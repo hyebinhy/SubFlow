@@ -56,7 +56,7 @@ class AnalyticsService:
                 total_yearly_cost=Decimal("0"),
             )
 
-        total_monthly = sum(to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle) for s in subs)
+        total_monthly = sum((to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle) for s in subs), Decimal("0"))
         total_yearly = total_monthly * 12
 
         today = date.today()
@@ -97,7 +97,7 @@ class AnalyticsService:
             by_category[cat_name]["total"] += monthly
             by_category[cat_name]["count"] += 1
 
-        total = sum(v["total"] for v in by_category.values())
+        total = sum((v["total"] for v in by_category.values()), Decimal("0"))
         breakdown = []
         for cat, data in sorted(by_category.items(), key=lambda x: x[1]["total"], reverse=True):
             pct = float(data["total"] / total * 100) if total > 0 else 0.0
@@ -114,7 +114,7 @@ class AnalyticsService:
 
     async def get_spending_trend(self, user_id: UUID, months: int = 6) -> SpendingTrend:
         subs = await self._get_active_subscriptions(user_id)
-        total_monthly = sum(to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle) for s in subs)
+        total_monthly = sum((to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle) for s in subs), Decimal("0"))
 
         today = date.today()
         data = []
