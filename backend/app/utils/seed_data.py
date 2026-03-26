@@ -31,7 +31,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/netflix.png",
             "is_popular": True,
             "plans": [
-                {"name": "광고형 스탠다드", "price": 5500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "광고형 스탠다드", "price": 7000, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "스탠다드", "price": 13500, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "프리미엄", "price": 17000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
@@ -43,6 +43,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/youtube.png",
             "is_popular": True,
             "plans": [
+                {"name": "Lite", "price": 8500, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "개인", "price": 14900, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "가족", "price": 23900, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
@@ -77,9 +78,10 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/tving.png",
             "is_popular": True,
             "plans": [
-                {"name": "베이직", "price": 5500, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "스탠다드", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "프리미엄", "price": 13900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "광고형 스탠다드", "price": 5500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "베이직", "price": 9500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "스탠다드", "price": 13500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄", "price": 17000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -153,9 +155,11 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/spotify.png",
             "is_popular": True,
             "plans": [
-                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "듀오", "price": 14900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "베이직", "price": 8690, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "개인", "price": 11990, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "듀오", "price": 17985, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "가족", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "학생", "price": 6600, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -165,8 +169,8 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/applemusic.png",
             "is_popular": True,
             "plans": [
-                {"name": "개인", "price": 11000, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "가족", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "개인", "price": 8900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "가족", "price": 13500, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -176,7 +180,10 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/melon.png",
             "is_popular": True,
             "plans": [
-                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "모바일 스트리밍", "price": 7590, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "스트리밍", "price": 8690, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "스트리밍 플러스", "price": 11990, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "패밀리", "price": 14000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -252,6 +259,7 @@ DEFAULT_SERVICES = {
             "plans": [
                 {"name": "Individual", "price": 10, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Business", "price": 19, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro+", "price": 39, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -271,6 +279,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/chatgpt.png",
             "is_popular": True,
             "plans": [
+                {"name": "Go", "price": 8, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Plus", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Pro", "price": 200, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
@@ -318,6 +327,8 @@ DEFAULT_SERVICES = {
             "plans": [
                 {"name": "Pro", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Business", "price": 40, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro+", "price": 60, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Ultra", "price": 200, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -330,6 +341,7 @@ DEFAULT_SERVICES = {
                 {"name": "Basic", "price": 10, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Standard", "price": 30, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Pro", "price": 60, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Mega", "price": 120, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -426,8 +438,8 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/microsoft365.png",
             "is_popular": True,
             "plans": [
-                {"name": "Personal", "price": 8900, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "Family", "price": 12900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Personal", "price": 12500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Family", "price": 15500, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -492,7 +504,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/canva.png",
             "is_popular": True,
             "plans": [
-                {"name": "Pro", "price": 15000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Pro", "price": 14000, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "Teams", "price": 12500, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
@@ -601,7 +613,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/millie.png",
             "is_popular": True,
             "plans": [
-                {"name": "베이직", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "베이직", "price": 11900, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -611,7 +623,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/ridibooks.png",
             "is_popular": False,
             "plans": [
-                {"name": "셀렉트", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "셀렉트", "price": 4900, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
     ],
@@ -634,9 +646,9 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/playstation.png",
             "is_popular": True,
             "plans": [
-                {"name": "Essential (월)", "price": 8900, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "Extra (월)", "price": 13900, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "Premium (월)", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Essential (월)", "price": 10800, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Special (월)", "price": 16200, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Deluxe (월)", "price": 19000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -669,8 +681,8 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/ea.png",
             "is_popular": False,
             "plans": [
-                {"name": "EA Play", "price": 4.99, "currency": "USD", "billing_cycle": "MONTHLY"},
-                {"name": "EA Play Pro", "price": 14.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "EA Play", "price": 5.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "EA Play Pro", "price": 16.99, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -759,6 +771,7 @@ DEFAULT_SERVICES = {
             "plans": [
                 {"name": "Member", "price": 5, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "연간", "price": 50, "currency": "USD", "billing_cycle": "YEARLY"},
+                {"name": "Friend of Medium", "price": 15, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -801,8 +814,8 @@ DEFAULT_SERVICES = {
             "is_popular": True,
             "plans": [
                 {"name": "50GB", "price": 1100, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "200GB", "price": 3300, "currency": "KRW", "billing_cycle": "MONTHLY"},
-                {"name": "2TB", "price": 11000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "200GB", "price": 4400, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "2TB", "price": 14000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -870,7 +883,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/1password.png",
             "is_popular": True,
             "plans": [
-                {"name": "Individual", "price": 2.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Individual", "price": 3.99, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Families", "price": 4.99, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
@@ -881,7 +894,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/bitwarden.png",
             "is_popular": False,
             "plans": [
-                {"name": "Premium", "price": 0.83, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Premium", "price": 1.65, "currency": "USD", "billing_cycle": "MONTHLY"},
                 {"name": "Families", "price": 3.33, "currency": "USD", "billing_cycle": "MONTHLY"},
             ],
         },
@@ -914,7 +927,7 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/baemin.png",
             "is_popular": True,
             "plans": [
-                {"name": "월간", "price": 4990, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "월간", "price": 3990, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -984,28 +997,58 @@ async def seed_services(db: AsyncSession) -> None:
     cat_result = await db.execute(select(Category))
     cat_map = {c.name: c.id for c in cat_result.scalars().all()}
 
-    # Get existing service names
+    # Get existing services as dict {name: Service}
     svc_result = await db.execute(select(Service))
-    existing_services = {s.name for s in svc_result.scalars().all()}
+    existing_services = {s.name: s for s in svc_result.scalars().all()}
 
-    added = False
+    # Get existing plans as dict {(service_id, plan_name): ServicePlan}
+    plan_result = await db.execute(select(ServicePlan))
+    existing_plans = {(p.service_id, p.name): p for p in plan_result.scalars().all()}
+
+    changed = False
     for category_name, services in DEFAULT_SERVICES.items():
         category_id = cat_map.get(category_name)
         for svc_data in services:
             plans_data = svc_data.get("plans", [])
+
             if svc_data["name"] in existing_services:
-                continue
-            svc_copy = {k: v for k, v in svc_data.items() if k != "plans"}
-            service = Service(**svc_copy, category_id=category_id)
-            db.add(service)
-            await db.flush()
+                # Update existing service's plans
+                service = existing_services[svc_data["name"]]
+                seed_plan_names = {p["name"] for p in plans_data}
 
-            for plan_data in plans_data:
-                plan = ServicePlan(service_id=service.id, **plan_data)
-                db.add(plan)
-            added = True
+                for plan_data in plans_data:
+                    key = (service.id, plan_data["name"])
+                    if key in existing_plans:
+                        # Update price/currency/billing_cycle if changed
+                        existing_plan = existing_plans[key]
+                        for field in ("price", "currency", "billing_cycle"):
+                            if str(getattr(existing_plan, field)) != str(plan_data.get(field)):
+                                setattr(existing_plan, field, plan_data[field])
+                                changed = True
+                    else:
+                        # Add new plan to existing service
+                        plan = ServicePlan(service_id=service.id, **plan_data)
+                        db.add(plan)
+                        changed = True
 
-    if added:
+                # Remove plans that are no longer in seed data
+                for (sid, pname), existing_plan in list(existing_plans.items()):
+                    if sid == service.id and pname not in seed_plan_names:
+                        await db.delete(existing_plan)
+                        changed = True
+            else:
+                # Add new service
+                svc_copy = {k: v for k, v in svc_data.items() if k != "plans"}
+                service = Service(**svc_copy, category_id=category_id)
+                db.add(service)
+                await db.flush()
+
+                for plan_data in plans_data:
+                    plan = ServicePlan(service_id=service.id, **plan_data)
+                    db.add(plan)
+                changed = True
+
+    if changed:
         await db.commit()
 
     # Always update logo URLs for existing services
