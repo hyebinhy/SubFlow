@@ -2,9 +2,11 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import CategoryPieChart from "../components/analytics/CategoryPieChart";
 import MonthlySpendingChart from "../components/analytics/MonthlySpendingChart";
 import SpendingTrendChart from "../components/analytics/SpendingTrendChart";
+import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
+import ExchangeRateAlert from "../components/dashboard/ExchangeRateAlert";
 
 export default function AnalyticsPage() {
-  const { overview, categoryBreakdown, spendingTrend, loading, error } = useAnalytics();
+  const { overview, categoryBreakdown, spendingTrend, savingsSuggestions, exchangeRateAlerts, loading, error } = useAnalytics();
 
   if (loading) {
     return (
@@ -66,6 +68,30 @@ export default function AnalyticsPage() {
       </div>
 
       {spendingTrend ? <MonthlySpendingChart trend={spendingTrend} /> : null}
+
+      {/* 환율 알림 */}
+      {exchangeRateAlerts && exchangeRateAlerts.alerts.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-lg font-semibold text-slate-900">환율 변동 알림</h3>
+          <ExchangeRateAlert alerts={exchangeRateAlerts.alerts} />
+          {exchangeRateAlerts.current_usd_krw && (
+            <p className="mt-2 text-xs text-slate-400">
+              현재 환율: 1 USD = {new Intl.NumberFormat("ko-KR").format(exchangeRateAlerts.current_usd_krw)}원
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 절약 제안 */}
+      {savingsSuggestions && savingsSuggestions.suggestions.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-lg font-semibold text-slate-900">절약 제안</h3>
+          <SavingsSuggestions
+            suggestions={savingsSuggestions.suggestions}
+            totalSavings={savingsSuggestions.total_potential_savings_krw}
+          />
+        </div>
+      )}
     </div>
   );
 }
