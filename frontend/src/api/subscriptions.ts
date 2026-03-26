@@ -1,4 +1,5 @@
 import type {
+  CalendarEvent,
   Subscription,
   SubscriptionCreateRequest,
   SubscriptionUpdateRequest,
@@ -45,5 +46,10 @@ export const subscriptionApi = {
   getUpcoming: (days = 7) =>
     apiClient
       .get<Subscription[]>("/subscriptions/upcoming", { params: { days } })
+      .then((r) => r.data),
+
+  getCalendarEvents: (): Promise<{ events: CalendarEvent[] }> =>
+    apiClient
+      .get<{ events: CalendarEvent[] }>("/subscriptions/calendar-events")
       .then((r) => r.data),
 };

@@ -90,6 +90,8 @@ class SubscriptionService:
             auto_renew=data.auto_renew,
             logo_url=service.logo_url,
             notes=data.notes,
+            is_recurring=data.is_recurring,
+            cancel_reminder=data.cancel_reminder,
         )
         if subscription.currency != "KRW":
             rates = await get_exchange_rates()

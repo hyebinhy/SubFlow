@@ -9,6 +9,23 @@ from app.schemas.category import CategoryResponse
 from app.schemas.service import ServicePlanResponse, ServiceResponse
 
 
+class CalendarEvent(BaseModel):
+    subscription_id: str
+    service_name: str
+    logo_url: str | None = None
+    cost: Decimal
+    currency: str
+    category_name: str | None = None
+    category_color: str | None = None
+    date: str  # ISO date
+    is_past: bool
+    is_recurring: bool
+
+
+class CalendarEventsResponse(BaseModel):
+    events: list[CalendarEvent]
+
+
 class SubscriptionFromCatalogRequest(BaseModel):
     """카탈로그에서 서비스 선택으로 구독 생성"""
     service_id: int
@@ -18,6 +35,8 @@ class SubscriptionFromCatalogRequest(BaseModel):
     status: SubscriptionStatus = SubscriptionStatus.ACTIVE
     auto_renew: bool = True
     notes: str | None = None
+    is_recurring: bool = True
+    cancel_reminder: bool = False
 
 
 class SubscriptionCreateRequest(BaseModel):
@@ -35,6 +54,8 @@ class SubscriptionCreateRequest(BaseModel):
     auto_renew: bool = True
     logo_url: str | None = None
     notes: str | None = None
+    is_recurring: bool = True
+    cancel_reminder: bool = False
 
 
 class SubscriptionUpdateRequest(BaseModel):
@@ -52,6 +73,8 @@ class SubscriptionUpdateRequest(BaseModel):
     logo_url: str | None = None
     notes: str | None = None
     plan_id: int | None = None
+    is_recurring: bool | None = None
+    cancel_reminder: bool | None = None
 
 
 class SubscriptionResponse(BaseModel):
@@ -67,6 +90,8 @@ class SubscriptionResponse(BaseModel):
     next_billing_date: date
     status: SubscriptionStatus
     auto_renew: bool
+    is_recurring: bool
+    cancel_reminder: bool
     category_id: int | None
     category: CategoryResponse | None = None
     service_id: int | None = None

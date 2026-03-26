@@ -52,6 +52,9 @@ class Subscription(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+    is_recurring: Mapped[bool] = mapped_column(Boolean, default=True)
+    cancel_reminder: Mapped[bool] = mapped_column(Boolean, default=False)
+
     initial_exchange_rate: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
 
     service_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("services.id"), nullable=True)

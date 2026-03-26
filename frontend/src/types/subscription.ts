@@ -16,6 +16,8 @@ export interface Subscription {
   next_billing_date: string;
   status: SubscriptionStatus;
   auto_renew: boolean;
+  is_recurring: boolean;
+  cancel_reminder: boolean;
   category_id?: number;
   category?: Category;
   service_id?: number;
@@ -39,7 +41,22 @@ export interface SubscriptionCreateRequest {
   category_id?: number;
   status?: SubscriptionStatus;
   auto_renew?: boolean;
+  is_recurring?: boolean;
+  cancel_reminder?: boolean;
   notes?: string;
 }
 
 export type SubscriptionUpdateRequest = Partial<SubscriptionCreateRequest>;
+
+export interface CalendarEvent {
+  subscription_id: string;
+  service_name: string;
+  logo_url?: string;
+  cost: number;
+  currency: string;
+  category_name?: string;
+  category_color?: string;
+  date: string;
+  is_past: boolean;
+  is_recurring: boolean;
+}

@@ -33,6 +33,8 @@ export default function SubscriptionForm({
     category_id: initial?.category_id ?? undefined,
     status: (initial?.status ?? "active") as SubscriptionStatus,
     auto_renew: initial?.auto_renew ?? true,
+    is_recurring: initial?.is_recurring ?? true,
+    cancel_reminder: initial?.cancel_reminder ?? false,
     notes: initial?.notes ?? "",
   });
 
@@ -42,6 +44,8 @@ export default function SubscriptionForm({
       ...form,
       cost: Number(form.cost),
       category_id: form.category_id || undefined,
+      is_recurring: form.is_recurring,
+      cancel_reminder: form.cancel_reminder,
       notes: form.notes || undefined,
     });
   };
@@ -125,6 +129,65 @@ export default function SubscriptionForm({
             className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
+      </div>
+
+      {/* 결제 유형 */}
+      <div>
+        <label className="block text-sm font-medium text-slate-500 mb-2">
+          결제 유형
+        </label>
+        <div className="glass-input inline-flex rounded-full p-1">
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, is_recurring: true, cancel_reminder: false })}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
+              form.is_recurring
+                ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            정기 결제
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, is_recurring: false })}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
+              !form.is_recurring
+                ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            일회성 결제
+          </button>
+        </div>
+
+        {!form.is_recurring && (
+          <div className="mt-3 glass rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">
+                해지 알림이 필요하신가요?
+              </span>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, cancel_reminder: !form.cancel_reminder })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                  form.cancel_reminder ? "bg-indigo-500" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                    form.cancel_reminder ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+            {form.cancel_reminder && (
+              <p className="text-xs text-indigo-500 bg-indigo-50/50 rounded-lg px-3 py-2">
+                결제 3일 전, 1일 전, 당일에 알림을 보내드립니다
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
