@@ -17,6 +17,7 @@ class NotificationSetting(Base):
     notify_days_before: Mapped[int] = mapped_column(Integer, default=3)
     email_notifications: Mapped[bool] = mapped_column(Boolean, default=True)
     push_notifications: Mapped[bool] = mapped_column(Boolean, default=False)
+    budget_monthly: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

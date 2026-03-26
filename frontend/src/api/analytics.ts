@@ -1,4 +1,5 @@
 import type {
+  BudgetStatus,
   CategoryBreakdown,
   DashboardOverview,
   ExchangeRateAlertResponse,
@@ -45,5 +46,10 @@ export const analyticsApi = {
   getSavingsSuggestions: () =>
     apiClient
       .get<SavingsSuggestionsResponse>("/analytics/savings-suggestions")
+      .then((r) => r.data),
+
+  getBudgetStatus: () =>
+    apiClient
+      .get<BudgetStatus>("/analytics/budget-status")
       .then((r) => r.data),
 };

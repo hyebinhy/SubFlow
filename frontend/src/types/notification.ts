@@ -4,10 +4,12 @@ export interface NotificationSettings {
   notify_days_before: number;
   email_notifications: boolean;
   push_notifications: boolean;
+  budget_monthly: number | null;
 }
 
 export interface NotificationSettingsUpdate {
   notify_days_before?: number;
   email_notifications?: boolean;
   push_notifications?: boolean;
+  budget_monthly?: number | null;
 }

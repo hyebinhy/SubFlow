@@ -121,3 +121,12 @@ class SavingSuggestionItem(BaseModel):
 class SavingsSuggestionsResponse(BaseModel):
     suggestions: list[SavingSuggestionItem]
     total_potential_savings_krw: Decimal
+
+
+# Feature 5: Budget Status
+class BudgetStatusResponse(BaseModel):
+    budget_monthly: int | None = None
+    current_spending: Decimal
+    remaining: Decimal | None = None
+    percentage_used: float | None = None  # 0-100+
+    is_over_budget: bool = False

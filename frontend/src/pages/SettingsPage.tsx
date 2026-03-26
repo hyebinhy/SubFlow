@@ -11,6 +11,7 @@ export default function SettingsPage() {
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
   const [notifyDays, setNotifyDays] = useState(3);
   const [emailNotif, setEmailNotif] = useState(true);
+  const [budgetMonthly, setBudgetMonthly] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function SettingsPage() {
       setNotifSettings(s);
       setNotifyDays(s.notify_days_before);
       setEmailNotif(s.email_notifications);
+      setBudgetMonthly(s.budget_monthly != null ? String(s.budget_monthly) : "");
     }).catch(() => {
       toast.error("알림 설정을 불러오는데 실패했습니다.");
     });
@@ -47,6 +49,44 @@ export default function SettingsPage() {
       toast.success("알림 설정이 저장되었습니다.");
     } catch {
       toast.error("알림 설정 저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBudgetSave = async () => {
+    setSaving(true);
+    try {
+      const value = budgetMonthly.trim() === "" ? null : Number(budgetMonthly);
+      if (value !== null && (isNaN(value) || value <= 0)) {
+        toast.error("올바른 금액을 입력해주세요.");
+        setSaving(false);
+        return;
+      }
+      const updated = await notificationApi.updateSettings({
+        budget_monthly: value,
+      });
+      setNotifSettings(updated);
+      setBudgetMonthly(updated.budget_monthly != null ? String(updated.budget_monthly) : "");
+      toast.success("예산이 저장되었습니다.");
+    } catch {
+      toast.error("예산 저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBudgetClear = async () => {
+    setSaving(true);
+    try {
+      const updated = await notificationApi.updateSettings({
+        budget_monthly: null,
+      });
+      setNotifSettings(updated);
+      setBudgetMonthly("");
+      toast.success("예산이 해제되었습니다.");
+    } catch {
+      toast.error("예산 해제에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -143,6 +183,47 @@ export default function SettingsPage() {
             <div className="h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
           </div>
         )}
+      </div>
+
+      {/* Budget Settings */}
+      <div className="glass p-6">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">월 예산 설정</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-500">
+              월 예산 (원)
+            </label>
+            <input
+              type="number"
+              value={budgetMonthly}
+              onChange={(e) => setBudgetMonthly(e.target.value)}
+              placeholder="예: 150000"
+              min="0"
+              className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              예산을 설정하면 대시보드에서 지출 현황을 한눈에 확인할 수 있습니다.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleBudgetSave}
+              disabled={saving}
+              className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              저장
+            </button>
+            {notifSettings?.budget_monthly != null && (
+              <button
+                onClick={handleBudgetClear}
+                disabled={saving}
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+              >
+                예산 해제
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

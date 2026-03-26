@@ -2,6 +2,7 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import MonthlySpendingChart from "../components/analytics/MonthlySpendingChart";
 import CategoryPieChart from "../components/analytics/CategoryPieChart";
+import BudgetStatus from "../components/dashboard/BudgetStatus";
 import TrialTracker from "../components/dashboard/TrialTracker";
 import OverlapWarning from "../components/dashboard/OverlapWarning";
 import ExchangeRateAlert from "../components/dashboard/ExchangeRateAlert";
@@ -17,6 +18,7 @@ export default function DashboardPage() {
     exchangeRateAlerts,
     trials,
     savingsSuggestions,
+    budgetStatus,
     loading,
     error: analyticsError,
   } = useAnalytics();
@@ -128,6 +130,9 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Budget status */}
+      {budgetStatus && <BudgetStatus budgetStatus={budgetStatus} />}
 
       {/* Smart subscription alerts */}
       {trials && trials.trials.length > 0 && (

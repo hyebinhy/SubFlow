@@ -108,3 +108,12 @@ export interface SavingsSuggestionsResponse {
   suggestions: SavingSuggestionItem[];
   total_potential_savings_krw: number;
 }
+
+// Feature 5: Budget Status
+export interface BudgetStatus {
+  budget_monthly: number | null;
+  current_spending: number;
+  remaining: number | null;
+  percentage_used: number | null;
+  is_over_budget: boolean;
+}

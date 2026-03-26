@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
+  BudgetStatus,
   CategoryBreakdown,
   DashboardOverview,
   ExchangeRateAlertResponse,
@@ -23,6 +24,7 @@ export function useAnalytics() {
   const [trials, setTrials] = useState<TrialTrackingResponse | null>(null);
   const [savingsSuggestions, setSavingsSuggestions] =
     useState<SavingsSuggestionsResponse | null>(null);
+  const [budgetStatus, setBudgetStatus] = useState<BudgetStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,12 +52,14 @@ export function useAnalytics() {
       analyticsApi.getExchangeRateAlerts(),
       analyticsApi.getTrials(),
       analyticsApi.getSavingsSuggestions(),
+      analyticsApi.getBudgetStatus(),
     ]);
 
     if (results[0].status === "fulfilled") setOverlaps(results[0].value);
     if (results[1].status === "fulfilled") setExchangeRateAlerts(results[1].value);
     if (results[2].status === "fulfilled") setTrials(results[2].value);
     if (results[3].status === "fulfilled") setSavingsSuggestions(results[3].value);
+    if (results[4].status === "fulfilled") setBudgetStatus(results[4].value);
   }, []);
 
   useEffect(() => {
@@ -70,6 +74,7 @@ export function useAnalytics() {
     exchangeRateAlerts,
     trials,
     savingsSuggestions,
+    budgetStatus,
     loading,
     error,
     refetch: fetchAll,

@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.notification_setting import NotificationSetting
 from app.models.subscription import BillingCycle, Subscription, SubscriptionStatus
 from app.models.service import Service
 from app.models.service_plan import ServicePlan
@@ -22,6 +23,7 @@ from app.schemas.analytics import (
     NextRenewalInfo,
     OverlapDetectionResponse,
     OverlapItem,
+    BudgetStatusResponse,
     SavingSuggestionItem,
     SavingsSuggestionsResponse,
     SpendingTrend,
@@ -372,4 +374,39 @@ class AnalyticsService:
         return SavingsSuggestionsResponse(
             suggestions=suggestions,
             total_potential_savings_krw=total_potential_savings,
+        )
+
+    async def get_budget_status(self, user_id: UUID) -> BudgetStatusResponse:
+        # Get current monthly spending (reuse logic from get_overview)
+        subs = await self._get_active_subscriptions(user_id)
+        monthly_krw_list = [
+            await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency)
+            for s in subs
+        ]
+        current_spending = sum(monthly_krw_list, Decimal("0")).quantize(Decimal("1"))
+
+        # Get budget from notification_settings
+        result = await self.db.execute(
+            select(NotificationSetting).where(NotificationSetting.user_id == user_id)
+        )
+        settings = result.scalar_one_or_none()
+        budget_monthly = settings.budget_monthly if settings else None
+
+        if budget_monthly is None:
+            return BudgetStatusResponse(
+                budget_monthly=None,
+                current_spending=current_spending,
+            )
+
+        budget = Decimal(str(budget_monthly))
+        remaining = budget - current_spending
+        percentage_used = float(current_spending / budget * 100) if budget > 0 else 0.0
+        is_over_budget = current_spending > budget
+
+        return BudgetStatusResponse(
+            budget_monthly=budget_monthly,
+            current_spending=current_spending,
+            remaining=remaining.quantize(Decimal("1")),
+            percentage_used=round(percentage_used, 1),
+            is_over_budget=is_over_budget,
         )
