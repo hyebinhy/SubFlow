@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SubFlow - Floating Dock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F0F4FA; color: #1E293B; min-height: 100vh; }
+  .bg-mesh::before, .bg-mesh::after { content: ''; position: fixed; border-radius: 50%; filter: blur(150px); z-index: 0; pointer-events: none; }
+  .bg-mesh::before { width: 700px; height: 700px; background: rgba(99,102,241,0.12); top: -250px; right: -100px; }
+  .bg-mesh::after { width: 600px; height: 600px; background: rgba(236,72,153,0.08); bottom: -200px; left: -100px; }
+
+  .app { min-height: 100vh; position: relative; z-index: 1; padding-bottom: 100px; }
+
+  .header {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.6); backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255,255,255,0.5);
+  }
+  .logo { font-size: 20px; font-weight: 800; }
+  .logo span { color: #6366F1; }
+  .avatar { width: 36px; height: 36px; border-radius: 12px; background: #6366F1; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; color: white; }
+
+  .main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .glass { background: rgba(255,255,255,0.45); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; padding: 24px; }
+
+  /* Floating Dock */
+  .floating-dock {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50;
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .dock-item {
+    display: flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px; border-radius: 16px;
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 20px; position: relative;
+  }
+  .dock-item:hover {
+    transform: translateY(-8px) scale(1.15);
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .dock-item.active {
+    background: linear-gradient(135deg, #6366F1, #818CF8);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+  }
+  .dock-item.active::after {
+    content: ''; position: absolute; bottom: -4px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #6366F1;
+  }
+  /* Tooltip */
+  .dock-item::before {
+    content: attr(data-label);
+    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    padding: 4px 10px; border-radius: 8px;
+    background: rgba(15,23,42,0.85); color: white;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+    transform: translateX(-50%) translateY(4px);
+  }
+  .dock-item:hover::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .dock-divider { width: 1px; height: 28px; background: rgba(0,0,0,0.08); margin: 0 4px; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-label { font-size: 12px; color: #94A3B8; }
+  .stat-value { font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 4px; }
+  .gradient-text { background: linear-gradient(135deg, #6366F1, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .sub-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 16px; }
+  .sub-item:hover { background: rgba(255,255,255,0.4); }
+  .sub-logo { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+</style>
+</head>
+<body class="bg-mesh">
+<div class="app">
+  <header class="header">
+    <div class="logo">Sub<span>Flow</span></div>
+    <div class="avatar">HB</div>
+  </header>
+
+  <main class="main">
+    <div style="margin-bottom: 20px;">
+      <h2 style="font-size: 22px; font-weight: 700;">대시보드</h2>
+      <p style="font-size: 13px; color: #94A3B8; margin-top: 2px;">2026년 3월 26일 기준</p>
+    </div>
+
+    <div class="summary-grid">
+      <div class="glass" style="padding:16px;">
+        <div class="stat-label">월 총 지출</div>
+        <div class="stat-value gradient-text" style="font-size:22px;">127,400원</div>
+      </div>
+      <div class="glass" style="padding:16px;">
+        <div class="stat-label">활성 구독</div>
+        <div class="stat-value" style="font-size:22px;">12개</div>
+      </div>
+      <div class="glass" style="padding:16px;">
+        <div class="stat-label">다가오는 결제</div>
+        <div class="stat-value" style="font-size:22px;">3건</div>
+      </div>
+      <div class="glass" style="padding:16px;">
+        <div class="stat-label">절약 금액</div>
+        <div class="stat-value" style="font-size:22px; color:#059669;">23,500원</div>
+      </div>
+    </div>
+
+    <div class="glass" style="margin-bottom: 16px;">
+      <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">다가오는 결제</h3>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div class="sub-item">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="sub-logo" style="background:linear-gradient(135deg,#E50914,#B20710);">N</div>
+            <div><div style="font-size:14px; font-weight:600;">Netflix</div><div style="font-size:11px; color:#94A3B8;">3월 28일</div></div>
+          </div>
+          <div style="font-size:14px; font-weight:700;">13,500원</div>
+        </div>
+        <div class="sub-item">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="sub-logo" style="background:linear-gradient(135deg,#1DB954,#158A3E);">S</div>
+            <div><div style="font-size:14px; font-weight:600;">Spotify</div><div style="font-size:11px; color:#94A3B8;">3월 30일</div></div>
+          </div>
+          <div style="font-size:14px; font-weight:700;">11,990원</div>
+        </div>
+        <div class="sub-item">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="sub-logo" style="background:linear-gradient(135deg,#6E40C9,#4A2D8A);">C</div>
+            <div><div style="font-size:14px; font-weight:600;">Claude Pro</div><div style="font-size:11px; color:#94A3B8;">4월 1일</div></div>
+          </div>
+          <div style="font-size:14px; font-weight:700;">$20.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass" style="height: 200px; display:flex; align-items:center; justify-content:center; color:#94A3B8;">
+      📊 차트 영역
+    </div>
+  </main>
+
+  <nav class="floating-dock">
+    <div class="dock-item active" data-label="대시보드">📊</div>
+    <div class="dock-item" data-label="서비스 탐색">🔍</div>
+    <div class="dock-item" data-label="내 구독">💳</div>
+    <div class="dock-divider"></div>
+    <div class="dock-item" data-label="지출 분석">📈</div>
+    <div class="dock-item" data-label="캘린더">📅</div>
+    <div class="dock-divider"></div>
+    <div class="dock-item" data-label="설정">⚙️</div>
+  </nav>
+</div>
+</body>
+</html>
