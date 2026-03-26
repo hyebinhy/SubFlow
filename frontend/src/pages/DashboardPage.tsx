@@ -45,7 +45,15 @@ export default function DashboardPage() {
                 className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-lg">{sub.category?.icon ?? "💳"}</span>
+                  {sub.logo_url ? (
+                    <img
+                      src={sub.logo_url}
+                      alt={sub.service_name}
+                      className="h-8 w-8 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg">{sub.category?.icon ?? "💳"}</span>
+                  )}
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {sub.service_name}
