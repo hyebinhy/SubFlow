@@ -82,7 +82,11 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               }`}
               title={
                 hasRenewal
-                  ? renewals.map((s) => `${s.service_name}: ${s.cost}원`).join("\n")
+                  ? renewals.map((s) =>
+                      s.currency === "KRW"
+                        ? `${s.service_name}: ${new Intl.NumberFormat("ko-KR").format(s.cost)}원`
+                        : `${s.service_name}: $${s.cost.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+                    ).join("\n")
                   : undefined
               }
             >
@@ -121,7 +125,9 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               {subs.map((s) => (
                 <p key={s.id} className="text-sm text-slate-900">
                   {s.category?.icon ?? "💳"} {s.service_name} -{" "}
-                  {new Intl.NumberFormat("ko-KR").format(s.cost)}원
+                  {s.currency === "KRW"
+                    ? `${new Intl.NumberFormat("ko-KR").format(s.cost)}원`
+                    : `$${s.cost.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                 </p>
               ))}
             </div>
