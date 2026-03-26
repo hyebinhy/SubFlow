@@ -5,7 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
 from app.models.user import User
-from app.schemas.analytics import CategoryBreakdown, DashboardOverview, SpendingTrend
+from app.schemas.analytics import (
+    CategoryBreakdown,
+    DashboardOverview,
+    ExchangeRateAlertResponse,
+    OverlapDetectionResponse,
+    SavingsSuggestionsResponse,
+    SpendingTrend,
+    TrialTrackingResponse,
+)
 from app.services.analytics_service import AnalyticsService
 
 router = APIRouter()
@@ -39,3 +47,39 @@ async def get_spending_trend(
 ):
     service = AnalyticsService(db)
     return await service.get_spending_trend(current_user.id, months)
+
+
+@router.get("/overlaps", response_model=OverlapDetectionResponse)
+async def detect_overlaps(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = AnalyticsService(db)
+    return await service.detect_overlaps(current_user.id)
+
+
+@router.get("/exchange-rate-alerts", response_model=ExchangeRateAlertResponse)
+async def get_exchange_rate_alerts(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = AnalyticsService(db)
+    return await service.get_exchange_rate_alerts(current_user.id)
+
+
+@router.get("/trials", response_model=TrialTrackingResponse)
+async def get_trial_subscriptions(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = AnalyticsService(db)
+    return await service.get_trial_subscriptions(current_user.id)
+
+
+@router.get("/savings-suggestions", response_model=SavingsSuggestionsResponse)
+async def get_savings_suggestions(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = AnalyticsService(db)
+    return await service.get_savings_suggestions(current_user.id)

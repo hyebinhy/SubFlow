@@ -10,6 +10,7 @@ from app.models.service import Service
 from app.models.service_plan import ServicePlan
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.schemas.subscription import SubscriptionCreateRequest, SubscriptionFromCatalogRequest, SubscriptionUpdateRequest
+from app.utils.exchange_rate import get_exchange_rates
 
 EAGER_LOADS = [
     selectinload(Subscription.category),
@@ -90,6 +91,9 @@ class SubscriptionService:
             logo_url=service.logo_url,
             notes=data.notes,
         )
+        if subscription.currency != "KRW":
+            rates = await get_exchange_rates()
+            subscription.initial_exchange_rate = rates.get(subscription.currency)
         self.db.add(subscription)
         await self.db.commit()
 
@@ -100,6 +104,9 @@ class SubscriptionService:
 
     async def create(self, user_id: UUID, data: SubscriptionCreateRequest) -> Subscription:
         subscription = Subscription(user_id=user_id, **data.model_dump())
+        if subscription.currency != "KRW":
+            rates = await get_exchange_rates()
+            subscription.initial_exchange_rate = rates.get(subscription.currency)
         self.db.add(subscription)
         await self.db.commit()
 

@@ -37,3 +37,73 @@ export interface MonthlyTotal {
 export interface SpendingTrend {
   data: MonthlyTotal[];
 }
+
+// Feature 1: Overlap Detection
+export interface OverlapItem {
+  category: string;
+  category_icon?: string;
+  services: string[];
+  total_monthly_cost: number;
+  message: string;
+}
+export interface OverlapDetectionResponse {
+  overlaps: OverlapItem[];
+}
+
+// Feature 2: Exchange Rate Alert
+export interface ExchangeRateAlertItem {
+  subscription_id: string;
+  service_name: string;
+  currency: string;
+  initial_rate: number;
+  current_rate: number;
+  change_percentage: number;
+  initial_monthly_krw: number;
+  current_monthly_krw: number;
+  extra_cost_krw: number;
+}
+export interface ExchangeRateAlertResponse {
+  alerts: ExchangeRateAlertItem[];
+  current_usd_krw?: number;
+}
+
+// Feature 3: Trial Tracking
+export interface TrialSubscriptionItem {
+  id: string;
+  service_name: string;
+  logo_url?: string;
+  category_name?: string;
+  trial_end_date: string;
+  days_remaining: number;
+  cost_after_trial: number;
+  currency: string;
+  cost_after_trial_krw: number;
+}
+export interface TrialTrackingResponse {
+  trials: TrialSubscriptionItem[];
+  total_count: number;
+}
+
+// Feature 4: Savings Suggestions
+export interface CheaperPlanInfo {
+  plan_id: number;
+  plan_name: string;
+  price: number;
+  currency: string;
+  billing_cycle: string;
+  monthly_cost_krw: number;
+}
+export interface SavingSuggestionItem {
+  subscription_id: string;
+  service_name: string;
+  logo_url?: string;
+  current_plan_name?: string;
+  current_monthly_krw: number;
+  cheaper_plans: CheaperPlanInfo[];
+  max_savings_krw: number;
+  suggestion_text: string;
+}
+export interface SavingsSuggestionsResponse {
+  suggestions: SavingSuggestionItem[];
+  total_potential_savings_krw: number;
+}

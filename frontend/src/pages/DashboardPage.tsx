@@ -2,6 +2,10 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import MonthlySpendingChart from "../components/analytics/MonthlySpendingChart";
 import CategoryPieChart from "../components/analytics/CategoryPieChart";
+import TrialTracker from "../components/dashboard/TrialTracker";
+import OverlapWarning from "../components/dashboard/OverlapWarning";
+import ExchangeRateAlert from "../components/dashboard/ExchangeRateAlert";
+import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
 import { format } from "date-fns";
 
 export default function DashboardPage() {
@@ -9,6 +13,10 @@ export default function DashboardPage() {
     overview,
     categoryBreakdown,
     spendingTrend,
+    overlaps,
+    exchangeRateAlerts,
+    trials,
+    savingsSuggestions,
     loading,
     error: analyticsError,
   } = useAnalytics();
@@ -44,9 +52,7 @@ export default function DashboardPage() {
         7 * 24 * 60 * 60 * 1000
   ).length;
 
-  const savingsEstimate = overview
-    ? Math.round(overview.total_monthly_cost * 0.1)
-    : 0;
+  const savingsEstimate = savingsSuggestions?.total_potential_savings_krw ?? 0;
 
   return (
     <div className="space-y-6">
@@ -123,6 +129,17 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Smart subscription alerts */}
+      {trials && trials.trials.length > 0 && (
+        <TrialTracker trials={trials.trials} />
+      )}
+      {overlaps && overlaps.overlaps.length > 0 && (
+        <OverlapWarning overlaps={overlaps.overlaps} />
+      )}
+      {exchangeRateAlerts && exchangeRateAlerts.alerts.length > 0 && (
+        <ExchangeRateAlert alerts={exchangeRateAlerts.alerts} />
+      )}
+
       {/* Charts row */}
       <div className="grid gap-6 lg:grid-cols-2">
         {spendingTrend && (
@@ -132,6 +149,14 @@ export default function DashboardPage() {
           <CategoryPieChart breakdown={categoryBreakdown} />
         )}
       </div>
+
+      {/* Savings suggestions */}
+      {savingsSuggestions && savingsSuggestions.suggestions.length > 0 && (
+        <SavingsSuggestions
+          suggestions={savingsSuggestions.suggestions}
+          totalSavings={savingsSuggestions.total_potential_savings_krw}
+        />
+      )}
 
       {/* Upcoming payments */}
       <div className="glass p-6">

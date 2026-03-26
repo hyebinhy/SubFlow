@@ -2,6 +2,8 @@ import enum
 import uuid
 from datetime import date, datetime
 
+from decimal import Decimal
+
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -49,6 +51,8 @@ class Subscription(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    initial_exchange_rate: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
 
     service_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("services.id"), nullable=True)
     plan_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("service_plans.id"), nullable=True)
