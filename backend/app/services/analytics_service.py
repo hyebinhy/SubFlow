@@ -133,19 +133,58 @@ class AnalyticsService:
         )
 
     async def get_spending_trend(self, user_id: UUID, months: int = 6) -> SpendingTrend:
-        subs = await self._get_active_subscriptions(user_id)
-        monthly_krw = [await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency) for s in subs]
-        total_monthly = sum(monthly_krw, Decimal("0"))
+        # Get ALL user subscriptions (active + cancelled + paused + trial) to check start_date
+        result = await self.db.execute(
+            select(Subscription)
+            .where(Subscription.user_id == user_id)
+        )
+        all_subs = list(result.scalars().all())
 
         today = date.today()
         data = []
+
+        # Past months + current month
         for i in range(months - 1, -1, -1):
             m = today.month - i
             y = today.year
             while m <= 0:
                 m += 12
                 y -= 1
-            data.append(MonthlyTotal(year=y, month=m, total=total_monthly.quantize(Decimal("1"))))
+
+            # Only count subscriptions that were active in this month
+            # A subscription contributes if: start_date <= end of this month AND (status is active OR it was active during this month)
+            month_total = Decimal("0")
+            for s in all_subs:
+                # Skip if subscription started after this month
+                if s.start_date.year > y or (s.start_date.year == y and s.start_date.month > m):
+                    continue
+                # Skip cancelled subscriptions for future months after cancellation
+                if s.status == SubscriptionStatus.CANCELLED:
+                    continue
+                month_total += await to_monthly_cost_krw(
+                    Decimal(str(s.cost)), s.billing_cycle, s.currency
+                )
+
+            data.append(MonthlyTotal(year=y, month=m, total=month_total.quantize(Decimal("1"))))
+
+        # Next month forecast
+        next_m = today.month + 1
+        next_y = today.year
+        if next_m > 12:
+            next_m = 1
+            next_y += 1
+
+        forecast_total = Decimal("0")
+        for s in all_subs:
+            if s.status not in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL):
+                continue
+            if s.start_date.year > next_y or (s.start_date.year == next_y and s.start_date.month > next_m):
+                continue
+            forecast_total += await to_monthly_cost_krw(
+                Decimal(str(s.cost)), s.billing_cycle, s.currency
+            )
+
+        data.append(MonthlyTotal(year=next_y, month=next_m, total=forecast_total.quantize(Decimal("1")), is_forecast=True))
 
         return SpendingTrend(data=data)
 

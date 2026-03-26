@@ -32,6 +32,7 @@ export interface MonthlyTotal {
   year: number;
   month: number;
   total: number;
+  is_forecast?: boolean;
 }
 
 export interface SpendingTrend {

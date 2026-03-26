@@ -41,6 +41,7 @@ class MonthlyTotal(BaseModel):
     year: int
     month: int
     total: Decimal
+    is_forecast: bool = False
 
 
 class SpendingTrend(BaseModel):
