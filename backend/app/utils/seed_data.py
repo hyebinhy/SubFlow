@@ -561,7 +561,9 @@ DEFAULT_SERVICES = {
             "logo_url": "/logos/duolingo.png",
             "is_popular": True,
             "plans": [
-                {"name": "Super", "price": 7900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Super", "price": 7250, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Super 패밀리", "price": 13260, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Max", "price": 21000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
