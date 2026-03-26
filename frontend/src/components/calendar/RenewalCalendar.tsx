@@ -52,10 +52,14 @@ export default function RenewalCalendar({ subscriptions }: Props) {
     ? renewalMap.get(format(selectedDate, "yyyy-MM-dd")) || []
     : [];
 
-  // Month total
-  const monthTotal = monthRenewals.reduce((sum, [, subs]) => {
-    return sum + subs.reduce((s, sub) => s + sub.cost, 0);
-  }, 0);
+  // Month totals by currency
+  const monthTotals = new Map<string, number>();
+  monthRenewals.forEach(([, subs]) => {
+    subs.forEach((sub) => {
+      const cur = sub.currency || "KRW";
+      monthTotals.set(cur, (monthTotals.get(cur) || 0) + sub.cost);
+    });
+  });
 
   const totalCount = monthRenewals.reduce((sum, [, subs]) => sum + subs.length, 0);
 
@@ -160,9 +164,18 @@ export default function RenewalCalendar({ subscriptions }: Props) {
           </p>
           <div className="mt-3 h-px bg-slate-200/50" />
           <p className="mt-3 text-xs font-medium text-slate-400">예상 결제 금액</p>
-          <p className="mt-1 text-xl font-bold gradient-text">
-            {new Intl.NumberFormat("ko-KR").format(Math.round(monthTotal))}원
-          </p>
+          <div className="mt-1 space-y-0.5">
+            {Array.from(monthTotals.entries()).map(([currency, total]) => (
+              <p key={currency} className="text-xl font-bold gradient-text">
+                {currency === "KRW"
+                  ? `${new Intl.NumberFormat("ko-KR").format(Math.round(total))}원`
+                  : `$${total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+              </p>
+            ))}
+            {monthTotals.size === 0 && (
+              <p className="text-xl font-bold text-slate-300">0원</p>
+            )}
+          </div>
         </div>
 
         {/* Selected date detail */}
