@@ -117,7 +117,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               <button
                 key={dateKey}
                 onClick={() => setSelectedDate(hasRenewal ? day : null)}
-                className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition-all duration-150 ${
+                className={`relative flex aspect-square flex-col items-start justify-start rounded-xl p-1.5 text-sm transition-all duration-150 ${
                   isSelected
                     ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
                     : today
@@ -127,24 +127,33 @@ export default function RenewalCalendar({ subscriptions }: Props) {
                         : "text-slate-500 hover:bg-white/30"
                 } ${!isSameMonth(day, currentMonth) ? "opacity-30" : ""}`}
               >
-                <span className="text-[13px]">{format(day, "d")}</span>
+                <span className="text-[11px] leading-none">{format(day, "d")}</span>
                 {hasRenewal && (
-                  <div className="mt-0.5 flex gap-0.5">
-                    {renewals.slice(0, 3).map((s) => (
-                      <span
-                        key={s.id}
-                        className={`inline-block h-1.5 w-1.5 rounded-full ${
-                          isSelected ? "bg-white/70" : ""
-                        }`}
-                        style={{
-                          backgroundColor: isSelected ? undefined : (s.category?.color ?? "#6366F1"),
-                        }}
-                      />
-                    ))}
+                  <div className="mt-auto flex w-full flex-wrap items-end justify-center gap-0.5 pb-0.5">
+                    {renewals.slice(0, 3).map((s) =>
+                      s.logo_url ? (
+                        <img
+                          key={s.id}
+                          src={s.logo_url}
+                          alt={s.service_name}
+                          className={`h-5 w-5 rounded-md object-cover ${isSelected ? "ring-1 ring-white/50" : "shadow-sm"}`}
+                        />
+                      ) : (
+                        <div
+                          key={s.id}
+                          className={`flex h-5 w-5 items-center justify-center rounded-md text-[8px] font-bold text-white ${isSelected ? "ring-1 ring-white/50" : "shadow-sm"}`}
+                          style={{ background: s.category?.color ?? "#6366F1" }}
+                        >
+                          {s.service_name[0]}
+                        </div>
+                      )
+                    )}
                     {renewals.length > 3 && (
-                      <span className={`text-[8px] ${isSelected ? "text-white/70" : "text-slate-400"}`}>
+                      <div className={`flex h-5 w-5 items-center justify-center rounded-md text-[8px] font-semibold ${
+                        isSelected ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"
+                      }`}>
                         +{renewals.length - 3}
-                      </span>
+                      </div>
                     )}
                   </div>
                 )}
