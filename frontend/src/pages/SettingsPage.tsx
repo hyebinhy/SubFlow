@@ -54,38 +54,38 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-8">
-      <h2 className="text-2xl font-bold text-gray-900">설정</h2>
+      <h2 className="text-2xl font-bold text-slate-900">설정</h2>
 
       {/* Profile */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">프로필</h3>
+      <div className="glass p-6">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">프로필</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-500">
               이메일
             </label>
             <input
               type="email"
               value={user?.email ?? ""}
               disabled
-              className="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500"
+              className="glass-input mt-1 block w-full rounded-lg px-3 py-2 text-slate-400 opacity-60"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-500">
               사용자 이름
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <button
             onClick={handleProfileSave}
             disabled={saving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
             저장
           </button>
@@ -93,18 +93,18 @@ export default function SettingsPage() {
       </div>
 
       {/* Notification Settings */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">알림 설정</h3>
+      <div className="glass p-6">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">알림 설정</h3>
         {notifSettings ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-slate-500">
                 결제일 알림 (며칠 전)
               </label>
               <select
                 value={notifyDays}
                 onChange={(e) => setNotifyDays(Number(e.target.value))}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {[1, 2, 3, 5, 7, 14].map((d) => (
                   <option key={d} value={d}>
@@ -114,7 +114,7 @@ export default function SettingsPage() {
               </select>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-slate-500">
                 이메일 알림
               </span>
               <button
@@ -133,7 +133,7 @@ export default function SettingsPage() {
             <button
               onClick={handleNotifSave}
               disabled={saving}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               저장
             </button>

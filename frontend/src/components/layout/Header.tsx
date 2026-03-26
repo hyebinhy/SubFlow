@@ -15,11 +15,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
+    <header className="flex h-16 items-center justify-between border-b border-white/30 bg-white/40 backdrop-blur-xl px-6">
       {/* Hamburger menu button - visible only on mobile */}
       <button
         onClick={onMenuToggle}
-        className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+        className="rounded-[12px] p-2 text-gray-600 hover:bg-white/50 md:hidden"
         aria-label="Open menu"
       >
         <span className="text-xl">☰</span>
@@ -31,10 +31,13 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         </span>
         <button
           onClick={handleLogout}
-          className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+          className="btn-secondary-glass px-3 py-1.5 text-sm"
         >
           로그아웃
         </button>
+        <div className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-indigo-500 text-sm font-semibold text-white">
+          {(user?.username ?? "U").charAt(0).toUpperCase()}
+        </div>
       </div>
     </header>
   );

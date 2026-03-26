@@ -24,19 +24,19 @@ export default function PlanSelector({ plans, onSelect }: Props) {
           <button
             key={plan.id}
             onClick={() => onSelect(plan)}
-            className="rounded-xl border-2 border-gray-200 p-4 text-left transition-all hover:border-blue-500 hover:bg-blue-50"
+            className="glass border-2 border-white/60 p-4 text-left transition-all hover:border-blue-500/60 hover:bg-blue-500/10"
           >
-            <p className="font-semibold text-gray-900">{plan.name}</p>
+            <p className="font-semibold text-slate-900">{plan.name}</p>
             <p className="mt-2 text-2xl font-bold text-blue-600">
               {isUsd && "$"}
               {price}
               {!isUsd && unit}
-              <span className="text-sm font-normal text-gray-500">
+              <span className="text-sm font-normal text-slate-400">
                 {cycleLabels[plan.billing_cycle]}
               </span>
             </p>
             {plan.description && (
-              <p className="mt-1 text-xs text-gray-500">{plan.description}</p>
+              <p className="mt-1 text-xs text-slate-400">{plan.description}</p>
             )}
           </button>
         );

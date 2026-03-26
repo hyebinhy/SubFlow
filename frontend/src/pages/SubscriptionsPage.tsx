@@ -74,15 +74,15 @@ export default function SubscriptionsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">구독 관리</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="text-2xl font-bold text-slate-900">구독 관리</h2>
+          <p className="mt-1 text-sm text-slate-400">
             활성 {activeCount}개 · 월 예상 비용{" "}
             {new Intl.NumberFormat("ko-KR").format(Math.round(totalMonthly))}원
           </p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="btn-primary-glass px-4 py-2 text-sm font-medium"
         >
           + 구독 추가
         </button>
@@ -93,8 +93,8 @@ export default function SubscriptionsPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
         </div>
       ) : subscriptions.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-300 py-12 text-center">
-          <p className="text-gray-500">아직 등록된 구독이 없습니다.</p>
+        <div className="glass py-12 text-center">
+          <p className="text-slate-400">아직 등록된 구독이 없습니다.</p>
           <button
             onClick={() => setModalOpen(true)}
             className="mt-2 text-sm text-blue-600 hover:underline"

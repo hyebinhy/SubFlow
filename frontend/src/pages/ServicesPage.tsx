@@ -77,7 +77,7 @@ export default function ServicesPage() {
   if (selectedServiceId) {
     return (
       <div>
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">서비스 상세</h2>
+        <h2 className="mb-6 text-2xl font-bold text-slate-900">서비스 상세</h2>
         <ServiceDetail
           serviceId={selectedServiceId}
           onBack={() => setSelectedServiceId(null)}
@@ -94,7 +94,7 @@ export default function ServicesPage() {
         >
           {subscribing && (
             <div className="space-y-4">
-              <div className="rounded-lg bg-blue-50 p-4">
+              <div className="rounded-lg bg-blue-500/10 p-4">
                 <p className="font-semibold text-blue-900">
                   {subscribing.plan.name}
                 </p>
@@ -108,38 +108,38 @@ export default function ServicesPage() {
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-slate-500">
                   구독 시작일
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-slate-500">
                   다음 결제일
                 </label>
                 <input
                   type="date"
                   value={nextDate}
                   onChange={(e) => setNextDate(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setSubscribing(null)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="btn-secondary-glass px-4 py-2 text-sm font-medium"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleSubscribe}
                   disabled={saving}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {saving ? "등록 중..." : "구독 등록"}
                 </button>
@@ -154,7 +154,7 @@ export default function ServicesPage() {
   // Service list view
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-gray-900">서비스 탐색</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-900">서비스 탐색</h2>
 
       {/* Search & Filter */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row">
@@ -166,7 +166,7 @@ export default function ServicesPage() {
             setSelectedCategory(undefined);
           }}
           placeholder="서비스 검색 (예: Netflix, Spotify...)"
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="glass-input flex-1 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
 
@@ -179,8 +179,8 @@ export default function ServicesPage() {
           }}
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
             !selectedCategory && !search
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+              : "glass text-slate-500 hover:bg-white/40"
           }`}
         >
           전체
@@ -194,8 +194,8 @@ export default function ServicesPage() {
             }}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               selectedCategory === cat.id
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                : "glass text-slate-500 hover:bg-white/40"
             }`}
           >
             {cat.icon} {cat.name}
@@ -209,8 +209,8 @@ export default function ServicesPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
         </div>
       ) : services.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-300 py-12 text-center">
-          <p className="text-gray-500">검색 결과가 없습니다.</p>
+        <div className="glass py-12 text-center">
+          <p className="text-slate-400">검색 결과가 없습니다.</p>
         </div>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">

@@ -34,20 +34,20 @@ export default function RenewalCalendar({ subscriptions }: Props) {
   });
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="glass p-6">
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
-          className="rounded-lg px-3 py-1 text-gray-600 hover:bg-gray-100"
+          className="rounded-lg px-3 py-1 text-slate-500 hover:bg-white/40"
         >
           &lt;
         </button>
-        <h3 className="font-semibold text-gray-900">
+        <h3 className="font-semibold text-slate-900">
           {format(currentMonth, "yyyy년 MM월")}
         </h3>
         <button
           onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-          className="rounded-lg px-3 py-1 text-gray-600 hover:bg-gray-100"
+          className="rounded-lg px-3 py-1 text-slate-500 hover:bg-white/40"
         >
           &gt;
         </button>
@@ -57,7 +57,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
         {DAY_LABELS.map((day) => (
           <div
             key={day}
-            className="py-2 text-center text-xs font-medium text-gray-500"
+            className="py-2 text-center text-xs font-medium text-slate-400"
           >
             {day}
           </div>
@@ -114,12 +114,12 @@ export default function RenewalCalendar({ subscriptions }: Props) {
           })
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([dateKey, subs]) => (
-            <div key={dateKey} className="rounded-lg bg-gray-50 px-3 py-2">
-              <p className="text-xs font-medium text-gray-500">
+            <div key={dateKey} className="rounded-lg bg-white/40 px-3 py-2">
+              <p className="text-xs font-medium text-slate-400">
                 {format(new Date(dateKey), "MM월 dd일")}
               </p>
               {subs.map((s) => (
-                <p key={s.id} className="text-sm text-gray-900">
+                <p key={s.id} className="text-sm text-slate-900">
                   {s.category?.icon ?? "💳"} {s.service_name} -{" "}
                   {new Intl.NumberFormat("ko-KR").format(s.cost)}원
                 </p>

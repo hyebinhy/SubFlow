@@ -8,10 +8,10 @@ interface Props {
 }
 
 const statusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  paused: "bg-yellow-100 text-yellow-700",
-  cancelled: "bg-red-100 text-red-700",
-  trial: "bg-blue-100 text-blue-700",
+  active: "bg-green-500/10 text-green-700",
+  paused: "bg-yellow-500/10 text-yellow-700",
+  cancelled: "bg-red-500/10 text-red-700",
+  trial: "bg-blue-500/10 text-blue-700",
 };
 
 const statusLabels: Record<string, string> = {
@@ -32,7 +32,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
   const costDisplay = new Intl.NumberFormat("ko-KR").format(subscription.cost);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="glass p-5 transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           {subscription.service?.logo_url || subscription.logo_url ? (
@@ -50,8 +50,8 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
             </div>
           )}
           <div>
-            <h3 className="font-semibold text-gray-900">{subscription.service_name}</h3>
-            <p className="text-xs text-gray-500">{subscription.category?.name ?? "미분류"}</p>
+            <h3 className="font-semibold text-slate-900">{subscription.service_name}</h3>
+            <p className="text-xs text-slate-400">{subscription.category?.name ?? "미분류"}</p>
           </div>
         </div>
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[subscription.status]}`}>
@@ -61,20 +61,20 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
 
       <div className="mt-4 flex items-end justify-between">
         <div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-slate-900">
             {costDisplay}
-            <span className="text-sm font-normal text-gray-500">
+            <span className="text-sm font-normal text-slate-400">
               {" "}{subscription.currency}/{cycleLabels[subscription.billing_cycle]}
             </span>
           </p>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-slate-400">
             다음 결제: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(subscription)}
-            className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+            className="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-white/40"
           >
             수정
           </button>

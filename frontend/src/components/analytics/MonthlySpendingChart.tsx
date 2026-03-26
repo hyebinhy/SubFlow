@@ -20,8 +20,8 @@ export default function MonthlySpendingChart({ trend }: Props) {
   }));
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <h3 className="mb-4 font-semibold text-gray-900">월별 지출 추이</h3>
+    <div className="glass p-6">
+      <h3 className="mb-4 font-semibold text-slate-900">월별 지출 추이</h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />

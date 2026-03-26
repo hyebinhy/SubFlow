@@ -49,7 +49,7 @@ export default function SubscriptionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-slate-500">
           서비스 이름 *
         </label>
         <input
@@ -57,14 +57,14 @@ export default function SubscriptionForm({
           value={form.service_name}
           onChange={(e) => setForm({ ...form, service_name: e.target.value })}
           required
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder="Netflix, YouTube Premium..."
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-500">
             비용 *
           </label>
           <input
@@ -74,12 +74,12 @@ export default function SubscriptionForm({
             required
             min="0"
             step="100"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="17000"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-500">
             결제 주기 *
           </label>
           <select
@@ -90,7 +90,7 @@ export default function SubscriptionForm({
                 billing_cycle: e.target.value as BillingCycle,
               })
             }
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="monthly">월간</option>
             <option value="yearly">연간</option>
@@ -102,18 +102,18 @@ export default function SubscriptionForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-500">
             시작일
           </label>
           <input
             type="date"
             value={form.start_date}
             onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-500">
             다음 결제일
           </label>
           <input
@@ -122,14 +122,14 @@ export default function SubscriptionForm({
             onChange={(e) =>
               setForm({ ...form, next_billing_date: e.target.value })
             }
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-500">
             카테고리
           </label>
           <select
@@ -140,7 +140,7 @@ export default function SubscriptionForm({
                 category_id: e.target.value ? Number(e.target.value) : undefined,
               })
             }
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="">선택 안함</option>
             {categories.map((c) => (
@@ -151,7 +151,7 @@ export default function SubscriptionForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-500">
             상태
           </label>
           <select
@@ -162,7 +162,7 @@ export default function SubscriptionForm({
                 status: e.target.value as SubscriptionStatus,
               })
             }
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="active">활성</option>
             <option value="trial">체험판</option>
@@ -173,12 +173,12 @@ export default function SubscriptionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">메모</label>
+        <label className="block text-sm font-medium text-slate-500">메모</label>
         <textarea
           value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
           rows={2}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder="프리미엄 플랜, 가족 공유 등..."
         />
       </div>
@@ -187,14 +187,14 @@ export default function SubscriptionForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="btn-secondary-glass px-4 py-2 text-sm font-medium"
         >
           취소
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {loading ? "저장 중..." : initial ? "수정" : "추가"}
         </button>

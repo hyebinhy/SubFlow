@@ -15,9 +15,9 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="bg-mesh flex h-screen">
       <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
         <Header onMenuToggle={handleMenuToggle} />
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />

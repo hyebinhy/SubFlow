@@ -19,16 +19,16 @@ export default function CategoryPieChart({ breakdown }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h3 className="mb-4 font-semibold text-gray-900">카테고리별 지출</h3>
-        <p className="py-12 text-center text-gray-500">데이터가 없습니다.</p>
+      <div className="glass p-6">
+        <h3 className="mb-4 font-semibold text-slate-900">카테고리별 지출</h3>
+        <p className="py-12 text-center text-slate-400">데이터가 없습니다.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <h3 className="mb-4 font-semibold text-gray-900">카테고리별 지출</h3>
+    <div className="glass p-6">
+      <h3 className="mb-4 font-semibold text-slate-900">카테고리별 지출</h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
