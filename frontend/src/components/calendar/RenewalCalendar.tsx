@@ -57,7 +57,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
   monthRenewals.forEach(([, subs]) => {
     subs.forEach((sub) => {
       const cur = sub.currency || "KRW";
-      monthTotals.set(cur, (monthTotals.get(cur) || 0) + sub.cost);
+      monthTotals.set(cur, (monthTotals.get(cur) || 0) + Number(sub.cost));
     });
   });
 
@@ -103,7 +103,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
         {/* Day grid */}
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: startDay }).map((_, i) => (
-            <div key={`empty-${i}`} className="aspect-square" />
+            <div key={`empty-${i}`} className="h-14" />
           ))}
 
           {days.map((day) => {
@@ -117,7 +117,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               <button
                 key={dateKey}
                 onClick={() => setSelectedDate(hasRenewal ? day : null)}
-                className={`relative flex aspect-square flex-col items-start justify-start rounded-xl p-1.5 text-sm transition-all duration-150 ${
+                className={`relative flex h-14 flex-col rounded-lg p-1 transition-all duration-150 ${
                   isSelected
                     ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
                     : today
@@ -129,31 +129,29 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               >
                 <span className="text-[11px] leading-none">{format(day, "d")}</span>
                 {hasRenewal && (
-                  <div className="mt-auto flex w-full flex-wrap items-end justify-center gap-0.5 pb-0.5">
-                    {renewals.slice(0, 3).map((s) =>
+                  <div className="mt-auto flex items-center gap-px">
+                    {renewals.slice(0, 2).map((s) =>
                       s.logo_url ? (
                         <img
                           key={s.id}
                           src={s.logo_url}
                           alt={s.service_name}
-                          className={`h-5 w-5 rounded-md object-cover ${isSelected ? "ring-1 ring-white/50" : "shadow-sm"}`}
+                          className={`h-4 w-4 rounded object-cover ${isSelected ? "ring-1 ring-white/50" : ""}`}
                         />
                       ) : (
                         <div
                           key={s.id}
-                          className={`flex h-5 w-5 items-center justify-center rounded-md text-[8px] font-bold text-white ${isSelected ? "ring-1 ring-white/50" : "shadow-sm"}`}
+                          className={`flex h-4 w-4 items-center justify-center rounded text-[7px] font-bold text-white ${isSelected ? "ring-1 ring-white/50" : ""}`}
                           style={{ background: s.category?.color ?? "#6366F1" }}
                         >
                           {s.service_name[0]}
                         </div>
                       )
                     )}
-                    {renewals.length > 3 && (
-                      <div className={`flex h-5 w-5 items-center justify-center rounded-md text-[8px] font-semibold ${
-                        isSelected ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"
-                      }`}>
-                        +{renewals.length - 3}
-                      </div>
+                    {renewals.length > 2 && (
+                      <span className={`text-[8px] font-semibold ${isSelected ? "text-white/70" : "text-slate-400"}`}>
+                        +{renewals.length - 2}
+                      </span>
                     )}
                   </div>
                 )}
