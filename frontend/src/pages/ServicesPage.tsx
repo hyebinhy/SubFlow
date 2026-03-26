@@ -41,6 +41,8 @@ export default function ServicesPage() {
       ]);
       setServices(svcs);
       setCategories(cats);
+    } catch {
+      toast.error("서비스 목록을 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }

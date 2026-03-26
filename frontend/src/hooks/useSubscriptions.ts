@@ -8,6 +8,7 @@ export function useSubscriptions() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -18,6 +19,9 @@ export function useSubscriptions() {
       ]);
       setSubscriptions(subs);
       setCategories(cats);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch subscriptions");
     } finally {
       setLoading(false);
     }
@@ -27,5 +31,5 @@ export function useSubscriptions() {
     fetchAll();
   }, [fetchAll]);
 
-  return { subscriptions, categories, loading, refetch: fetchAll };
+  return { subscriptions, categories, loading, error, refetch: fetchAll };
 }

@@ -6,13 +6,21 @@ import CategoryPieChart from "../components/analytics/CategoryPieChart";
 import { format } from "date-fns";
 
 export default function DashboardPage() {
-  const { overview, categoryBreakdown, spendingTrend, loading } = useAnalytics();
-  const { subscriptions } = useSubscriptions();
+  const { overview, categoryBreakdown, spendingTrend, loading, error: analyticsError } = useAnalytics();
+  const { subscriptions, error: subscriptionsError } = useSubscriptions();
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (analyticsError || subscriptionsError) {
+    return (
+      <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
+        {analyticsError || subscriptionsError}
       </div>
     );
   }

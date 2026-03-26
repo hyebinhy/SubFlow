@@ -12,11 +12,17 @@ interface Props {
 export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props) {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     serviceApi
       .getById(serviceId)
       .then(setService)
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "서비스 정보를 불러오는데 실패했습니다.");
+      })
       .finally(() => setLoading(false));
   }, [serviceId]);
 
@@ -24,6 +30,22 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
     return (
       <div className="flex justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <button
+          onClick={onBack}
+          className="mb-4 text-sm text-gray-500 hover:text-gray-700"
+        >
+          &larr; 서비스 목록으로
+        </button>
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
+          {error}
+        </div>
       </div>
     );
   }

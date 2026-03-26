@@ -14,6 +14,7 @@ export function useAnalytics() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -26,6 +27,9 @@ export function useAnalytics() {
       setOverview(ov);
       setCategoryBreakdown(cb);
       setSpendingTrend(st);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch analytics");
     } finally {
       setLoading(false);
     }
@@ -35,5 +39,5 @@ export function useAnalytics() {
     fetchAll();
   }, [fetchAll]);
 
-  return { overview, categoryBreakdown, spendingTrend, loading, refetch: fetchAll };
+  return { overview, categoryBreakdown, spendingTrend, loading, error, refetch: fetchAll };
 }

@@ -18,6 +18,8 @@ export default function SettingsPage() {
       setNotifSettings(s);
       setNotifyDays(s.notify_days_before);
       setEmailNotif(s.email_notifications);
+    }).catch(() => {
+      toast.error("알림 설정을 불러오는데 실패했습니다.");
     });
   }, []);
 

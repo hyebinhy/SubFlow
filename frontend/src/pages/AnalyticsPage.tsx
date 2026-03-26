@@ -4,7 +4,7 @@ import MonthlySpendingChart from "../components/analytics/MonthlySpendingChart";
 import SpendingTrendChart from "../components/analytics/SpendingTrendChart";
 
 export default function AnalyticsPage() {
-  const { overview, categoryBreakdown, spendingTrend, loading } = useAnalytics();
+  const { overview, categoryBreakdown, spendingTrend, loading, error } = useAnalytics();
 
   if (loading) {
     return (
@@ -14,11 +14,19 @@ export default function AnalyticsPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">지출 분석</h2>
 
-      {overview && (
+      {overview ? (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-gray-200 bg-white p-5">
             <p className="text-sm text-gray-500">월 평균 지출</p>
@@ -44,14 +52,20 @@ export default function AnalyticsPage() {
             )}
           </div>
         </div>
+      ) : (
+        <p className="text-center text-gray-500">분석 개요 데이터가 없습니다.</p>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {spendingTrend && <SpendingTrendChart trend={spendingTrend} />}
-        {categoryBreakdown && <CategoryPieChart breakdown={categoryBreakdown} />}
+        {spendingTrend ? <SpendingTrendChart trend={spendingTrend} /> : (
+          <p className="text-center text-gray-500">지출 추이 데이터가 없습니다.</p>
+        )}
+        {categoryBreakdown ? <CategoryPieChart breakdown={categoryBreakdown} /> : (
+          <p className="text-center text-gray-500">카테고리별 지출 데이터가 없습니다.</p>
+        )}
       </div>
 
-      {spendingTrend && <MonthlySpendingChart trend={spendingTrend} />}
+      {spendingTrend ? <MonthlySpendingChart trend={spendingTrend} /> : null}
     </div>
   );
 }
