@@ -27,9 +27,7 @@ export default function CalendarPage() {
       {active.length === 0 ? (
         <p className="text-center text-slate-400">활성화된 구독이 없습니다.</p>
       ) : (
-        <div className="max-w-2xl">
-          <RenewalCalendar subscriptions={active} />
-        </div>
+        <RenewalCalendar subscriptions={active} />
       )}
     </div>
   );
