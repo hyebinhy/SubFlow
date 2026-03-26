@@ -23,7 +23,7 @@ const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const fmtCost = (sub: Subscription) =>
   sub.currency === "KRW"
     ? `${new Intl.NumberFormat("ko-KR").format(sub.cost)}원`
-    : `$${sub.cost.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+    : new Intl.NumberFormat("en-US", { style: "currency", currency: sub.currency }).format(sub.cost);
 
 export default function RenewalCalendar({ subscriptions }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -169,7 +169,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               <p key={currency} className="text-xl font-bold gradient-text">
                 {currency === "KRW"
                   ? `${new Intl.NumberFormat("ko-KR").format(Math.round(total))}원`
-                  : `$${total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                  : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(total)}
               </p>
             ))}
             {monthTotals.size === 0 && (

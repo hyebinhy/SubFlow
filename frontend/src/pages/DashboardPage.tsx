@@ -231,7 +231,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-semibold text-slate-900">
                       {sub.currency === "KRW"
                         ? `${fmt(sub.cost)}원`
-                        : `$${sub.cost.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                        : new Intl.NumberFormat("en-US", { style: "currency", currency: sub.currency }).format(sub.cost)}
                     </p>
                   </div>
                 </div>
