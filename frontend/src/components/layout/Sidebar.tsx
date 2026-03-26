@@ -6,12 +6,12 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { to: "/", label: "대시보드", icon: "📊" },
-  { to: "/services", label: "서비스 탐색", icon: "🔍" },
-  { to: "/subscriptions", label: "내 구독", icon: "💳" },
-  { to: "/analytics", label: "지출 분석", icon: "📈" },
-  { to: "/calendar", label: "캘린더", icon: "📅" },
-  { to: "/settings", label: "설정", icon: "⚙️" },
+  { to: "/", label: "대시보드" },
+  { to: "/services", label: "서비스 탐색" },
+  { to: "/subscriptions", label: "내 구독" },
+  { to: "/analytics", label: "지출 분석" },
+  { to: "/calendar", label: "캘린더" },
+  { to: "/settings", label: "설정" },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -59,7 +59,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }`
               }
             >
-              <span>{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
