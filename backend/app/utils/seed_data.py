@@ -1,0 +1,1012 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.category import Category
+from app.models.service import Service
+from app.models.service_plan import ServicePlan
+from app.models.subscription import Subscription
+
+DEFAULT_CATEGORIES = [
+    {"name": "Entertainment", "icon": "🎬", "color": "#E50914", "is_default": True},
+    {"name": "Music", "icon": "🎵", "color": "#1DB954", "is_default": True},
+    {"name": "Developer Tools", "icon": "💻", "color": "#6E40C9", "is_default": True},
+    {"name": "Cloud/Infrastructure", "icon": "☁️", "color": "#FF9900", "is_default": True},
+    {"name": "Productivity", "icon": "📋", "color": "#4285F4", "is_default": True},
+    {"name": "Education", "icon": "📚", "color": "#00BFA5", "is_default": True},
+    {"name": "Health & Fitness", "icon": "💪", "color": "#FF6B6B", "is_default": True},
+    {"name": "News & Media", "icon": "📰", "color": "#1A1A2E", "is_default": True},
+    {"name": "Gaming", "icon": "🎮", "color": "#107C10", "is_default": True},
+    {"name": "Storage", "icon": "💾", "color": "#0078D4", "is_default": True},
+    {"name": "Security & VPN", "icon": "🔒", "color": "#4A90D9", "is_default": True},
+    {"name": "Lifestyle", "icon": "🛍️", "color": "#FF6F61", "is_default": True},
+]
+
+# category_name -> list of services
+DEFAULT_SERVICES = {
+    "Entertainment": [
+        {
+            "name": "Netflix",
+            "description": "영화, 드라마, 다큐멘터리 등 다양한 콘텐츠를 제공하는 글로벌 OTT 서비스",
+            "website_url": "https://www.netflix.com",
+            "logo_url": "/logos/netflix.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "광고형 스탠다드", "price": 5500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "스탠다드", "price": 13500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄", "price": 17000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "YouTube Premium",
+            "description": "광고 없는 유튜브, YouTube Music, 오프라인 저장 등",
+            "website_url": "https://www.youtube.com/premium",
+            "logo_url": "/logos/youtube.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 14900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "가족", "price": 23900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Disney+",
+            "description": "디즈니, 마블, 스타워즈, 픽사 등 콘텐츠 스트리밍 서비스",
+            "website_url": "https://www.disneyplus.com",
+            "logo_url": "/logos/disneyplus.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "스탠다드", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄", "price": 13900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Wavve",
+            "description": "KBS, MBC, SBS 콘텐츠를 제공하는 국내 OTT 서비스",
+            "website_url": "https://www.wavve.com",
+            "logo_url": "/logos/wavve.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "베이직", "price": 7900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "스탠다드", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄", "price": 13900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Tving",
+            "description": "CJ ENM 콘텐츠를 중심으로 한 국내 OTT 서비스",
+            "website_url": "https://www.tving.com",
+            "logo_url": "/logos/tving.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "베이직", "price": 5500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "스탠다드", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄", "price": 13900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Watcha",
+            "description": "영화, 드라마, 애니메이션 등을 제공하는 국내 OTT 서비스",
+            "website_url": "https://www.watcha.com",
+            "logo_url": "/logos/watcha.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "베이직", "price": 7900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄", "price": 12900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Apple TV+",
+            "description": "Apple 오리지널 콘텐츠를 제공하는 스트리밍 서비스",
+            "website_url": "https://tv.apple.com",
+            "logo_url": "/logos/appletv.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "개인", "price": 6500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Coupang Play",
+            "description": "쿠팡 로켓와우 회원을 위한 OTT 서비스",
+            "website_url": "https://www.coupangplay.com",
+            "logo_url": "/logos/coupangplay.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 7890, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Amazon Prime Video",
+            "description": "아마존 오리지널 및 다양한 영화, 드라마를 제공하는 글로벌 OTT",
+            "website_url": "https://www.primevideo.com",
+            "logo_url": "/logos/primevideo.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 5900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Laftel",
+            "description": "일본 애니메이션 전문 스트리밍 서비스",
+            "website_url": "https://laftel.net",
+            "logo_url": "/logos/laftel.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "프리미엄", "price": 8500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Paramount+",
+            "description": "파라마운트 영화, CBS 드라마 등 콘텐츠 스트리밍 서비스",
+            "website_url": "https://www.paramountplus.com",
+            "logo_url": "/logos/paramount.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Essential", "price": 7.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "With SHOWTIME", "price": 12.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Music": [
+        {
+            "name": "Spotify",
+            "description": "전 세계 최대 음악 스트리밍 서비스",
+            "website_url": "https://www.spotify.com",
+            "logo_url": "/logos/spotify.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "듀오", "price": 14900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "가족", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Apple Music",
+            "description": "Apple의 음악 스트리밍 서비스",
+            "website_url": "https://music.apple.com",
+            "logo_url": "/logos/applemusic.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 11000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "가족", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Melon",
+            "description": "국내 최대 음악 스트리밍 서비스",
+            "website_url": "https://www.melon.com",
+            "logo_url": "/logos/melon.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Genie Music",
+            "description": "KT에서 운영하는 음악 스트리밍 서비스",
+            "website_url": "https://www.genie.co.kr",
+            "logo_url": "/logos/genie.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "개인", "price": 8500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "FLO",
+            "description": "SKT에서 운영하는 음악 스트리밍 서비스",
+            "website_url": "https://www.music-flo.com",
+            "logo_url": "/logos/flo.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "YouTube Music",
+            "description": "YouTube 기반 음악 스트리밍 서비스",
+            "website_url": "https://music.youtube.com",
+            "logo_url": "/logos/youtubemusic.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "가족", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "VIBE",
+            "description": "네이버에서 운영하는 AI 추천 음악 스트리밍 서비스",
+            "website_url": "https://vibe.naver.com",
+            "logo_url": "/logos/vibe.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "개인", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Bugs",
+            "description": "NHN 벅스에서 운영하는 음악 스트리밍 서비스",
+            "website_url": "https://www.bugs.co.kr",
+            "logo_url": "/logos/bugs.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "무제한 듣기", "price": 8500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Tidal",
+            "description": "고음질(HiFi/MQA) 전문 음악 스트리밍 서비스",
+            "website_url": "https://tidal.com",
+            "logo_url": "/logos/tidal.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "HiFi", "price": 10.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "HiFi Plus", "price": 19.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Developer Tools": [
+        {
+            "name": "GitHub Copilot",
+            "description": "AI 기반 코드 자동완성 도구",
+            "website_url": "https://github.com/features/copilot",
+            "logo_url": "/logos/github.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Individual", "price": 10, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 19, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "JetBrains All Products",
+            "description": "IntelliJ, PyCharm, WebStorm 등 JetBrains IDE 전체 패키지",
+            "website_url": "https://www.jetbrains.com",
+            "logo_url": "/logos/jetbrains.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Individual", "price": 24.90, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "ChatGPT Plus",
+            "description": "OpenAI의 AI 챗봇 프리미엄 서비스",
+            "website_url": "https://chat.openai.com",
+            "logo_url": "/logos/chatgpt.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Plus", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro", "price": 200, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Claude Pro",
+            "description": "Anthropic의 AI 어시스턴트 프리미엄 서비스",
+            "website_url": "https://claude.ai",
+            "logo_url": "/logos/claude.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Max (5x)", "price": 100, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Max (20x)", "price": 200, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Notion",
+            "description": "올인원 워크스페이스 — 문서, 위키, 프로젝트 관리",
+            "website_url": "https://www.notion.so",
+            "logo_url": "/logos/notion.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Plus", "price": 10, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 18, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Figma",
+            "description": "협업 디자인 툴 — UI/UX 디자인, 프로토타이핑",
+            "website_url": "https://www.figma.com",
+            "logo_url": "/logos/figma.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Professional", "price": 15, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Organization", "price": 45, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Cursor",
+            "description": "AI 기반 코드 에디터",
+            "website_url": "https://cursor.sh",
+            "logo_url": "/logos/cursor.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 40, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Midjourney",
+            "description": "AI 이미지 생성 서비스 — 텍스트로 고품질 이미지 생성",
+            "website_url": "https://www.midjourney.com",
+            "logo_url": "/logos/midjourney.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Basic", "price": 10, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Standard", "price": 30, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro", "price": 60, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Perplexity Pro",
+            "description": "AI 기반 검색 엔진 프리미엄 서비스",
+            "website_url": "https://www.perplexity.ai",
+            "logo_url": "/logos/perplexity.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "GitLab",
+            "description": "DevOps 플랫폼 — 소스 코드 관리, CI/CD, 프로젝트 관리",
+            "website_url": "https://gitlab.com",
+            "logo_url": "/logos/gitlab.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Premium", "price": 29, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Ultimate", "price": 99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Replit",
+            "description": "브라우저 기반 클라우드 IDE 및 AI 코딩 플랫폼",
+            "website_url": "https://replit.com",
+            "logo_url": "/logos/replit.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Replit Core", "price": 25, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Cloud/Infrastructure": [
+        {
+            "name": "Vercel",
+            "description": "프론트엔드 배포 및 서버리스 플랫폼",
+            "website_url": "https://vercel.com",
+            "logo_url": "/logos/vercel.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Netlify",
+            "description": "정적 사이트 호스팅 및 서버리스 함수 플랫폼",
+            "website_url": "https://www.netlify.com",
+            "logo_url": "/logos/netlify.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Pro", "price": 19, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "AWS",
+            "description": "Amazon Web Services — 글로벌 최대 클라우드 인프라 서비스",
+            "website_url": "https://aws.amazon.com",
+            "logo_url": "/logos/aws.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "사용량 기반", "price": 50, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "DigitalOcean",
+            "description": "개발자 친화적 클라우드 호스팅 플랫폼",
+            "website_url": "https://www.digitalocean.com",
+            "logo_url": "/logos/digitalocean.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Basic Droplet", "price": 6, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro Droplet", "price": 12, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Cloudflare",
+            "description": "CDN, DNS, 보안, 서버리스 등 웹 인프라 서비스",
+            "website_url": "https://www.cloudflare.com",
+            "logo_url": "/logos/cloudflare.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 20, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 200, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Productivity": [
+        {
+            "name": "Microsoft 365",
+            "description": "Word, Excel, PowerPoint, OneDrive 등 오피스 생산성 도구",
+            "website_url": "https://www.microsoft.com/microsoft-365",
+            "logo_url": "/logos/microsoft365.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Personal", "price": 8900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Family", "price": 12900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Google One",
+            "description": "Google 드라이브 추가 저장 공간 및 부가 혜택",
+            "website_url": "https://one.google.com",
+            "logo_url": "/logos/googleone.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "100GB", "price": 2400, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "200GB", "price": 3700, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "2TB", "price": 11900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Dropbox",
+            "description": "클라우드 파일 저장 및 공유 서비스",
+            "website_url": "https://www.dropbox.com",
+            "logo_url": "/logos/dropbox.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Plus", "price": 11.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Adobe Creative Cloud",
+            "description": "Photoshop, Illustrator, Premiere Pro 등 크리에이티브 도구 전체",
+            "website_url": "https://www.adobe.com",
+            "logo_url": "/logos/adobe.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "전체 앱", "price": 62000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "단일 앱", "price": 24000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Slack",
+            "description": "팀 커뮤니케이션 및 협업 메신저 플랫폼",
+            "website_url": "https://slack.com",
+            "logo_url": "/logos/slack.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 8.75, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business+", "price": 12.50, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Zoom",
+            "description": "화상회의 및 온라인 미팅 플랫폼",
+            "website_url": "https://zoom.us",
+            "logo_url": "/logos/zoom.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 13.33, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 21.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Canva Pro",
+            "description": "온라인 그래픽 디자인 툴 — 소셜미디어, 프레젠테이션, 포스터 등",
+            "website_url": "https://www.canva.com",
+            "logo_url": "/logos/canva.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Pro", "price": 15000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Teams", "price": 12500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Todoist",
+            "description": "할 일 관리 및 프로젝트 관리 앱",
+            "website_url": "https://todoist.com",
+            "logo_url": "/logos/todoist.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Pro", "price": 5, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 8, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Grammarly",
+            "description": "AI 기반 영어 문법 교정 및 작문 도우미",
+            "website_url": "https://www.grammarly.com",
+            "logo_url": "/logos/grammarly.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Premium", "price": 12, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 15, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Miro",
+            "description": "온라인 협업 화이트보드 플랫폼",
+            "website_url": "https://miro.com",
+            "logo_url": "/logos/miro.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Starter", "price": 8, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 16, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Linear",
+            "description": "소프트웨어 팀을 위한 이슈 트래커 및 프로젝트 관리 도구",
+            "website_url": "https://linear.app",
+            "logo_url": "/logos/linear.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Standard", "price": 8, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Plus", "price": 14, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Education": [
+        {
+            "name": "Duolingo Plus",
+            "description": "AI 기반 외국어 학습 서비스",
+            "website_url": "https://www.duolingo.com",
+            "logo_url": "/logos/duolingo.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Super", "price": 7900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "LinkedIn Premium",
+            "description": "비즈니스 네트워킹 및 구직 프리미엄 서비스",
+            "website_url": "https://www.linkedin.com/premium",
+            "logo_url": "/logos/linkedin.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Career", "price": 29.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Business", "price": 59.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Coursera Plus",
+            "description": "스탠포드, 구글 등 7000+ 강좌 무제한 수강 플랫폼",
+            "website_url": "https://www.coursera.org",
+            "logo_url": "/logos/coursera.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Plus (월)", "price": 59, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Plus (연)", "price": 399, "currency": "USD", "billing_cycle": "YEARLY"},
+            ],
+        },
+        {
+            "name": "Class101",
+            "description": "취미, 부업, 자기개발 분야 온라인 클래스 플랫폼",
+            "website_url": "https://class101.net",
+            "logo_url": "/logos/class101.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "올패스", "price": 19900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "인프런",
+            "description": "개발, 데이터, 디자인 등 IT 전문 온라인 강의 플랫폼",
+            "website_url": "https://www.inflearn.com",
+            "logo_url": "/logos/inflearn.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "플러스", "price": 26400, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "밀리의 서재",
+            "description": "전자책, 오디오북 무제한 구독 서비스",
+            "website_url": "https://www.millie.co.kr",
+            "logo_url": "/logos/millie.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "베이직", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "리디 셀렉트",
+            "description": "전자책, 웹소설, 웹툰 구독 서비스",
+            "website_url": "https://ridibooks.com",
+            "logo_url": "/logos/ridibooks.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "셀렉트", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Gaming": [
+        {
+            "name": "Nintendo Switch Online",
+            "description": "닌텐도 스위치 온라인 멀티플레이 서비스",
+            "website_url": "https://www.nintendo.com",
+            "logo_url": "/logos/nintendo.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "개인", "price": 3900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "가족", "price": 7900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "PlayStation Plus",
+            "description": "PlayStation 온라인 멀티플레이 및 게임 구독 서비스",
+            "website_url": "https://www.playstation.com",
+            "logo_url": "/logos/playstation.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Essential (월)", "price": 8900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Extra (월)", "price": 13900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Premium (월)", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Xbox Game Pass",
+            "description": "수백 개의 PC/콘솔 게임을 무제한으로 즐길 수 있는 구독 서비스",
+            "website_url": "https://www.xbox.com/game-pass",
+            "logo_url": "/logos/xbox.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Core", "price": 6900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Standard", "price": 10900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "Ultimate", "price": 18900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Discord Nitro",
+            "description": "디스코드 프리미엄 — 이모지, 스티커, 프로필 커스텀, 고화질 스트리밍",
+            "website_url": "https://discord.com/nitro",
+            "logo_url": "/logos/discord.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Nitro Basic", "price": 2.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Nitro", "price": 9.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "EA Play",
+            "description": "EA 게임 구독 서비스 — FIFA, Battlefield, Sims 등",
+            "website_url": "https://www.ea.com/ea-play",
+            "logo_url": "/logos/ea.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "EA Play", "price": 4.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "EA Play Pro", "price": 14.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Steam",
+            "description": "세계 최대 PC 게임 디지털 플랫폼",
+            "website_url": "https://store.steampowered.com",
+            "logo_url": "/logos/steam.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "사용량 기반", "price": 0, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Health & Fitness": [
+        {
+            "name": "Calm",
+            "description": "명상, 수면, 릴렉스를 위한 마음 건강 앱",
+            "website_url": "https://www.calm.com",
+            "logo_url": "/logos/calm.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Premium", "price": 14.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "연간", "price": 69.99, "currency": "USD", "billing_cycle": "YEARLY"},
+            ],
+        },
+        {
+            "name": "Headspace",
+            "description": "명상, 마인드풀니스, 수면 가이드 앱",
+            "website_url": "https://www.headspace.com",
+            "logo_url": "/logos/headspace.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Premium", "price": 12.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "연간", "price": 69.99, "currency": "USD", "billing_cycle": "YEARLY"},
+            ],
+        },
+        {
+            "name": "Strava",
+            "description": "러닝, 사이클링 등 운동 기록 및 소셜 피트니스 앱",
+            "website_url": "https://www.strava.com",
+            "logo_url": "/logos/strava.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Subscriber", "price": 11.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Nike Run Club+",
+            "description": "Nike 러닝 코칭, 오디오 가이드 런, 트레이닝 플랜",
+            "website_url": "https://www.nike.com/nrc-app",
+            "logo_url": "/logos/nike.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Premium", "price": 7900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "FatSecret Premium",
+            "description": "칼로리 계산, 식단 관리, 영양 분석 앱",
+            "website_url": "https://www.fatsecret.com",
+            "logo_url": "/logos/fatsecret.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Premium", "price": 6.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "News & Media": [
+        {
+            "name": "The New York Times",
+            "description": "세계 최고 권위의 뉴스 매체 디지털 구독",
+            "website_url": "https://www.nytimes.com",
+            "logo_url": "/logos/nytimes.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Basic", "price": 4, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "All Access", "price": 25, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Medium",
+            "description": "작가, 전문가들의 블로그 및 매거진 플랫폼",
+            "website_url": "https://medium.com",
+            "logo_url": "/logos/medium.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Member", "price": 5, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "연간", "price": 50, "currency": "USD", "billing_cycle": "YEARLY"},
+            ],
+        },
+        {
+            "name": "The Economist",
+            "description": "세계 경제, 정치, 비즈니스 전문 주간지 디지털 구독",
+            "website_url": "https://www.economist.com",
+            "logo_url": "/logos/economist.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Digital", "price": 28900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "조선일보 디지털",
+            "description": "조선일보 프리미엄 디지털 뉴스 구독",
+            "website_url": "https://www.chosun.com",
+            "logo_url": "/logos/chosun.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "프리미엄", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "중앙일보 디지털",
+            "description": "중앙일보 프리미엄 디지털 뉴스 구독",
+            "website_url": "https://www.joongang.co.kr",
+            "logo_url": "/logos/joongang.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "프리미엄", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Storage": [
+        {
+            "name": "iCloud+",
+            "description": "Apple 클라우드 저장소 — 사진, 파일, 백업, Private Relay",
+            "website_url": "https://www.icloud.com",
+            "logo_url": "/logos/icloud.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "50GB", "price": 1100, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "200GB", "price": 3300, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "2TB", "price": 11000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "pCloud",
+            "description": "유럽 기반 클라우드 저장소 — 평생 요금제 지원",
+            "website_url": "https://www.pcloud.com",
+            "logo_url": "/logos/pcloud.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Premium 500GB", "price": 4.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Premium Plus 2TB", "price": 9.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "MEGA",
+            "description": "대용량 무료 저장 공간을 제공하는 클라우드 스토리지",
+            "website_url": "https://mega.io",
+            "logo_url": "/logos/mega.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Pro Lite (400GB)", "price": 4.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro I (2TB)", "price": 9.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Pro II (8TB)", "price": 19.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Security & VPN": [
+        {
+            "name": "NordVPN",
+            "description": "전 세계 60개국 VPN 서버를 제공하는 보안 서비스",
+            "website_url": "https://nordvpn.com",
+            "logo_url": "/logos/nordvpn.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Basic", "price": 12.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Plus", "price": 13.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Complete", "price": 14.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "ExpressVPN",
+            "description": "초고속 VPN 서비스 — 94개국 서버 제공",
+            "website_url": "https://www.expressvpn.com",
+            "logo_url": "/logos/expressvpn.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "월간", "price": 12.95, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Surfshark",
+            "description": "무제한 기기 연결을 지원하는 VPN 서비스",
+            "website_url": "https://surfshark.com",
+            "logo_url": "/logos/surfshark.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Starter", "price": 15.45, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "One", "price": 16.95, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "1Password",
+            "description": "비밀번호 관리 및 보안 인증 매니저",
+            "website_url": "https://1password.com",
+            "logo_url": "/logos/1password.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "Individual", "price": 2.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Families", "price": 4.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Bitwarden",
+            "description": "오픈소스 비밀번호 관리 매니저",
+            "website_url": "https://bitwarden.com",
+            "logo_url": "/logos/bitwarden.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Premium", "price": 0.83, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Families", "price": 3.33, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+    ],
+    "Lifestyle": [
+        {
+            "name": "쿠팡 로켓와우",
+            "description": "로켓배송 무료, 쿠팡이츠 할인, 쿠팡플레이 등 통합 멤버십",
+            "website_url": "https://www.coupang.com",
+            "logo_url": "/logos/coupang.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "와우 회원", "price": 7890, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "네이버 플러스 멤버십",
+            "description": "네이버 쇼핑 적립, 네이버 시리즈, 네이버 VIBE 등 통합 혜택",
+            "website_url": "https://naver.com",
+            "logo_url": "/logos/naver.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "월간", "price": 4900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "배민클럽",
+            "description": "배달의민족 무료배달, 할인 쿠폰 등 프리미엄 멤버십",
+            "website_url": "https://www.baemin.com",
+            "logo_url": "/logos/baemin.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "월간", "price": 4990, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "카카오톡 이모티콘 플러스",
+            "description": "카카오톡 이모티콘 무제한 사용 구독 서비스",
+            "website_url": "https://www.kakaocorp.com",
+            "logo_url": "/logos/kakaotalk.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "월간", "price": 4900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Amazon Prime",
+            "description": "아마존 무료배송, Prime Video, Prime Music 등 통합 멤버십",
+            "website_url": "https://www.amazon.com/prime",
+            "logo_url": "/logos/amazonprime.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "월간", "price": 14.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "연간", "price": 139, "currency": "USD", "billing_cycle": "YEARLY"},
+            ],
+        },
+    ],
+}
+
+
+async def seed_categories(db: AsyncSession) -> None:
+    result = await db.execute(select(Category))
+    existing = {c.name for c in result.scalars().all()}
+
+    added = False
+    for cat_data in DEFAULT_CATEGORIES:
+        if cat_data["name"] not in existing:
+            db.add(Category(**cat_data))
+            added = True
+    if added:
+        await db.commit()
+
+
+async def _update_logo_urls(db: AsyncSession) -> None:
+    """Update existing services' and subscriptions' logo_url to use local SVG files."""
+    logo_map: dict[str, str] = {}
+    for services in DEFAULT_SERVICES.values():
+        for svc in services:
+            logo_map[svc["name"]] = svc["logo_url"]
+
+    # Update services table
+    result = await db.execute(select(Service))
+    for service in result.scalars().all():
+        new_url = logo_map.get(service.name)
+        if new_url and service.logo_url != new_url:
+            service.logo_url = new_url
+
+    # Update cached logo_url in subscriptions table
+    sub_result = await db.execute(select(Subscription))
+    for sub in sub_result.scalars().all():
+        new_url = logo_map.get(sub.service_name)
+        if new_url and sub.logo_url != new_url:
+            sub.logo_url = new_url
+
+    await db.commit()
+
+
+async def seed_services(db: AsyncSession) -> None:
+    # Build category name -> id map
+    cat_result = await db.execute(select(Category))
+    cat_map = {c.name: c.id for c in cat_result.scalars().all()}
+
+    # Get existing service names
+    svc_result = await db.execute(select(Service))
+    existing_services = {s.name for s in svc_result.scalars().all()}
+
+    added = False
+    for category_name, services in DEFAULT_SERVICES.items():
+        category_id = cat_map.get(category_name)
+        for svc_data in services:
+            plans_data = svc_data.get("plans", [])
+            if svc_data["name"] in existing_services:
+                continue
+            svc_copy = {k: v for k, v in svc_data.items() if k != "plans"}
+            service = Service(**svc_copy, category_id=category_id)
+            db.add(service)
+            await db.flush()
+
+            for plan_data in plans_data:
+                plan = ServicePlan(service_id=service.id, **plan_data)
+                db.add(plan)
+            added = True
+
+    if added:
+        await db.commit()
+
+    # Always update logo URLs for existing services
+    await _update_logo_urls(db)
