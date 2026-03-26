@@ -452,6 +452,7 @@ DEFAULT_SERVICES = {
                 {"name": "100GB", "price": 2400, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "200GB", "price": 3700, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "2TB", "price": 11900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "AI Premium", "price": 29000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -473,6 +474,7 @@ DEFAULT_SERVICES = {
             "plans": [
                 {"name": "전체 앱", "price": 62000, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "단일 앱", "price": 24000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "포토그래피", "price": 26400, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
@@ -818,6 +820,8 @@ DEFAULT_SERVICES = {
                 {"name": "50GB", "price": 1100, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "200GB", "price": 4400, "currency": "KRW", "billing_cycle": "MONTHLY"},
                 {"name": "2TB", "price": 14000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "6TB", "price": 44000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "12TB", "price": 88000, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
         {
