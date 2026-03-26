@@ -17,6 +17,7 @@ from app.schemas.analytics import (
     NextRenewalInfo,
     SpendingTrend,
 )
+from app.utils.exchange_rate import to_krw
 
 
 def to_monthly_cost(cost: Decimal, cycle: BillingCycle) -> Decimal:
@@ -29,6 +30,12 @@ def to_monthly_cost(cost: Decimal, cycle: BillingCycle) -> Decimal:
             return cost / 3
         case BillingCycle.YEARLY:
             return cost / 12
+
+
+async def to_monthly_cost_krw(cost: Decimal, cycle: BillingCycle, currency: str) -> Decimal:
+    """Convert cost to monthly KRW amount."""
+    monthly = to_monthly_cost(cost, cycle)
+    return await to_krw(monthly, currency)
 
 
 class AnalyticsService:
@@ -56,7 +63,8 @@ class AnalyticsService:
                 total_yearly_cost=Decimal("0"),
             )
 
-        total_monthly = sum((to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle) for s in subs), Decimal("0"))
+        monthly_krw_list = [await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency) for s in subs]
+        total_monthly = sum(monthly_krw_list, Decimal("0"))
         total_yearly = total_monthly * 12
 
         today = date.today()
@@ -66,13 +74,14 @@ class AnalyticsService:
         next_renewal = None
         if upcoming:
             s = upcoming[0]
+            cost_krw = await to_krw(Decimal(str(s.cost)), s.currency)
             next_renewal = NextRenewalInfo(
                 service_name=s.service_name,
                 next_billing_date=s.next_billing_date.isoformat(),
-                cost=Decimal(str(s.cost)),
+                cost=cost_krw,
             )
 
-        monthly_costs = [(s, to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle)) for s in subs]
+        monthly_costs = list(zip(subs, monthly_krw_list))
         monthly_costs.sort(key=lambda x: x[1], reverse=True)
         most_expensive = MostExpensiveInfo(
             service_name=monthly_costs[0][0].service_name,
@@ -93,7 +102,7 @@ class AnalyticsService:
         by_category: dict[str, dict] = defaultdict(lambda: {"total": Decimal("0"), "count": 0})
         for s in subs:
             cat_name = s.category.name if s.category else "미분류"
-            monthly = to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle)
+            monthly = await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency)
             by_category[cat_name]["total"] += monthly
             by_category[cat_name]["count"] += 1
 
@@ -114,7 +123,8 @@ class AnalyticsService:
 
     async def get_spending_trend(self, user_id: UUID, months: int = 6) -> SpendingTrend:
         subs = await self._get_active_subscriptions(user_id)
-        total_monthly = sum((to_monthly_cost(Decimal(str(s.cost)), s.billing_cycle) for s in subs), Decimal("0"))
+        monthly_krw = [await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency) for s in subs]
+        total_monthly = sum(monthly_krw, Decimal("0"))
 
         today = date.today()
         data = []

@@ -199,7 +199,9 @@ export default function DashboardPage() {
                       </span>
                     )}
                     <p className="text-sm font-semibold text-slate-900">
-                      {fmt(sub.cost)}원
+                      {sub.currency === "KRW"
+                        ? `${fmt(sub.cost)}원`
+                        : `$${sub.cost.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                     </p>
                   </div>
                 </div>
