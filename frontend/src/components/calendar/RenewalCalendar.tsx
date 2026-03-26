@@ -103,7 +103,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
         {/* Day grid */}
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: startDay }).map((_, i) => (
-            <div key={`empty-${i}`} className="h-14" />
+            <div key={`empty-${i}`} className="h-18" />
           ))}
 
           {days.map((day) => {
@@ -117,7 +117,7 @@ export default function RenewalCalendar({ subscriptions }: Props) {
               <button
                 key={dateKey}
                 onClick={() => setSelectedDate(hasRenewal ? day : null)}
-                className={`relative flex h-14 flex-col rounded-lg p-1 transition-all duration-150 ${
+                className={`relative flex h-18 flex-col rounded-lg p-1 transition-all duration-150 ${
                   isSelected
                     ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
                     : today
