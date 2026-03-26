@@ -1,69 +1,62 @@
 import { NavLink } from "react-router-dom";
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 const navItems = [
-  { to: "/", label: "대시보드" },
-  { to: "/services", label: "서비스 탐색" },
-  { to: "/subscriptions", label: "내 구독" },
-  { to: "/analytics", label: "지출 분석" },
-  { to: "/calendar", label: "캘린더" },
-  { to: "/settings", label: "설정" },
+  { to: "/", label: "대시보드", icon: "📊" },
+  { to: "/services", label: "서비스 탐색", icon: "🔍" },
+  { to: "/subscriptions", label: "내 구독", icon: "💳" },
+  { to: "/analytics", label: "지출 분석", icon: "📈" },
+  { to: "/calendar", label: "캘린더", icon: "📅" },
+  { to: "/settings", label: "설정", icon: "⚙️" },
 ];
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  return (
-    <>
-      {/* Mobile overlay backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={onClose}
-        />
-      )}
+const groups: number[][] = [[0, 1, 2], [3, 4], [5]];
 
-      <aside
-        className={`glass-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-white/30 px-6">
-          <h1 className="text-lg font-bold">
-            <span className="text-gray-900">Sub</span>
-            <span className="text-indigo-500">Flow</span>
-          </h1>
-          {/* Mobile close button */}
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-gray-500 hover:bg-white/50 md:hidden"
-            aria-label="Close sidebar"
-          >
-            ✕
-          </button>
+export default function FloatingDock() {
+  return (
+    <nav className="floating-dock">
+      {groups.map((group, gi) => (
+        <div key={gi} className="flex items-center gap-1.5">
+          {gi > 0 && (
+            <div className="mx-1 h-6 w-px bg-gray-300/50" />
+          )}
+          {group.map((idx) => {
+            const item = navItems[idx];
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) =>
+                  `group relative flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-gradient-to-br from-indigo-500 to-indigo-400 shadow-lg shadow-indigo-500/25 text-white"
+                      : "text-gray-600 hover:bg-white/60"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {/* Tooltip */}
+                    <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-800 px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:-top-10 group-hover:opacity-100">
+                      {item.label}
+                    </span>
+
+                    {/* Icon with hover animation */}
+                    <span className="transition-transform duration-200 group-hover:-translate-y-2 group-hover:scale-115">
+                      {item.icon}
+                    </span>
+
+                    {/* Active dot indicator */}
+                    {isActive && (
+                      <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-indigo-500" />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-[12px] px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-indigo-500/10 border border-indigo-500/15 text-indigo-500 font-semibold"
-                    : "text-gray-600 font-medium hover:bg-white/50"
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-    </>
+      ))}
+    </nav>
   );
 }

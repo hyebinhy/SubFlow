@@ -1,28 +1,15 @@
-import { useState, useCallback } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
+import FloatingDock from "./Sidebar";
 import Header from "./Header";
 
 export default function Layout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const handleMenuToggle = useCallback(() => {
-    setIsSidebarOpen((prev) => !prev);
-  }, []);
-
-  const handleSidebarClose = useCallback(() => {
-    setIsSidebarOpen(false);
-  }, []);
-
   return (
-    <div className="bg-mesh flex h-screen">
-      <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
-      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-        <Header onMenuToggle={handleMenuToggle} />
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
-        </main>
-      </div>
+    <div className="bg-mesh min-h-screen">
+      <Header />
+      <main className="relative z-10 p-6 pb-28">
+        <Outlet />
+      </main>
+      <FloatingDock />
     </div>
   );
 }

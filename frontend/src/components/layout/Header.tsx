@@ -1,11 +1,7 @@
 import { useAuthStore } from "../../store/authStore";
 import { useNavigate } from "react-router-dom";
 
-interface HeaderProps {
-  onMenuToggle: () => void;
-}
-
-export default function Header({ onMenuToggle }: HeaderProps) {
+export default function Header() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -15,16 +11,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-white/30 bg-white/40 backdrop-blur-xl px-6">
-      {/* Hamburger menu button - visible only on mobile */}
-      <button
-        onClick={onMenuToggle}
-        className="rounded-[12px] p-2 text-gray-600 hover:bg-white/50 md:hidden"
-        aria-label="Open menu"
-      >
-        <span className="text-xl">☰</span>
-      </button>
-      <div className="hidden md:block" />
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-white/30 bg-white/40 backdrop-blur-xl px-6">
+      <h1 className="text-lg font-bold">
+        <span className="text-gray-900">Sub</span>
+        <span className="text-indigo-500">Flow</span>
+      </h1>
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-600">
           {user?.username ?? "사용자"}
