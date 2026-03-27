@@ -154,7 +154,7 @@ async def get_subscription_timeline(
         SubscriptionHistoryItem(
             id=str(h.id),
             subscription_id=str(h.subscription_id),
-            event_type=h.event_type.value,
+            event_type=h.event_type,
             description=h.description,
             old_value=h.old_value,
             new_value=h.new_value,
@@ -185,7 +185,7 @@ async def get_subscription_history(
         SubscriptionHistoryItem(
             id=str(h.id),
             subscription_id=str(h.subscription_id),
-            event_type=h.event_type.value,
+            event_type=h.event_type,
             description=h.description,
             old_value=h.old_value,
             new_value=h.new_value,
