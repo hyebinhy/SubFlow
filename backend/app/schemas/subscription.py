@@ -104,3 +104,17 @@ class SubscriptionResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SubscriptionHistoryItem(BaseModel):
+    id: str
+    subscription_id: str
+    event_type: str
+    description: str
+    old_value: str | None = None
+    new_value: str | None = None
+    created_at: str
+
+
+class SubscriptionTimelineResponse(BaseModel):
+    events: list[SubscriptionHistoryItem]

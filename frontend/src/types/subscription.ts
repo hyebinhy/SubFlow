@@ -48,6 +48,16 @@ export interface SubscriptionCreateRequest {
 
 export type SubscriptionUpdateRequest = Partial<SubscriptionCreateRequest>;
 
+export interface SubscriptionHistoryItem {
+  id: string;
+  subscription_id: string;
+  event_type: "created" | "plan_changed" | "status_changed" | "price_changed" | "renewed";
+  description: string;
+  old_value?: string;
+  new_value?: string;
+  created_at: string;
+}
+
 export interface CalendarEvent {
   subscription_id: string;
   service_name: string;

@@ -2,6 +2,7 @@ import type {
   CalendarEvent,
   Subscription,
   SubscriptionCreateRequest,
+  SubscriptionHistoryItem,
   SubscriptionUpdateRequest,
 } from "../types/subscription";
 import apiClient from "./client";
@@ -51,5 +52,15 @@ export const subscriptionApi = {
   getCalendarEvents: (): Promise<{ events: CalendarEvent[] }> =>
     apiClient
       .get<{ events: CalendarEvent[] }>("/subscriptions/calendar-events")
+      .then((r) => r.data),
+
+  getTimeline: (): Promise<{ events: SubscriptionHistoryItem[] }> =>
+    apiClient
+      .get<{ events: SubscriptionHistoryItem[] }>("/subscriptions/timeline")
+      .then((r) => r.data),
+
+  getHistory: (id: string): Promise<{ events: SubscriptionHistoryItem[] }> =>
+    apiClient
+      .get<{ events: SubscriptionHistoryItem[] }>(`/subscriptions/${id}/history`)
       .then((r) => r.data),
 };

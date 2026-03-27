@@ -4,6 +4,7 @@ import {
   Search,
   CreditCard,
   TrendingUp,
+  Clock,
   Calendar,
   Settings,
 } from "lucide-react";
@@ -20,11 +21,12 @@ const navItems: NavItem[] = [
   { to: "/services", label: "서비스 탐색", icon: Search },
   { to: "/subscriptions", label: "내 구독", icon: CreditCard },
   { to: "/analytics", label: "지출 분석", icon: TrendingUp },
+  { to: "/timeline", label: "히스토리", icon: Clock },
   { to: "/calendar", label: "캘린더", icon: Calendar },
   { to: "/settings", label: "설정", icon: Settings },
 ];
 
-const groups: number[][] = [[0, 1, 2], [3, 4], [5]];
+const groups: number[][] = [[0, 1, 2], [3, 4, 5], [6]];
 
 export default function FloatingDock() {
   return (

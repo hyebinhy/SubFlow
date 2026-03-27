@@ -10,6 +10,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import ServicesPage from "./pages/ServicesPage";
+import TimelinePage from "./pages/TimelinePage";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/timeline" element={<TimelinePage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

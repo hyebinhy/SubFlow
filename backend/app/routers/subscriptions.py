@@ -4,17 +4,21 @@ from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
 from app.models.subscription import BillingCycle, SubscriptionStatus
+from app.models.subscription_history import SubscriptionHistory
 from app.models.user import User
 from app.schemas.subscription import (
     CalendarEvent,
     CalendarEventsResponse,
     SubscriptionCreateRequest,
     SubscriptionFromCatalogRequest,
+    SubscriptionHistoryItem,
     SubscriptionResponse,
+    SubscriptionTimelineResponse,
     SubscriptionUpdateRequest,
 )
 from app.services.subscription_service import SubscriptionService
@@ -132,6 +136,64 @@ async def get_calendar_events(
     # Sort events by date
     events.sort(key=lambda e: e.date)
     return CalendarEventsResponse(events=events)
+
+
+@router.get("/timeline", response_model=SubscriptionTimelineResponse)
+async def get_subscription_timeline(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all history events for the current user, sorted by created_at DESC."""
+    result = await db.execute(
+        select(SubscriptionHistory)
+        .where(SubscriptionHistory.user_id == current_user.id)
+        .order_by(SubscriptionHistory.created_at.desc())
+    )
+    histories = result.scalars().all()
+    events = [
+        SubscriptionHistoryItem(
+            id=str(h.id),
+            subscription_id=str(h.subscription_id),
+            event_type=h.event_type.value,
+            description=h.description,
+            old_value=h.old_value,
+            new_value=h.new_value,
+            created_at=h.created_at.isoformat(),
+        )
+        for h in histories
+    ]
+    return SubscriptionTimelineResponse(events=events)
+
+
+@router.get("/{subscription_id}/history", response_model=SubscriptionTimelineResponse)
+async def get_subscription_history(
+    subscription_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return history events for a specific subscription."""
+    result = await db.execute(
+        select(SubscriptionHistory)
+        .where(
+            SubscriptionHistory.subscription_id == subscription_id,
+            SubscriptionHistory.user_id == current_user.id,
+        )
+        .order_by(SubscriptionHistory.created_at.desc())
+    )
+    histories = result.scalars().all()
+    events = [
+        SubscriptionHistoryItem(
+            id=str(h.id),
+            subscription_id=str(h.subscription_id),
+            event_type=h.event_type.value,
+            description=h.description,
+            old_value=h.old_value,
+            new_value=h.new_value,
+            created_at=h.created_at.isoformat(),
+        )
+        for h in histories
+    ]
+    return SubscriptionTimelineResponse(events=events)
 
 
 @router.get("/{subscription_id}", response_model=SubscriptionResponse)

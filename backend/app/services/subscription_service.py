@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -9,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.models.service import Service
 from app.models.service_plan import ServicePlan
 from app.models.subscription import Subscription, SubscriptionStatus
+from app.models.subscription_history import HistoryEventType, SubscriptionHistory
 from app.schemas.subscription import SubscriptionCreateRequest, SubscriptionFromCatalogRequest, SubscriptionUpdateRequest
 from app.utils.exchange_rate import get_exchange_rates
 
@@ -23,6 +25,25 @@ EAGER_LOADS = [
 class SubscriptionService:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def _record_history(
+        self,
+        subscription_id: UUID,
+        user_id: UUID,
+        event_type: HistoryEventType,
+        description: str,
+        old_value: str | None = None,
+        new_value: str | None = None,
+    ) -> None:
+        history = SubscriptionHistory(
+            subscription_id=subscription_id,
+            user_id=user_id,
+            event_type=event_type,
+            description=description,
+            old_value=old_value,
+            new_value=new_value,
+        )
+        self.db.add(history)
 
     async def get_all(
         self,
@@ -97,6 +118,14 @@ class SubscriptionService:
             rates = await get_exchange_rates()
             subscription.initial_exchange_rate = rates.get(subscription.currency)
         self.db.add(subscription)
+        await self.db.flush()
+
+        await self._record_history(
+            subscription_id=subscription.id,
+            user_id=user_id,
+            event_type=HistoryEventType.CREATED,
+            description=f"{service.name} ({plan.name}) 구독을 시작했습니다",
+        )
         await self.db.commit()
 
         result = await self.db.execute(
@@ -110,6 +139,14 @@ class SubscriptionService:
             rates = await get_exchange_rates()
             subscription.initial_exchange_rate = rates.get(subscription.currency)
         self.db.add(subscription)
+        await self.db.flush()
+
+        await self._record_history(
+            subscription_id=subscription.id,
+            user_id=user_id,
+            event_type=HistoryEventType.CREATED,
+            description=f"{subscription.service_name} 구독을 시작했습니다",
+        )
         await self.db.commit()
 
         result = await self.db.execute(
@@ -120,6 +157,52 @@ class SubscriptionService:
     async def update(self, subscription_id: UUID, user_id: UUID, data: SubscriptionUpdateRequest) -> Subscription:
         subscription = await self.get_by_id(subscription_id, user_id)
         update_data = data.model_dump(exclude_unset=True)
+
+        # Detect changes and record history before applying updates
+        if "status" in update_data and update_data["status"] != subscription.status:
+            old_status = subscription.status.value if subscription.status else None
+            new_status = update_data["status"].value if isinstance(update_data["status"], SubscriptionStatus) else update_data["status"]
+            await self._record_history(
+                subscription_id=subscription.id,
+                user_id=user_id,
+                event_type=HistoryEventType.STATUS_CHANGED,
+                description=f"{old_status} → {new_status}",
+                old_value=old_status,
+                new_value=new_status,
+            )
+
+        if "cost" in update_data and Decimal(str(update_data["cost"])) != Decimal(str(subscription.cost)):
+            old_cost = f"{subscription.cost:,.0f}원"
+            new_cost = f"{Decimal(str(update_data['cost'])):,.0f}원"
+            await self._record_history(
+                subscription_id=subscription.id,
+                user_id=user_id,
+                event_type=HistoryEventType.PRICE_CHANGED,
+                description=f"{old_cost} → {new_cost}",
+                old_value=str(subscription.cost),
+                new_value=str(update_data["cost"]),
+            )
+
+        if "plan_id" in update_data and update_data["plan_id"] != subscription.plan_id:
+            old_plan_name = subscription.plan.name if subscription.plan else str(subscription.plan_id)
+            # Fetch new plan name
+            new_plan_name = str(update_data["plan_id"])
+            if update_data["plan_id"] is not None:
+                plan_result = await self.db.execute(
+                    select(ServicePlan).where(ServicePlan.id == update_data["plan_id"])
+                )
+                new_plan = plan_result.scalar_one_or_none()
+                if new_plan:
+                    new_plan_name = new_plan.name
+            await self._record_history(
+                subscription_id=subscription.id,
+                user_id=user_id,
+                event_type=HistoryEventType.PLAN_CHANGED,
+                description=f"{old_plan_name} → {new_plan_name}",
+                old_value=old_plan_name,
+                new_value=new_plan_name,
+            )
+
         for key, value in update_data.items():
             setattr(subscription, key, value)
         await self.db.commit()
@@ -131,6 +214,17 @@ class SubscriptionService:
 
     async def delete(self, subscription_id: UUID, user_id: UUID) -> None:
         subscription = await self.get_by_id(subscription_id, user_id)
+
+        await self._record_history(
+            subscription_id=subscription.id,
+            user_id=user_id,
+            event_type=HistoryEventType.STATUS_CHANGED,
+            description=f"{subscription.service_name} 구독을 해지했습니다",
+            old_value=subscription.status.value if subscription.status else None,
+            new_value="cancelled",
+        )
+        await self.db.flush()
+
         await self.db.delete(subscription)
         await self.db.commit()
 
