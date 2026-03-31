@@ -123,7 +123,25 @@ class SavingsSuggestionsResponse(BaseModel):
     total_potential_savings_krw: Decimal
 
 
-# Feature 5: Budget Status
+# Feature 5: Price Change Alert
+class PriceChangeAlertItem(BaseModel):
+    subscription_id: str
+    service_name: str
+    logo_url: str | None = None
+    plan_name: str
+    currency: str
+    old_price: Decimal
+    new_price: Decimal
+    change_amount: Decimal
+    change_percentage: float
+    effective_date: str
+
+
+class PriceChangeAlertResponse(BaseModel):
+    alerts: list[PriceChangeAlertItem]
+
+
+# Feature 6: Budget Status
 class BudgetStatusResponse(BaseModel):
     budget_monthly: int | None = None
     current_spending: Decimal

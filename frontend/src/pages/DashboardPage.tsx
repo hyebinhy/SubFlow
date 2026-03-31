@@ -6,6 +6,7 @@ import BudgetStatus from "../components/dashboard/BudgetStatus";
 import TrialTracker from "../components/dashboard/TrialTracker";
 import OverlapWarning from "../components/dashboard/OverlapWarning";
 import ExchangeRateAlert from "../components/dashboard/ExchangeRateAlert";
+import PriceChangeAlert from "../components/dashboard/PriceChangeAlert";
 import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
 import { format } from "date-fns";
 
@@ -18,6 +19,7 @@ export default function DashboardPage() {
     exchangeRateAlerts,
     trials,
     savingsSuggestions,
+    priceChanges,
     budgetStatus,
     loading,
     error: analyticsError,
@@ -140,6 +142,9 @@ export default function DashboardPage() {
       )}
       {overlaps && overlaps.overlaps.length > 0 && (
         <OverlapWarning overlaps={overlaps.overlaps} />
+      )}
+      {priceChanges && priceChanges.alerts.length > 0 && (
+        <PriceChangeAlert alerts={priceChanges.alerts} />
       )}
       {exchangeRateAlerts && exchangeRateAlerts.alerts.length > 0 && (
         <ExchangeRateAlert alerts={exchangeRateAlerts.alerts} />

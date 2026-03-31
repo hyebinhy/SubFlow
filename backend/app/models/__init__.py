@@ -6,6 +6,7 @@ from app.models.subscription import Subscription, BillingCycle, SubscriptionStat
 from app.models.subscription_history import SubscriptionHistory, HistoryEventType
 from app.models.payment_history import PaymentHistory
 from app.models.notification_setting import NotificationSetting
+from app.models.plan_price_history import PlanPriceHistory
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "HistoryEventType",
     "PaymentHistory",
     "NotificationSetting",
+    "PlanPriceHistory",
 ]

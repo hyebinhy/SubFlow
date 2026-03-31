@@ -4,6 +4,7 @@ import type {
   DashboardOverview,
   ExchangeRateAlertResponse,
   OverlapDetectionResponse,
+  PriceChangeAlertResponse,
   SavingsSuggestionsResponse,
   SpendingTrend,
   TrialTrackingResponse,
@@ -46,6 +47,11 @@ export const analyticsApi = {
   getSavingsSuggestions: () =>
     apiClient
       .get<SavingsSuggestionsResponse>("/analytics/savings-suggestions")
+      .then((r) => r.data),
+
+  getPriceChanges: () =>
+    apiClient
+      .get<PriceChangeAlertResponse>("/analytics/price-changes")
       .then((r) => r.data),
 
   getBudgetStatus: () =>

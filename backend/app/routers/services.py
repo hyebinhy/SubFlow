@@ -4,9 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_current_user, get_db
+from app.models.plan_price_history import PlanPriceHistory
 from app.models.service import Service
+from app.models.service_plan import ServicePlan
 from app.models.user import User
-from app.schemas.service import ServiceListResponse, ServiceResponse
+from app.schemas.service import PlanPriceHistoryResponse, ServiceListResponse, ServiceResponse
 
 router = APIRouter()
 
@@ -104,6 +106,29 @@ async def search_services(
         )
         for s in services
     ]
+
+
+@router.get("/{service_id}/price-history", response_model=dict[int, list[PlanPriceHistoryResponse]])
+async def get_price_history(
+    service_id: int,
+    _current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """서비스의 모든 요금제 가격 변동 이력을 반환합니다."""
+    result = await db.execute(
+        select(PlanPriceHistory)
+        .join(ServicePlan)
+        .where(ServicePlan.service_id == service_id)
+        .order_by(PlanPriceHistory.effective_date)
+    )
+    rows = result.scalars().all()
+
+    history: dict[int, list[PlanPriceHistoryResponse]] = {}
+    for row in rows:
+        history.setdefault(row.plan_id, []).append(
+            PlanPriceHistoryResponse.model_validate(row)
+        )
+    return history
 
 
 @router.get("/{service_id}", response_model=ServiceResponse)

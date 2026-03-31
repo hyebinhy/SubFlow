@@ -1,4 +1,4 @@
-import type { Service, ServiceListItem } from "../types/service";
+import type { PlanPriceHistory, Service, ServiceListItem } from "../types/service";
 import apiClient from "./client";
 
 export const serviceApi = {
@@ -17,4 +17,9 @@ export const serviceApi = {
 
   getById: (id: number) =>
     apiClient.get<Service>(`/services/${id}`).then((r) => r.data),
+
+  getPriceHistory: (serviceId: number) =>
+    apiClient
+      .get<Record<number, PlanPriceHistory[]>>(`/services/${serviceId}/price-history`)
+      .then((r) => r.data),
 };

@@ -1,10 +1,18 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel
 
 from app.models.subscription import BillingCycle
 from app.schemas.category import CategoryResponse
+
+
+class PlanPriceHistoryResponse(BaseModel):
+    price: Decimal
+    currency: str
+    effective_date: date
+
+    model_config = {"from_attributes": True}
 
 
 class ServicePlanResponse(BaseModel):

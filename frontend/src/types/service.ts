@@ -25,6 +25,12 @@ export interface Service {
   plans: ServicePlan[];
 }
 
+export interface PlanPriceHistory {
+  price: number;
+  currency: string;
+  effective_date: string;
+}
+
 export interface ServiceListItem {
   id: number;
   name: string;

@@ -18,3 +18,4 @@ class ServicePlan(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     service = relationship("Service", back_populates="plans")
+    price_history = relationship("PlanPriceHistory", back_populates="plan", order_by="PlanPriceHistory.effective_date")

@@ -11,6 +11,7 @@ from app.schemas.analytics import (
     DashboardOverview,
     ExchangeRateAlertResponse,
     OverlapDetectionResponse,
+    PriceChangeAlertResponse,
     SavingsSuggestionsResponse,
     SpendingTrend,
     TrialTrackingResponse,
@@ -84,6 +85,15 @@ async def get_savings_suggestions(
 ):
     service = AnalyticsService(db)
     return await service.get_savings_suggestions(current_user.id)
+
+
+@router.get("/price-changes", response_model=PriceChangeAlertResponse)
+async def get_price_changes(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = AnalyticsService(db)
+    return await service.get_price_change_alerts(current_user.id)
 
 
 @router.get("/budget-status", response_model=BudgetStatusResponse)

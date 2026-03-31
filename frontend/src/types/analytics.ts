@@ -109,7 +109,24 @@ export interface SavingsSuggestionsResponse {
   total_potential_savings_krw: number;
 }
 
-// Feature 5: Budget Status
+// Feature 5: Price Change Alert
+export interface PriceChangeAlertItem {
+  subscription_id: string;
+  service_name: string;
+  logo_url?: string;
+  plan_name: string;
+  currency: string;
+  old_price: number;
+  new_price: number;
+  change_amount: number;
+  change_percentage: number;
+  effective_date: string;
+}
+export interface PriceChangeAlertResponse {
+  alerts: PriceChangeAlertItem[];
+}
+
+// Feature 6: Budget Status
 export interface BudgetStatus {
   budget_monthly: number | null;
   current_spending: number;

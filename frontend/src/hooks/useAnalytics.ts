@@ -5,6 +5,7 @@ import type {
   DashboardOverview,
   ExchangeRateAlertResponse,
   OverlapDetectionResponse,
+  PriceChangeAlertResponse,
   SavingsSuggestionsResponse,
   SpendingTrend,
   TrialTrackingResponse,
@@ -24,6 +25,8 @@ export function useAnalytics() {
   const [trials, setTrials] = useState<TrialTrackingResponse | null>(null);
   const [savingsSuggestions, setSavingsSuggestions] =
     useState<SavingsSuggestionsResponse | null>(null);
+  const [priceChanges, setPriceChanges] =
+    useState<PriceChangeAlertResponse | null>(null);
   const [budgetStatus, setBudgetStatus] = useState<BudgetStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export function useAnalytics() {
       analyticsApi.getExchangeRateAlerts(),
       analyticsApi.getTrials(),
       analyticsApi.getSavingsSuggestions(),
+      analyticsApi.getPriceChanges(),
       analyticsApi.getBudgetStatus(),
     ]);
 
@@ -59,7 +63,8 @@ export function useAnalytics() {
     if (results[1].status === "fulfilled") setExchangeRateAlerts(results[1].value);
     if (results[2].status === "fulfilled") setTrials(results[2].value);
     if (results[3].status === "fulfilled") setSavingsSuggestions(results[3].value);
-    if (results[4].status === "fulfilled") setBudgetStatus(results[4].value);
+    if (results[4].status === "fulfilled") setPriceChanges(results[4].value);
+    if (results[5].status === "fulfilled") setBudgetStatus(results[5].value);
   }, []);
 
   useEffect(() => {
@@ -74,6 +79,7 @@ export function useAnalytics() {
     exchangeRateAlerts,
     trials,
     savingsSuggestions,
+    priceChanges,
     budgetStatus,
     loading,
     error,

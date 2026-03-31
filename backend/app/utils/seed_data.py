@@ -1,7 +1,10 @@
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.category import Category
+from app.models.plan_price_history import PlanPriceHistory
 from app.models.service import Service
 from app.models.service_plan import ServicePlan
 from app.models.subscription import Subscription
@@ -1059,3 +1062,138 @@ async def seed_services(db: AsyncSession) -> None:
 
     # Always update logo URLs for existing services
     await _update_logo_urls(db)
+
+    # Seed price history
+    await seed_price_history(db)
+
+
+# 주요 서비스의 실제 가격 변동 이력 (서비스이름 -> 플랜이름 -> [(가격, 통화, 날짜)])
+PRICE_HISTORY_DATA: dict[str, dict[str, list[tuple[float, str, str]]]] = {
+    "Netflix": {
+        "광고형 스탠다드": [
+            (5500, "KRW", "2022-11-01"),
+            (5500, "KRW", "2023-10-19"),
+            (7000, "KRW", "2024-10-01"),
+        ],
+        "스탠다드": [
+            (9500, "KRW", "2021-01-01"),
+            (10500, "KRW", "2022-01-14"),
+            (12000, "KRW", "2023-10-19"),
+            (13500, "KRW", "2024-10-01"),
+        ],
+        "프리미엄": [
+            (14500, "KRW", "2021-01-01"),
+            (15500, "KRW", "2022-01-14"),
+            (17000, "KRW", "2023-10-19"),
+            (17000, "KRW", "2024-10-01"),
+        ],
+    },
+    "YouTube Premium": {
+        "개인": [
+            (8690, "KRW", "2021-01-01"),
+            (10450, "KRW", "2022-09-01"),
+            (14900, "KRW", "2024-03-01"),
+        ],
+        "가족": [
+            (14900, "KRW", "2021-01-01"),
+            (16900, "KRW", "2022-09-01"),
+            (23900, "KRW", "2024-03-01"),
+        ],
+    },
+    "Spotify": {
+        "Individual": [
+            (8990, "KRW", "2021-01-01"),
+            (10990, "KRW", "2023-07-01"),
+        ],
+        "Duo": [
+            (11990, "KRW", "2021-01-01"),
+            (14990, "KRW", "2023-07-01"),
+        ],
+        "Family": [
+            (14990, "KRW", "2021-01-01"),
+            (17490, "KRW", "2023-07-01"),
+        ],
+    },
+    "ChatGPT Plus": {
+        "Plus": [
+            (20.00, "USD", "2023-02-01"),
+            (20.00, "USD", "2024-01-01"),
+        ],
+        "Pro": [
+            (200.00, "USD", "2024-12-01"),
+        ],
+    },
+    "Disney+": {
+        "스탠다드": [
+            (7900, "KRW", "2021-11-12"),
+            (9900, "KRW", "2023-11-01"),
+        ],
+        "프리미엄": [
+            (9900, "KRW", "2021-11-12"),
+            (13900, "KRW", "2023-11-01"),
+        ],
+    },
+    "Apple Music": {
+        "개인": [
+            (8900, "KRW", "2021-01-01"),
+            (10900, "KRW", "2022-10-24"),
+        ],
+        "가족": [
+            (13500, "KRW", "2021-01-01"),
+            (16900, "KRW", "2022-10-24"),
+        ],
+    },
+    "1Password": {
+        "Individual": [
+            (2.99, "USD", "2021-01-01"),
+            (2.99, "USD", "2023-01-01"),
+            (3.99, "USD", "2024-09-01"),
+        ],
+        "Families": [
+            (4.99, "USD", "2021-01-01"),
+            (4.99, "USD", "2024-09-01"),
+        ],
+    },
+    "Notion": {
+        "Plus": [
+            (8.00, "USD", "2021-01-01"),
+            (10.00, "USD", "2024-04-01"),
+        ],
+        "Business": [
+            (15.00, "USD", "2021-01-01"),
+            (18.00, "USD", "2024-04-01"),
+        ],
+    },
+}
+
+
+async def seed_price_history(db: AsyncSession) -> None:
+    """주요 서비스의 과거 가격 변동 이력을 시딩합니다."""
+    existing = await db.execute(select(PlanPriceHistory.id).limit(1))
+    if existing.scalar_one_or_none() is not None:
+        return  # 이미 시딩됨
+
+    # plan_id 조회를 위한 맵 생성
+    svc_result = await db.execute(select(Service))
+    svc_map = {s.name: s.id for s in svc_result.scalars().all()}
+
+    plan_result = await db.execute(select(ServicePlan))
+    plan_map = {(p.service_id, p.name): p.id for p in plan_result.scalars().all()}
+
+    for svc_name, plans in PRICE_HISTORY_DATA.items():
+        svc_id = svc_map.get(svc_name)
+        if not svc_id:
+            continue
+        for plan_name, history in plans.items():
+            plan_id = plan_map.get((svc_id, plan_name))
+            if not plan_id:
+                continue
+            for price, currency, effective_date_str in history:
+                db.add(PlanPriceHistory(
+                    plan_id=plan_id,
+                    price=price,
+                    currency=currency,
+                    effective_date=date.fromisoformat(effective_date_str),
+                ))
+
+    await db.commit()

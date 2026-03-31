@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.notification_setting import NotificationSetting
+from app.models.plan_price_history import PlanPriceHistory
 from app.models.subscription import BillingCycle, Subscription, SubscriptionStatus
 from app.models.service import Service
 from app.models.service_plan import ServicePlan
@@ -29,6 +30,8 @@ from app.schemas.analytics import (
     SpendingTrend,
     TrialSubscriptionItem,
     TrialTrackingResponse,
+    PriceChangeAlertItem,
+    PriceChangeAlertResponse,
 )
 from app.utils.exchange_rate import get_exchange_rates, to_krw
 
@@ -375,6 +378,95 @@ class AnalyticsService:
             suggestions=suggestions,
             total_potential_savings_krw=total_potential_savings,
         )
+
+    async def get_price_change_alerts(self, user_id: UUID) -> PriceChangeAlertResponse:
+        """사용자 구독 서비스의 가격 변동을 감지하여 알림을 반환합니다.
+
+        구독 시 기록된 비용과 해당 요금제의 최신 가격 이력을 비교하여
+        가격이 변동된 경우 알림을 생성합니다.
+        """
+        subs = await self._get_active_subscriptions(user_id)
+        alerts: list[PriceChangeAlertItem] = []
+
+        for sub in subs:
+            if not sub.service_id:
+                continue
+
+            # 해당 서비스의 모든 플랜 가격 이력 조회
+            result = await self.db.execute(
+                select(PlanPriceHistory)
+                .join(ServicePlan)
+                .where(ServicePlan.service_id == sub.service_id)
+                .order_by(PlanPriceHistory.plan_id, PlanPriceHistory.effective_date)
+            )
+            all_history = result.scalars().all()
+            if not all_history:
+                continue
+
+            # plan_id별로 그룹화
+            plan_histories: dict[int, list[PlanPriceHistory]] = {}
+            for h in all_history:
+                plan_histories.setdefault(h.plan_id, []).append(h)
+
+            # 사용자의 구독 비용과 가장 가까운 플랜을 매칭
+            user_cost = Decimal(str(sub.cost))
+            best_plan_id = None
+            best_diff = None
+            for plan_id, history in plan_histories.items():
+                latest_price = Decimal(str(history[-1].price))
+                # 현재 가격 또는 과거 가격 중 사용자 비용과 매칭되는 것
+                for h in history:
+                    if Decimal(str(h.price)) == user_cost:
+                        best_plan_id = plan_id
+                        best_diff = Decimal("0")
+                        break
+                if best_plan_id:
+                    break
+                diff = abs(latest_price - user_cost)
+                if best_diff is None or diff < best_diff:
+                    best_diff = diff
+                    best_plan_id = plan_id
+
+            if best_plan_id is None:
+                continue
+
+            history = plan_histories[best_plan_id]
+            if len(history) < 2:
+                continue
+
+            prev = history[-2]
+            latest = history[-1]
+            old_price = Decimal(str(prev.price))
+            new_price = Decimal(str(latest.price))
+
+            if old_price == new_price:
+                continue
+
+            change_amount = new_price - old_price
+            change_pct = float(change_amount / old_price * 100)
+
+            # 플랜 이름 조회
+            plan_result = await self.db.execute(
+                select(ServicePlan.name).where(ServicePlan.id == best_plan_id)
+            )
+            plan_name = plan_result.scalar_one_or_none() or "Unknown"
+
+            alerts.append(PriceChangeAlertItem(
+                subscription_id=str(sub.id),
+                service_name=sub.service_name,
+                logo_url=sub.logo_url,
+                plan_name=plan_name,
+                currency=latest.currency,
+                old_price=old_price,
+                new_price=new_price,
+                change_amount=change_amount,
+                change_percentage=round(change_pct, 1),
+                effective_date=latest.effective_date.isoformat(),
+            ))
+
+        # 인상률 높은 순 정렬
+        alerts.sort(key=lambda a: a.change_percentage, reverse=True)
+        return PriceChangeAlertResponse(alerts=alerts)
 
     async def get_budget_status(self, user_id: UUID) -> BudgetStatusResponse:
         # Get current monthly spending (reuse logic from get_overview)
