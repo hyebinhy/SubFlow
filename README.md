@@ -153,12 +153,3 @@ SubFlow/
 - **subscription_history** - 구독 변경 이력 (생성, 플랜변경, 해지 등)
 - **notification_settings** - 알림 설정 (결제 N일 전 알림, 월 예산)
 
-## 환경 변수
-
-백엔드는 `backend/.env` 파일 또는 환경 변수로 설정합니다. 기본값이 있으므로 로컬 개발 시에는 별도 설정 없이 실행 가능합니다.
-
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/subscription_db` | DB 연결 |
-| `SECRET_KEY` | `your-secret-key-change-in-production` | JWT 서명 키 |
-| `ALLOWED_ORIGINS` | `["http://localhost:5173"]` | CORS 허용 도메인 |
