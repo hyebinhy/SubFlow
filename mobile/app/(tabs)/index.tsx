@@ -10,14 +10,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
 
 const { width } = Dimensions.get('window');
-// 부모 ScrollView에 Spacing.lg(16) 패딩이 있으므로 가용 너비(CW)를 계산
+// 부모 ScrollView에 Spacing.lg 패딩이 있으나, 카드가 잘리지 않도록 (화면 끝까지 보이도록)
+// 가용 너비(CW)를 기준으로 카드 크기를 계산하되, Pager는 전체 너비를 사용합니다.
 const CW = width - Spacing.lg * 2;
-const ITEM_WIDTH = CW * 0.8; // 가용 너비의 80%를 카드 너비로 설정
+const ITEM_WIDTH = CW * 0.8; // 카드 너비는 가용 너비의 80%로 유지
 const GAP = Spacing.md;
-const SPACER = (CW - ITEM_WIDTH) / 2;
+// 페이저 전체 너비가 width가 되므로 카드가 가운데 정렬되도록 SPACER 재계산
+const SPACER = (width - ITEM_WIDTH) / 2;
 const SNAP_INTERVAL = ITEM_WIDTH + GAP;
 
 // ── 데이터 타입 및 헬퍼 ──
@@ -30,9 +33,9 @@ interface Subscription {
 }
 
 const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  { id: '1', name: 'Netflix', amount: 17000, startDate: '2023-01-15', priceNews: 'Next month price increase expected' },
+  { id: '1', name: 'Netflix', amount: 17000, startDate: '2023-01-15', priceNews: 'home.priceIncrease' as const },
   { id: '2', name: 'Spotify', amount: 10900, startDate: '2024-05-10' },
-  { id: '3', name: 'YouTube Premium', amount: 14900, startDate: '2022-11-20', priceNews: 'Family plan update available' },
+  { id: '3', name: 'YouTube Premium', amount: 14900, startDate: '2022-11-20' },
   { id: '4', name: 'iCloud+', amount: 3900, startDate: '2021-08-05' },
   { id: '5', name: 'ChatGPT Plus', amount: 26000, startDate: '2023-07-22' },
 ];
@@ -98,9 +101,11 @@ const progressStyles = StyleSheet.create({
 });
 
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { useTranslation } from '../../src/hooks/useTranslation';
 
 export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = React.useState(0);
+  const { t } = useTranslation();
 
   const totalMonthlySpend = MOCK_SUBSCRIPTIONS.reduce((sum, s) => sum + s.amount, 0);
   const activeSub = MOCK_SUBSCRIPTIONS[activeIndex];
@@ -118,13 +123,13 @@ export default function HomeScreen() {
             <View style={styles.logoMark}>
               <Ionicons name="contract" size={20} color={Colors.textWhite} />
             </View>
-            <Text style={styles.headerTitle}>Clerio</Text>
+            <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIconBtn}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
               <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerIconBtn}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
               <Ionicons name="settings-outline" size={20} color={Colors.textWhite} />
             </TouchableOpacity>
             <View style={styles.headerAvatar}>
@@ -140,19 +145,19 @@ export default function HomeScreen() {
         >
           {/* 타이틀 영역 */}
           <View style={styles.titleArea}>
-            <Text style={styles.subTitle}>Subscription Analytics</Text>
-            <Text style={styles.mainTitle}>All Client Data</Text>
+            <Text style={styles.subTitle}>{t('home.subtitle')}</Text>
+            <Text style={styles.mainTitle}>{t('home.title')}</Text>
 
             {/* 상태 뱃지 영역 (Glass) */}
             <View style={styles.statusPills}>
               <View style={[styles.pillContainer, styles.glassPill]}>
-                <Text style={styles.pillLabel}>Budget:</Text>
+                <Text style={styles.pillLabel}>{t('home.budget')}:</Text>
                 <Text style={styles.pillValue}>₩{totalMonthlySpend.toLocaleString()}</Text>
               </View>
               <View style={[styles.pillContainer, styles.glassPill]}>
-                <Text style={styles.pillLabel}>Status:</Text>
+                <Text style={styles.pillLabel}>{t('home.status')}:</Text>
                 <View style={[styles.statusBadge, { backgroundColor: Colors.success + '20' }]}>
-                  <Text style={[styles.statusText, { color: Colors.success }]}>In focus</Text>
+                  <Text style={[styles.statusText, { color: Colors.success }]}>{t('home.statusActive')}</Text>
                 </View>
               </View>
             </View>
@@ -206,7 +211,7 @@ export default function HomeScreen() {
                     {/* 가격 지표 (레퍼런스처럼 카드에 밀착) */}
                     <View style={styles.revenueWrapper}>
                       <View style={[styles.floatingRevenue, styles.glassPill]}>
-                        <Text style={styles.revenueLabel}>Monthly Price</Text>
+                        <Text style={styles.revenueLabel}>{t('home.monthlyPrice')}</Text>
                         <Text style={styles.revenueValue}>₩{item.amount.toLocaleString()}</Text>
                         <Ionicons name="arrow-up-circle" size={14} color={Colors.success} style={{ marginLeft: 4 }} />
                       </View>
@@ -224,7 +229,7 @@ export default function HomeScreen() {
                 <View style={styles.paymentHeader}>
                   <View style={styles.paymentHeaderTitle}>
                     <Ionicons name="pie-chart" size={20} color={Colors.textPrimary} />
-                    <Text style={styles.paymentTitle}>Usage Metrics</Text>
+                    <Text style={styles.paymentTitle}>{t('home.spendingAnalysis')}</Text>
                   </View>
                   <View style={styles.roundArrowBtn}>
                     <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
@@ -236,7 +241,7 @@ export default function HomeScreen() {
                 <View style={styles.percentRow}>
                   <Text style={styles.largePercent}>{spendPercent}%</Text>
                   <View style={styles.percentBadge}>
-                    <Text style={styles.percentBadgeText}>of Total Spend</Text>
+                    <Text style={styles.percentBadgeText}>{t('home.ofMonthlyCost')}</Text>
                   </View>
                 </View>
 
@@ -244,14 +249,14 @@ export default function HomeScreen() {
                 {activeSub.priceNews && (
                   <View style={styles.newsBox}>
                     <Ionicons name="alert-circle" size={16} color={Colors.danger} />
-                    <Text style={styles.newsText}>{activeSub.priceNews}</Text>
+                    <Text style={styles.newsText}>{t(activeSub.priceNews as any)}</Text>
                   </View>
                 )}
 
                 {/* 바코드 섹션 */}
                 <View style={[styles.barcodeSection, { marginTop: Spacing.xl }]}>
                   <View style={styles.barcodeLabels}>
-                    <Text style={styles.bLabelText}>Payment Consistency</Text>
+                    <Text style={styles.bLabelText}>{t('home.paymentHistory')}</Text>
                     <Text style={styles.bLabelText}>98%</Text>
                   </View>
                   <BarcodeProgress />
@@ -261,7 +266,7 @@ export default function HomeScreen() {
               <View style={[styles.paymentHeader, { marginTop: Spacing.xl }]}>
                 <View style={styles.paymentHeaderTitle}>
                   <Ionicons name="document-text" size={20} color={Colors.textPrimary} />
-                  <Text style={styles.paymentTitle}>Billing Overview</Text>
+                  <Text style={styles.paymentTitle}>{t('home.billingSchedule')}</Text>
                 </View>
                 <View style={styles.roundArrowBtn}>
                   <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
@@ -409,6 +414,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     height: 135,
     zIndex: 20,
+    marginHorizontal: -Spacing.lg,
   },
   pagerScroll: {
     flex: 1,

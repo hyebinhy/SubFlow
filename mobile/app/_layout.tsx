@@ -1,8 +1,19 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '../src/constants/theme';
+import { useAuthStore } from '../src/store/authStore';
+import { useSettingsStore } from '../src/store/settingsStore';
 
 export default function RootLayout() {
+  const loadToken = useAuthStore((s) => s.loadToken);
+  const loadSettings = useSettingsStore((s) => s.loadSettings);
+
+  useEffect(() => {
+    loadToken();
+    loadSettings();
+  }, []);
+
   return (
     <>
       <StatusBar style="dark" />

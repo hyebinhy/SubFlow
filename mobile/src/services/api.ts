@@ -1,9 +1,13 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// 웹: localhost OK / 모바일: PC의 실제 IP 필요
 const API_BASE_URL = __DEV__
-  ? 'http://localhost:8000/api/v1'
-  : 'https://api.subflow.app/api/v1'; // 프로덕션 URL은 나중에 변경
+  ? Platform.OS === 'web'
+    ? 'http://localhost:8000/api/v1'
+    : 'http://172.30.1.44:8000/api/v1'
+  : 'https://api.subflow.app/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -36,9 +40,7 @@ export default api;
 // Auth
 export const authAPI = {
   login: (email: string, password: string) =>
-    api.post('/auth/login', new URLSearchParams({ username: email, password }), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    }),
+    api.post('/auth/login', { email, password }),
   register: (email: string, password: string, username: string) =>
     api.post('/auth/register', { email, password, username }),
 };

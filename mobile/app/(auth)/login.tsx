@@ -8,10 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useAuthStore } from '../../src/store/authStore';
 import {
   Colors,
   Spacing,
@@ -25,15 +28,25 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const login = useAuthStore((s) => s.login);
 
-  const handleLogin = () => {
-    router.replace('/(tabs)');
+  const handleLogin = async () => {
+    if (!email || !password) return;
+    setLoading(true);
+    try {
+      await login(email, password);
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      Alert.alert('오류', '로그인에 실패했습니다. 정보를 확인해 주세요.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <LinearGradient
-      colors={['#D6E6F2', '#E2EEF6', '#EDF3F8', '#F4F8FB']}
-      locations={[0, 0.3, 0.6, 1]}
+      colors={['#E9EFFD', '#F8FAFF', '#E9EFFD']}
       style={styles.gradient}
     >
       <KeyboardAvoidingView
@@ -45,72 +58,65 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 로고 영역 */}
-          <View style={styles.logoSection}>
-            <View style={styles.logoWrap}>
-              <Ionicons name="water" size={36} color={Colors.primary} />
-            </View>
-            <Text style={styles.appName}>SubFlow</Text>
-            <Text style={styles.tagline}>
-              스마트한 구독 관리,{'\n'}현명한 지출 습관
-            </Text>
-          </View>
-
-          {/* 입력 폼 카드 */}
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>로그인</Text>
+            <Text style={styles.formTitle}>구독 관리 서비스</Text>
 
-            <View style={styles.inputWrap}>
-              <Ionicons name="mail-outline" size={18} color={Colors.textTertiary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="이메일"
-                placeholderTextColor={Colors.textTertiary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>이메일</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="ykgstar37@gmail.com"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
             </View>
 
-            <View style={styles.inputWrap}>
-              <Ionicons name="lock-closed-outline" size={18} color={Colors.textTertiary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="비밀번호"
-                placeholderTextColor={Colors.textTertiary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={18}
-                  color={Colors.textTertiary}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>비밀번호</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="********"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={18}
+                    color={Colors.textTertiary}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.loginBtn} 
+              onPress={handleLogin} 
+              activeOpacity={0.8} 
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.loginBtnText}>로그인</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.footerContainer}>
+              <Text style={styles.footerText}>계정이 없으신가요? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                <Text style={styles.footerLink}>회원가입</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity style={styles.forgotBtn}>
-              <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} activeOpacity={0.8}>
-              <Text style={styles.loginBtnText}>로그인</Text>
-              <Ionicons name="arrow-forward" size={18} color={Colors.textWhite} />
-            </TouchableOpacity>
           </View>
-
-          {/* 하단 링크 */}
-          <TouchableOpacity style={styles.registerLink} onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.registerText}>
-              계정이 없으신가요? <Text style={styles.registerBold}>회원가입</Text>
-            </Text>
-          </TouchableOpacity>
-
-          {/* 하단 버전 */}
-          <Text style={styles.version}>SubFlow v1.0.0</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -118,119 +124,78 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
+  gradient: { flex: 1 },
+  flex: { flex: 1 },
   scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xxl,
-    paddingVertical: 60,
+    flexGrow: 1, 
+    justifyContent: 'center', 
+    paddingHorizontal: Spacing.xl,
   },
-  // ── 로고 영역 ──
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.xxxl + 8,
-  },
-  logoWrap: {
-    width: 68,
-    height: 68,
-    borderRadius: BorderRadius.xl,
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
+  formCard: { 
+    backgroundColor: Colors.surface, 
+    borderRadius: 24, 
+    padding: Spacing.xxl, 
+    gap: Spacing.lg, 
     ...Shadow.md,
+    marginVertical: 40,
   },
-  appName: {
-    fontSize: FontSize.xxxl,
-    fontWeight: FontWeight.heavy,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
+  formTitle: { 
+    fontSize: FontSize.xl, 
+    fontWeight: FontWeight.bold, 
+    color: Colors.textPrimary, 
     textAlign: 'center',
-    lineHeight: 22,
+    marginBottom: Spacing.md,
   },
-  // ── 폼 카드 ──
-  formCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xxl,
-    padding: Spacing.xxl,
-    gap: Spacing.lg,
-    ...Shadow.md,
+  fieldContainer: {
+    gap: 8,
   },
-  formTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
+  label: {
+    fontSize: FontSize.sm,
+    color: Colors.textTertiary,
+    fontWeight: FontWeight.medium,
+    marginLeft: 4,
   },
   inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primarySoft,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#EDF2FF',
+    borderRadius: 12, 
+    paddingHorizontal: Spacing.lg, 
     height: 52,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
   },
-  inputIcon: {
-    marginRight: Spacing.md,
-  },
-  input: {
-    flex: 1,
-    fontSize: FontSize.md,
+  input: { 
+    flex: 1, 
+    fontSize: FontSize.md, 
     color: Colors.textPrimary,
   },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginTop: -Spacing.sm,
-  },
-  forgotText: {
-    fontSize: FontSize.xs,
-    color: Colors.primary,
-    fontWeight: FontWeight.medium,
-  },
   loginBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', 
+    alignItems: 'center', 
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.sm,
+    backgroundColor: '#737DFF', 
+    height: 52, 
+    borderRadius: 12, 
+    marginTop: Spacing.md,
     ...Shadow.sm,
   },
-  loginBtnText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+  loginBtnText: { 
+    fontSize: FontSize.lg, 
+    fontWeight: FontWeight.bold, 
     color: Colors.textWhite,
   },
-  // ── 하단 ──
-  registerLink: {
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.xxl,
+    marginTop: Spacing.sm,
   },
-  registerText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-  },
-  registerBold: {
-    color: Colors.primary,
-    fontWeight: FontWeight.bold,
-  },
-  version: {
-    textAlign: 'center',
-    fontSize: FontSize.xs,
+  footerText: { 
+    fontSize: FontSize.sm, 
     color: Colors.textTertiary,
-    marginTop: Spacing.xxl,
+  },
+  footerLink: { 
+    fontSize: FontSize.sm, 
+    color: '#737DFF', 
+    fontWeight: FontWeight.bold,
   },
 });

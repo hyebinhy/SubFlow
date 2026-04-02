@@ -1,8 +1,22 @@
 import { Redirect } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
+import { useAuthStore } from '../src/store/authStore';
+import { Colors } from '../src/constants/theme';
 
 export default function Index() {
-  // TODO: 인증 상태에 따라 분기
-  // const isLoggedIn = useAuthStore(s => s.isLoggedIn);
-  // if (isLoggedIn) return <Redirect href="/(tabs)" />;
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return <Redirect href="/(auth)/login" />;
 }

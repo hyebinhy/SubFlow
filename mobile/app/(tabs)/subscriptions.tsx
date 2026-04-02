@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
@@ -32,14 +33,15 @@ const MOCK_SUBSCRIPTIONS = [
   { id: '6', name: 'Adobe CC', plan: 'Photography', amount: 13200, cycle: '월간', nextDate: '—', status: 'cancelled' as const, category: '디자인' },
 ];
 
-const statusBadge: Record<string, { label: string; color: 'success' | 'warning' | 'danger' }> = {
-  active: { label: '활성', color: 'success' },
-  paused: { label: '일시정지', color: 'warning' },
-  cancelled: { label: '해지', color: 'danger' },
+const statusKeys: Record<string, { labelKey: 'common.active' | 'common.paused' | 'common.cancelled'; color: 'success' | 'warning' | 'danger' }> = {
+  active: { labelKey: 'common.active', color: 'success' },
+  paused: { labelKey: 'common.paused', color: 'warning' },
+  cancelled: { labelKey: 'common.cancelled', color: 'danger' },
 };
 
 export default function SubscriptionsScreen() {
   const [filter, setFilter] = useState<FilterType>('all');
+  const { t } = useTranslation();
 
   const filtered = filter === 'all'
     ? MOCK_SUBSCRIPTIONS
@@ -58,7 +60,7 @@ export default function SubscriptionsScreen() {
             <View style={styles.logoMark}>
               <Ionicons name="contract" size={20} color={Colors.textWhite} />
             </View>
-            <Text style={styles.headerTitle}>Clerio</Text>
+            <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.addBtn}>
@@ -77,8 +79,8 @@ export default function SubscriptionsScreen() {
         >
            {/* 타이틀 및 요약 정보 (Pills) */}
            <View style={styles.pageHeader}>
-             <Text style={styles.subTitle}>Subscription Management</Text>
-             <Text style={styles.mainTitle}>My List</Text>
+             <Text style={styles.subTitle}>{t('subs.subtitle')}</Text>
+             <Text style={styles.mainTitle}>{t('subs.title')}</Text>
              
              <View style={styles.summaryPills}>
                <View style={styles.pill}>
@@ -102,7 +104,7 @@ export default function SubscriptionsScreen() {
                     onPress={() => setFilter(f)}
                   >
                     <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                      {f === 'all' ? '전체' : statusBadge[f]?.label}
+                      {f === 'all' ? t('common.all') : t(statusKeys[f]?.labelKey)}
                     </Text>
                   </TouchableOpacity>
                 ))}
