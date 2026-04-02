@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { subscriptionAPI, analyticsAPI, servicesAPI, notificationAPI } from '../services/api';
 
-// 공통 fetch 훅
 function useFetch<T>(fetcher: () => Promise<{ data: T }>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,32 +24,58 @@ function useFetch<T>(fetcher: () => Promise<{ data: T }>, deps: unknown[] = []) 
   return { data, loading, error, refetch };
 }
 
-// ── 구독 목록 ──
+// ── Subscriptions ──
 export function useSubscriptions() {
   return useFetch(() => subscriptionAPI.getAll());
 }
 
-// ── 분석 개요 ──
+export function useUpcomingSubscriptions() {
+  return useFetch(() => subscriptionAPI.getUpcoming());
+}
+
+export function useCalendarEvents(year: number, month: number) {
+  return useFetch(() => subscriptionAPI.getCalendarEvents(year, month), [year, month]);
+}
+
+export function useTimeline() {
+  return useFetch(() => subscriptionAPI.getTimeline());
+}
+
+// ── Analytics ──
 export function useAnalyticsOverview() {
   return useFetch(() => analyticsAPI.getOverview());
 }
 
-// ── 카테고리별 지출 ──
-export function useSpendingByCategory() {
-  return useFetch(() => analyticsAPI.getSpendingByCategory());
+export function useCategoryBreakdown() {
+  return useFetch(() => analyticsAPI.getCategoryBreakdown());
 }
 
-// ── 월별 추이 ──
 export function useSpendingTrend() {
   return useFetch(() => analyticsAPI.getSpendingTrend());
 }
 
-// ── 서비스 카탈로그 ──
+export function useSavingsSuggestions() {
+  return useFetch(() => analyticsAPI.getSavingsSuggestions());
+}
+
+export function useBudgetStatus() {
+  return useFetch(() => analyticsAPI.getBudgetStatus());
+}
+
+export function usePriceChanges() {
+  return useFetch(() => analyticsAPI.getPriceChanges());
+}
+
+export function useOverlaps() {
+  return useFetch(() => analyticsAPI.getOverlaps());
+}
+
+// ── Services ──
 export function useServices() {
   return useFetch(() => servicesAPI.getAll());
 }
 
-// ── 알림 설정 ──
+// ── Notifications ──
 export function useNotificationSettings() {
   return useFetch(() => notificationAPI.getSettings());
 }

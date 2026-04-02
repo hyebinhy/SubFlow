@@ -78,6 +78,16 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
           >
             수정
           </button>
+          {subscription.service?.cancel_url && subscription.status === "active" && (
+            <a
+              href={subscription.service.cancel_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50"
+            >
+              해지하기
+            </a>
+          )}
           <button
             onClick={() => onDelete(subscription.id)}
             className="rounded-lg px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"

@@ -24,7 +24,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconActive]}>
-              <Ionicons name="grid" size={24} color={color} />
+              <Ionicons name="home" size={24} color={color} />
             </View>
           ),
         }}
@@ -34,7 +34,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconActive]}>
-              <Ionicons name="time" size={24} color={color} />
+              <Ionicons name="card" size={24} color={color} />
             </View>
           ),
         }}
@@ -44,7 +44,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconActive]}>
-              <Ionicons name="people" size={24} color={color} />
+              <Ionicons name="search" size={24} color={color} />
             </View>
           ),
         }}
@@ -54,7 +54,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconActive]}>
-              <Ionicons name="list" size={24} color={color} />
+              <Ionicons name="bar-chart" size={24} color={color} />
             </View>
           ),
         }}
@@ -64,7 +64,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconActive]}>
-              <Ionicons name="sparkles" size={24} color={color} />
+              <Ionicons name="calendar" size={24} color={color} />
             </View>
           ),
         }}

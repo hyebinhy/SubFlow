@@ -20,6 +20,7 @@ export interface Service {
   category?: Category;
   logo_url?: string;
   website_url?: string;
+  cancel_url?: string;
   is_popular: boolean;
   created_at: string;
   plans: ServicePlan[];

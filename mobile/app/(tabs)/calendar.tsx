@@ -1,128 +1,192 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card } from '../../src/components/Card';
+import { router } from 'expo-router';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
-import {
-  Colors,
-  Spacing,
-  FontSize,
-  FontWeight,
-  BorderRadius,
-  Shadow,
-} from '../../src/constants/theme';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useCalendarEvents } from '../../src/hooks/useApi';
+import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const PAYMENT_DAYS: Record<number, { name: string; amount: number; color: string }[]> = {
-  7: [{ name: 'Netflix', amount: 17000, color: '#E50914' }],
-  12: [{ name: 'Spotify', amount: 10900, color: '#1DB954' }],
-  15: [{ name: 'YouTube', amount: 14900, color: '#FF0000' }],
-  20: [{ name: 'iCloud+', amount: 3900, color: '#007AFF' }],
-};
+const DAYS_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS_KO = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+function getFirstDayOfMonth(year: number, month: number) {
+  return new Date(year, month, 1).getDay();
+}
 
 export default function CalendarScreen() {
-  const [currentDate] = useState(new Date(2026, 3, 1));
-  const today = 2;
+  const { t, language } = useTranslation();
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+
+  const calendarEvents = useCalendarEvents(year, month + 1);
+
+  // Mock fallback 결제 이벤트
+  const MOCK_EVENTS = [
+    { service_name: 'Netflix', billing_amount: 17000, billing_date: `${year}-${String(month+1).padStart(2,'0')}-07` },
+    { service_name: 'Spotify', billing_amount: 10900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-12` },
+    { service_name: 'YouTube Premium', billing_amount: 14900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-15` },
+    { service_name: 'iCloud+', billing_amount: 3900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-20` },
+    { service_name: 'ChatGPT Plus', billing_amount: 26000, billing_date: `${year}-${String(month+1).padStart(2,'0')}-22` },
+  ];
+
+  const apiEvents = (calendarEvents.data as any)?.events ?? [];
+  const events = apiEvents.length > 0 ? apiEvents : (calendarEvents.error ? MOCK_EVENTS : apiEvents);
+
+  const todayDay = (year === now.getFullYear() && month === now.getMonth()) ? now.getDate() : -1;
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  const days = language === 'ko' ? DAYS_KO : DAYS_EN;
+  const monthName = language === 'ko' ? `${year}년 ${MONTHS_KO[month]}` : `${MONTHS_EN[month]} ${year}`;
+
+  // 결제일 맵 (day → events[])
+  const paymentMap = useMemo(() => {
+    const map: Record<number, any[]> = {};
+    for (const ev of events) {
+      const d = new Date(ev.billing_date ?? ev.next_billing_date).getDate();
+      if (!map[d]) map[d] = [];
+      map[d].push(ev);
+    }
+    return map;
+  }, [events]);
 
   const calendarDays: (number | null)[] = [];
-  for (let i = 0; i < 3; i++) calendarDays.push(null); // Wed start
-  for (let i = 1; i <= 30; i++) calendarDays.push(i);
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
-  const monthTotal = Object.values(PAYMENT_DAYS).flat().reduce((sum, p) => sum + p.amount, 0);
+  const monthTotal = events.reduce((s: number, e: any) => s + (e.billing_amount ?? e.amount ?? 0), 0);
+
+  // 다가오는 결제 (오늘 이후)
+  const upcoming = events
+    .filter((e: any) => {
+      const d = new Date(e.billing_date ?? e.next_billing_date).getDate();
+      return d >= todayDay;
+    })
+    .sort((a: any, b: any) => new Date(a.billing_date ?? a.next_billing_date).getTime() - new Date(b.billing_date ?? b.next_billing_date).getTime());
+
+  const prevMonth = () => {
+    if (month === 0) { setYear(y => y - 1); setMonth(11); }
+    else setMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (month === 11) { setYear(y => y + 1); setMonth(0); }
+    else setMonth(m => m + 1);
+  };
 
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
-        {/* 헤더 */}
         <View style={styles.header}>
-            <View style={styles.headerLeft}>
-                <View style={styles.logoMark}>
-                <Ionicons name="contract" size={20} color={Colors.textWhite} />
-                </View>
-                <Text style={styles.headerTitle}>Clerio</Text>
+          <View style={styles.headerLeft}>
+            <View style={styles.logoMark}>
+              <Ionicons name="contract" size={20} color={Colors.textWhite} />
             </View>
-            <View style={styles.headerRight}>
-                <TouchableOpacity style={styles.headerIconBtn}>
-                <Ionicons name="calendar-outline" size={20} color={Colors.textWhite} />
-                </TouchableOpacity>
-                <View style={styles.headerAvatar}>
-                   <Ionicons name="person" size={16} color={Colors.primary} />
-                </View>
+            <Text style={styles.headerTitle}>SubFlow</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
+              <Ionicons name="calendar-outline" size={20} color={Colors.textWhite} />
+            </TouchableOpacity>
+            <View style={styles.headerAvatar}>
+              <Ionicons name="person" size={16} color={Colors.primary} />
             </View>
+          </View>
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.pageHeader}>
-             <Text style={styles.subTitle}>Payment Schedule</Text>
-             <Text style={styles.mainTitle}>April 2026</Text>
-             
-             <View style={styles.summaryPills}>
-               <View style={styles.pill}>
-                  <Text style={styles.pillLabel}>Budget:</Text>
-                  <Text style={styles.pillValue}>₩100K</Text>
-               </View>
-               <View style={[styles.pill, {backgroundColor: 'rgba(255,255,255,0.7)'}]}>
-                  <Text style={styles.pillLabel}>To Pay:</Text>
-                  <Text style={styles.pillValue}>₩{monthTotal.toLocaleString()}</Text>
-               </View>
-             </View>
+            <Text style={styles.subTitle}>{t('calendar.title')}</Text>
+            <Text style={styles.mainTitle}>{monthName}</Text>
+            <View style={styles.summaryPills}>
+              <View style={styles.pill}>
+                <Text style={styles.pillLabel}>{t('home.budget')}:</Text>
+                <Text style={styles.pillValue}>₩100K</Text>
+              </View>
+              <View style={[styles.pill, { backgroundColor: 'rgba(255,255,255,0.7)' }]}>
+                <Text style={styles.pillLabel}>{t('calendar.thisMonth')}:</Text>
+                <Text style={styles.pillValue}>₩{monthTotal.toLocaleString()}</Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.cardContainer}>
-             <View style={styles.mainWhiteCard}>
-                <View style={styles.monthNav}>
-                   <TouchableOpacity><Ionicons name="chevron-back" size={20} color={Colors.textTertiary} /></TouchableOpacity>
-                   <Text style={styles.monthTitle}>April</Text>
-                   <TouchableOpacity><Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} /></TouchableOpacity>
-                </View>
+            <View style={styles.mainWhiteCard}>
+              {/* 월 네비게이션 */}
+              <View style={styles.monthNav}>
+                <TouchableOpacity onPress={prevMonth}>
+                  <Ionicons name="chevron-back" size={20} color={Colors.textTertiary} />
+                </TouchableOpacity>
+                <Text style={styles.monthTitle}>
+                  {language === 'ko' ? MONTHS_KO[month] : MONTHS_EN[month]}
+                </Text>
+                <TouchableOpacity onPress={nextMonth}>
+                  <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+                </TouchableOpacity>
+              </View>
 
-                {/* 요일 */}
-                <View style={styles.weekRow}>
-                   {DAYS.map((d, i) => <Text key={i} style={styles.weekDay}>{d}</Text>)}
-                </View>
+              <View style={styles.weekRow}>
+                {days.map((d, i) => <Text key={i} style={styles.weekDay}>{d}</Text>)}
+              </View>
 
-                {/* 날짜 그리드 */}
+              {calendarEvents.loading ? (
+                <ActivityIndicator style={{ padding: 40 }} color={Colors.primary} />
+              ) : (
                 <View style={styles.calGrid}>
-                   {calendarDays.map((day, i) => {
-                      const hasPayment = day ? PAYMENT_DAYS[day] : null;
-                      const isToday = day === today;
-                      return (
-                         <View key={i} style={styles.calCell}>
-                            {day && (
-                               <View style={[styles.dayWrap, isToday && styles.todayWrap]}>
-                                  <Text style={[styles.dayText, isToday && styles.todayText]}>{day}</Text>
-                                  {hasPayment && <View style={styles.dotRow}>{hasPayment.map((p, j) => <View key={j} style={[styles.payDot, {backgroundColor: p.color}]} />)}</View>}
-                               </View>
+                  {calendarDays.map((day, i) => {
+                    const hasPayment = day ? paymentMap[day] : null;
+                    const isToday = day === todayDay;
+                    return (
+                      <View key={i} style={styles.calCell}>
+                        {day && (
+                          <View style={[styles.dayWrap, isToday && styles.todayWrap]}>
+                            <Text style={[styles.dayText, isToday && styles.todayText]}>{day}</Text>
+                            {hasPayment && (
+                              <View style={styles.dotRow}>
+                                {hasPayment.map((p: any, j: number) => (
+                                  <View key={j} style={[styles.payDot, { backgroundColor: Colors.danger }]} />
+                                ))}
+                              </View>
                             )}
-                         </View>
-                      );
-                   })}
-                </View>
-
-                <View style={styles.divider} />
-                
-                <Text style={styles.sectionTitle}>Upcoming</Text>
-                {Object.entries(PAYMENT_DAYS).map(([day, payments]) => 
-                  payments.map((p, i) => (
-                    <View key={`${day}-${i}`} style={styles.upcomingItem}>
-                      <ServiceLogo name={p.name} size={40} />
-                      <View style={styles.upcomingInfo}>
-                        <Text style={styles.upcomingName}>{p.name}</Text>
-                        <Text style={styles.upcomingDate}>April {day}</Text>
+                          </View>
+                        )}
                       </View>
-                      <Text style={styles.upcomingAmount}>₩{p.amount.toLocaleString()}</Text>
+                    );
+                  })}
+                </View>
+              )}
+
+              <View style={styles.divider} />
+
+              <Text style={styles.sectionTitle}>{t('calendar.upcoming')}</Text>
+              {upcoming.length > 0 ? upcoming.map((ev: any, i: number) => {
+                const d = new Date(ev.billing_date ?? ev.next_billing_date);
+                const dateStr = language === 'ko'
+                  ? `${d.getMonth() + 1}월 ${d.getDate()}일`
+                  : `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`;
+                return (
+                  <View key={i} style={styles.upcomingItem}>
+                    <ServiceLogo name={ev.service_name} size={40} />
+                    <View style={styles.upcomingInfo}>
+                      <Text style={styles.upcomingName}>{ev.service_name}</Text>
+                      <Text style={styles.upcomingDate}>{dateStr}</Text>
                     </View>
-                  ))
-                )}
-             </View>
+                    <Text style={styles.upcomingAmount}>₩{(ev.billing_amount ?? ev.amount ?? 0).toLocaleString()}</Text>
+                  </View>
+                );
+              }) : (
+                <Text style={styles.emptyText}>{t('common.noData')}</Text>
+              )}
+            </View>
           </View>
 
           <View style={{ height: 120 }} />
@@ -137,19 +201,13 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm
+    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  logoMark: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center', alignItems: 'center'
-  },
+  logoMark: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textWhite },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  headerIconBtn: {
-    width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center', alignItems: 'center'
-  },
+  headerIconBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' },
   headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl },
@@ -157,16 +215,11 @@ const styles = StyleSheet.create({
   subTitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.7)', fontWeight: FontWeight.medium, marginBottom: 4 },
   mainTitle: { fontSize: 42, fontWeight: FontWeight.heavy, color: '#FFF', letterSpacing: -1 },
   summaryPills: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.lg },
-  pill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: Colors.surface, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20
-  },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.surface, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   pillLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, fontWeight: FontWeight.medium },
   pillValue: { fontSize: FontSize.sm, color: Colors.textPrimary, fontWeight: FontWeight.bold },
   cardContainer: { marginTop: Spacing.sm, paddingHorizontal: Spacing.sm },
-  mainWhiteCard: {
-    backgroundColor: '#FFF', borderRadius: 40, padding: Spacing.xxl, ...Shadow.md
-  },
+  mainWhiteCard: { backgroundColor: '#FFF', borderRadius: 40, padding: Spacing.xxl, ...Shadow.md },
   monthNav: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, marginBottom: Spacing.xl },
   monthTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   weekRow: { flexDirection: 'row', marginBottom: Spacing.md },
@@ -185,5 +238,6 @@ const styles = StyleSheet.create({
   upcomingInfo: { flex: 1, marginLeft: Spacing.md },
   upcomingName: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   upcomingDate: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
-  upcomingAmount: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary }
+  upcomingAmount: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  emptyText: { fontSize: FontSize.sm, color: Colors.textTertiary, textAlign: 'center' },
 });

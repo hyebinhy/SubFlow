@@ -1,109 +1,91 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Colors,
-  Spacing,
-  FontSize,
-  FontWeight,
-  BorderRadius,
-  Shadow,
-} from '../../src/constants/theme';
+import { router } from 'expo-router';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useAnalyticsOverview, useCategoryBreakdown, useSpendingTrend, useSavingsSuggestions, useBudgetStatus } from '../../src/hooks/useApi';
+import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
-// 밀집된 바 차트 컴포넌트
-function DensityBarChart() {
-  const data = Array.from({ length: 40 }, (_, i) => {
-    let type = 'normal';
-    // 몇몇 바는 약간 붉은색(open/warning)
-    if (i === 12 || i === 18) type = 'warning';
-    
-    return {
-      height: Math.random() * 60 + 10,
-      type,
-    };
-  });
-
+// ── 월별 추이 바 차트 (디자인 유지) ──
+function TrendBarChart({ data }: { data: { month: string; amount: number }[] }) {
+  const max = Math.max(...data.map(d => d.amount), 1);
   return (
     <View style={chartStyles.container}>
-      {data.map((bar, i) => (
-        <View key={i} style={chartStyles.barWrap}>
-          <View
-            style={[
-              chartStyles.bar,
-              { 
-                height: bar.height, 
-                backgroundColor: bar.type === 'warning' ? '#FFA07A' : '#AEEA00',
-                opacity: bar.type === 'normal' ? 0.6 : 1
-              },
-            ]}
-          />
-        </View>
-      ))}
-      <View style={chartStyles.baseline} />
-      {/* 둥근 아이콘 마커들 (대략적인 위치) */}
-      <View style={[chartStyles.marker, { left: '15%', bottom: 20 }]}>
-        <Ionicons name="arrow-up-circle" size={14} color="#AEEA00" />
-      </View>
-      <View style={[chartStyles.marker, { left: '45%', bottom: 30 }]}>
-        <Ionicons name="alert-circle" size={14} color="#FFA07A" />
-      </View>
-      <View style={[chartStyles.marker, { right: '20%', bottom: 40 }]}>
-        <Ionicons name="arrow-up-circle" size={14} color="#AEEA00" />
-      </View>
+      {data.map((bar, i) => {
+        const isLast = i === data.length - 1;
+        return (
+          <View key={i} style={chartStyles.barWrap}>
+            <View
+              style={[
+                chartStyles.bar,
+                {
+                  height: (bar.amount / max) * 100,
+                  backgroundColor: isLast ? Colors.success : '#AEEA00',
+                  opacity: isLast ? 1 : 0.6,
+                },
+              ]}
+            />
+          </View>
+        );
+      })}
     </View>
   );
 }
 
 const chartStyles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 120,
-    marginTop: Spacing.xl,
-    paddingHorizontal: Spacing.sm,
-    position: 'relative'
+    flexDirection: 'row', alignItems: 'flex-end', height: 120,
+    marginTop: Spacing.xl, paddingHorizontal: Spacing.sm,
   },
-  barWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  bar: {
-    width: 2,
-    borderRadius: 1,
-  },
-  baseline: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  marker: {
-    position: 'absolute',
-    backgroundColor: '#fff',
-    borderRadius: 7,
-  }
+  barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  bar: { width: 3, borderRadius: 2 },
 });
 
 export default function AnalyticsScreen() {
+  const { t } = useTranslation();
+  const overview = useAnalyticsOverview();
+  const categories = useCategoryBreakdown();
+  const trend = useSpendingTrend();
+  const savings = useSavingsSuggestions();
+  const budget = useBudgetStatus();
+
+  const isLoading = overview.loading;
+
+  // API 데이터 없으면 mock fallback
+  const MOCK_OVERVIEW = {
+    total_monthly_krw: 72700, total_yearly_krw: 872400,
+    active_count: 5, paused_count: 1, trial_count: 0,
+  };
+  const MOCK_CATEGORIES = [
+    { category_name: 'Entertainment', total_krw: 31900, percentage: 43.9, color: '#E50914' },
+    { category_name: 'Music', total_krw: 10900, percentage: 15.0, color: '#1DB954' },
+    { category_name: 'Developer Tools', total_krw: 26000, percentage: 35.8, color: '#10A37F' },
+    { category_name: 'Cloud', total_krw: 3900, percentage: 5.4, color: '#3693F5' },
+  ];
+  const MOCK_TREND = [
+    { month: 'Nov', amount: 62000 }, { month: 'Dec', amount: 58000 },
+    { month: 'Jan', amount: 61000 }, { month: 'Feb', amount: 57900 },
+    { month: 'Mar', amount: 72700 }, { month: 'Apr', amount: 72700 },
+  ];
+  const MOCK_SAVINGS = [
+    { message: 'Netflix와 YouTube Premium 동시 사용 중 — YouTube 해지 시 월 ₩14,900 절약' },
+    { message: 'ChatGPT Plus를 연간 결제로 전환 시 약 20% 할인 가능' },
+  ];
+
+  const ov = (overview.data as any) ?? (overview.error ? MOCK_OVERVIEW : null);
+  const cats = ((categories.data as any)?.categories ?? []).length > 0
+    ? (categories.data as any).categories : (categories.error ? MOCK_CATEGORIES : []);
+  const trendData = ((trend.data as any)?.months ?? []).length > 0
+    ? (trend.data as any).months : (trend.error ? MOCK_TREND : []);
+  const savingsList = ((savings.data as any)?.suggestions ?? []).length > 0
+    ? (savings.data as any).suggestions : (savings.error ? MOCK_SAVINGS : []);
+
   return (
-    <LinearGradient
-      colors={[Colors.primaryBg, Colors.background]}
-      style={styles.container}
-    >
+    <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         {/* 헤더 */}
         <View style={styles.header}>
@@ -111,13 +93,13 @@ export default function AnalyticsScreen() {
             <View style={styles.logoMark}>
               <Ionicons name="contract" size={20} color={Colors.textWhite} />
             </View>
-            <Text style={styles.headerTitle}>Clerio</Text>
+            <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIconBtn}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
               <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerIconBtn}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
               <Ionicons name="settings-outline" size={20} color={Colors.textWhite} />
             </TouchableOpacity>
             <View style={styles.headerAvatar}>
@@ -126,93 +108,146 @@ export default function AnalyticsScreen() {
           </View>
         </View>
 
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* 상단 그래프 카드 */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleWrap}>
-                <Ionicons name="briefcase" size={20} color={Colors.textPrimary} />
-                <Text style={styles.cardTitle}>On-Time Month Closures</Text>
-              </View>
-              <View style={styles.roundArrowBtn}>
-                <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
-              </View>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {isLoading ? (
+            <View style={{ paddingTop: 100, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color={Colors.primary} />
             </View>
-
-            <Text style={styles.subText}>Typical Account Metrics</Text>
-            <Text style={styles.largePercent}>77,24%</Text>
-
-            <DensityBarChart />
-
-            {/* 통계 요약 */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>88 <Ionicons name="checkmark-circle" size={12} color="#AEEA00" /></Text>
-                <Text style={styles.statLabel}>Closed</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>19 <Ionicons name="warning" size={12} color="#FFA07A" /></Text>
-                <Text style={styles.statLabel}>Open</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>19/5 <Ionicons name="close-circle" size={12} color="#FFD54F" /></Text>
-                <Text style={styles.statLabel}>Timely</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>84/0 <Ionicons name="ellipse" size={12} color="#AEEA00" /></Text>
-                <Text style={styles.statLabel}>On Time</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* AI Assistant 구역 */}
-          <View style={styles.aiCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleWrap}>
-                <Ionicons name="sparkles" size={20} color={Colors.textPrimary} />
-                <Text style={styles.cardTitle}>AI Assistant</Text>
-              </View>
-              <View style={{flexDirection: 'row', gap: 8}}>
-                <View style={styles.roundArrowBtn}>
-                  <Ionicons name="document-text" size={16} color={Colors.textPrimary} />
+          ) : (
+            <>
+              {/* ── 지출 현황 카드 (기존 On-Time 위치) ── */}
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleWrap}>
+                    <Ionicons name="pie-chart" size={20} color={Colors.textPrimary} />
+                    <Text style={styles.cardTitle}>{t('analytics.title')}</Text>
+                  </View>
+                  <View style={styles.roundArrowBtn}>
+                    <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
+                  </View>
                 </View>
-                <View style={styles.roundArrowBtn}>
-                  <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
-                </View>
-              </View>
-            </View>
 
-            {/* AI 채팅 내용 */}
-            <View style={styles.chatContainer}>
-              {/* AI의 메세지 */}
-              <View style={styles.messageRow}>
-                <View style={styles.aiAvatar}>
-                  <Ionicons name="color-wand" size={16} color={Colors.textWhite} />
-                </View>
-                <View style={styles.aiBubble}>
-                  <Text style={styles.chatText}>Please upload a PDF for data processing.</Text>
-                </View>
-                <Text style={styles.chatTime}>10:57</Text>
-              </View>
+                <Text style={styles.subText}>{t('analytics.monthly')}</Text>
+                <Text style={styles.largePercent}>
+                  ₩{(ov?.total_monthly_krw ?? 0).toLocaleString()}
+                </Text>
 
-              {/* 내 메세지 */}
-              <View style={[styles.messageRow, { justifyContent: 'flex-end', marginTop: Spacing.xl }]}>
-                <Text style={styles.chatTime}>10:59</Text>
-                <View style={styles.myBubble}>
-                  <Text style={[styles.chatText, { color: Colors.textPrimary }]}>
-                    Sure, I'm uploading the document now. Let me know...
-                  </Text>
-                </View>
-                <View style={styles.myAvatar}>
-                  <Ionicons name="person" size={16} color={Colors.textWhite} />
+                {/* 월별 추이 차트 */}
+                {trendData.length > 0 && (
+                  <TrendBarChart data={trendData} />
+                )}
+
+                {/* 통계 요약 */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {ov?.active_count ?? 0}{' '}
+                      <Ionicons name="checkmark-circle" size={12} color={Colors.success} />
+                    </Text>
+                    <Text style={styles.statLabel}>{t('common.active')}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {ov?.paused_count ?? 0}{' '}
+                      <Ionicons name="pause-circle" size={12} color="#FFD54F" />
+                    </Text>
+                    <Text style={styles.statLabel}>{t('common.paused')}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {ov?.trial_count ?? 0}{' '}
+                      <Ionicons name="time" size={12} color="#5AC8FA" />
+                    </Text>
+                    <Text style={styles.statLabel}>Trial</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      ₩{((ov?.total_yearly_krw ?? 0) / 1000).toFixed(0)}K
+                    </Text>
+                    <Text style={styles.statLabel}>{t('analytics.yearly')}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
+
+              {/* ── 카테고리별 지출 (기존 AI Assistant 위치) ── */}
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleWrap}>
+                    <Ionicons name="grid" size={20} color={Colors.textPrimary} />
+                    <Text style={styles.cardTitle}>{t('analytics.byCategory')}</Text>
+                  </View>
+                  <View style={styles.roundArrowBtn}>
+                    <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
+                  </View>
+                </View>
+
+                {cats.map((cat: any, i: number) => (
+                  <View key={i} style={styles.catRow}>
+                    <View style={[styles.catDot, { backgroundColor: cat.color || Colors.primary }]} />
+                    <Text style={styles.catName}>{cat.category_name}</Text>
+                    <Text style={styles.catPercent}>{cat.percentage?.toFixed(0)}%</Text>
+                    <Text style={styles.catAmount}>₩{(cat.total_krw ?? 0).toLocaleString()}</Text>
+                  </View>
+                ))}
+
+                {cats.length === 0 && (
+                  <Text style={styles.emptyText}>{t('common.noData')}</Text>
+                )}
+              </View>
+
+              {/* ── 절약 제안 카드 ── */}
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleWrap}>
+                    <Ionicons name="bulb" size={20} color={Colors.textPrimary} />
+                    <Text style={styles.cardTitle}>{t('analytics.savingInsight')}</Text>
+                  </View>
+                </View>
+
+                {savingsList.map((s: any, i: number) => (
+                  <View key={i} style={styles.suggestionRow}>
+                    <Ionicons name="arrow-down-circle" size={16} color={Colors.success} />
+                    <Text style={styles.suggestionText}>{s.message}</Text>
+                  </View>
+                ))}
+
+                {savingsList.length === 0 && (
+                  <Text style={styles.emptyText}>{t('common.noData')}</Text>
+                )}
+              </View>
+
+              {/* ── 예산 현황 ── */}
+              {((budget.data as any)?.monthly_budget > 0 || budget.error) && (
+                <View style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardTitleWrap}>
+                      <Ionicons name="wallet" size={20} color={Colors.textPrimary} />
+                      <Text style={styles.cardTitle}>{t('settings.monthlyBudget')}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.budgetBar}>
+                    <View
+                      style={[
+                        styles.budgetFill,
+                        {
+                          width: `${Math.min(((budget.data as any)?.usage_percentage ?? 0), 100)}%`,
+                          backgroundColor: ((budget.data as any)?.usage_percentage ?? 0) > 80 ? Colors.danger : Colors.success,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.budgetLabels}>
+                    <Text style={styles.budgetText}>
+                      ₩{((budget.data as any)?.total_spent ?? 0).toLocaleString()}
+                    </Text>
+                    <Text style={styles.budgetText}>
+                      / ₩{((budget.data as any)?.monthly_budget ?? 0).toLocaleString()}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
 
           <View style={{ height: 160 }} />
         </ScrollView>
@@ -224,25 +259,19 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
-  // Header
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   logoMark: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textWhite },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   headerIconBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+    width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center', alignItems: 'center',
   },
   headerAvatar: {
@@ -251,73 +280,36 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
-  
-  // Cards
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 40,
-    padding: Spacing.xxl,
-    marginBottom: Spacing.lg,
-    ...Shadow.md,
+    backgroundColor: Colors.surface, borderRadius: 40, padding: Spacing.xxl,
+    marginBottom: Spacing.lg, ...Shadow.md,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   cardTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   roundArrowBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 1, borderColor: Colors.border,
+    width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: Colors.border,
     justifyContent: 'center', alignItems: 'center',
   },
   subText: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: Spacing.lg },
   largePercent: { fontSize: 48, fontWeight: FontWeight.heavy, color: Colors.textPrimary, letterSpacing: -1.5, marginTop: -4 },
-  
-  // Stats row
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.xl,
-  },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.xl },
   statItem: { alignItems: 'flex-start' },
   statNumber: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   statLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4 },
-
-  // AI Card
-  aiCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 40,
-    padding: Spacing.xxl,
-    ...Shadow.md,
-    minHeight: 250,
-  },
-  chatContainer: {
-    marginTop: Spacing.xl,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  aiAvatar: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#C5D6E6',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  aiBubble: {
-    flex: 1,
-  },
-  myAvatar: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#FFB8A1',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  myBubble: {
-    backgroundColor: Colors.primarySoft,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderBottomRightRadius: 4,
-    maxWidth: '70%',
-  },
-  chatText: { fontSize: FontSize.sm, color: Colors.textPrimary, fontWeight: FontWeight.medium },
-  chatTime: { fontSize: FontSize.xs, color: Colors.textTertiary },
+  // Category
+  catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm },
+  catDot: { width: 10, height: 10, borderRadius: 5, marginRight: Spacing.md },
+  catName: { flex: 1, fontSize: FontSize.md, color: Colors.textPrimary, fontWeight: FontWeight.medium },
+  catPercent: { fontSize: FontSize.sm, color: Colors.textTertiary, marginRight: Spacing.md },
+  catAmount: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textPrimary },
+  // Suggestions
+  suggestionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm, marginTop: Spacing.md },
+  suggestionText: { flex: 1, fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20 },
+  // Budget
+  budgetBar: { height: 8, borderRadius: 4, backgroundColor: Colors.borderLight, marginTop: Spacing.lg, overflow: 'hidden' },
+  budgetFill: { height: '100%', borderRadius: 4 },
+  budgetLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.sm },
+  budgetText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: FontWeight.medium },
+  emptyText: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: Spacing.lg, textAlign: 'center' },
 });

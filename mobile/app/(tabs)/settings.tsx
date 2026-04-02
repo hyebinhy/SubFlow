@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Card } from '../../src/components/Card';
+import { notificationAPI } from '../../src/services/api';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
@@ -67,6 +68,15 @@ export default function SettingsScreen() {
     setLanguage(language === 'en' ? 'ko' : 'en');
   };
 
+  const syncPush = (v: boolean) => {
+    setPushEnabled(v);
+    notificationAPI.updateSettings({ push_enabled: v }).catch(() => {});
+  };
+  const syncEmail = (v: boolean) => {
+    setEmailEnabled(v);
+    notificationAPI.updateSettings({ email_enabled: v }).catch(() => {});
+  };
+
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={{ flex: 1 }}>
       <SafeAreaView style={styles.safe}>
@@ -98,7 +108,7 @@ export default function SettingsScreen() {
               title={t('settings.pushNotif')}
               subtitle={t('settings.pushDesc')}
               rightElement={
-                <Switch value={pushEnabled} onValueChange={setPushEnabled}
+                <Switch value={pushEnabled} onValueChange={syncPush}
                   trackColor={{ true: Colors.primary, false: Colors.border }} thumbColor={Colors.surface} />
               }
             />
@@ -108,7 +118,7 @@ export default function SettingsScreen() {
               title={t('settings.emailNotif')}
               subtitle={t('settings.emailDesc')}
               rightElement={
-                <Switch value={emailEnabled} onValueChange={setEmailEnabled}
+                <Switch value={emailEnabled} onValueChange={syncEmail}
                   trackColor={{ true: Colors.primary, false: Colors.border }} thumbColor={Colors.surface} />
               }
             />

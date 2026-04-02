@@ -31,6 +31,7 @@ DEFAULT_SERVICES = {
             "name": "Netflix",
             "description": "영화, 드라마, 다큐멘터리 등 다양한 콘텐츠를 제공하는 글로벌 OTT 서비스",
             "website_url": "https://www.netflix.com",
+            "cancel_url": "https://www.netflix.com/cancelplan",
             "logo_url": "/logos/netflix.png",
             "is_popular": True,
             "plans": [
@@ -43,6 +44,7 @@ DEFAULT_SERVICES = {
             "name": "YouTube Premium",
             "description": "광고 없는 유튜브, YouTube Music, 오프라인 저장 등",
             "website_url": "https://www.youtube.com/premium",
+            "cancel_url": "https://myaccount.google.com/subscriptions",
             "logo_url": "/logos/youtube.png",
             "is_popular": True,
             "plans": [
@@ -55,6 +57,7 @@ DEFAULT_SERVICES = {
             "name": "Disney+",
             "description": "디즈니, 마블, 스타워즈, 픽사 등 콘텐츠 스트리밍 서비스",
             "website_url": "https://www.disneyplus.com",
+            "cancel_url": "https://www.disneyplus.com/account/subscription",
             "logo_url": "/logos/disneyplus.png",
             "is_popular": True,
             "plans": [
@@ -66,6 +69,7 @@ DEFAULT_SERVICES = {
             "name": "Wavve",
             "description": "KBS, MBC, SBS 콘텐츠를 제공하는 국내 OTT 서비스",
             "website_url": "https://www.wavve.com",
+            "cancel_url": "https://www.wavve.com/my/subscription",
             "logo_url": "/logos/wavve.png",
             "is_popular": True,
             "plans": [
@@ -78,6 +82,7 @@ DEFAULT_SERVICES = {
             "name": "Tving",
             "description": "CJ ENM 콘텐츠를 중심으로 한 국내 OTT 서비스",
             "website_url": "https://www.tving.com",
+            "cancel_url": "https://www.tving.com/my/membership",
             "logo_url": "/logos/tving.png",
             "is_popular": True,
             "plans": [
@@ -91,6 +96,7 @@ DEFAULT_SERVICES = {
             "name": "Watcha",
             "description": "영화, 드라마, 애니메이션 등을 제공하는 국내 OTT 서비스",
             "website_url": "https://www.watcha.com",
+            "cancel_url": "https://www.watcha.com/settings/account",
             "logo_url": "/logos/watcha.png",
             "is_popular": False,
             "plans": [
@@ -102,6 +108,7 @@ DEFAULT_SERVICES = {
             "name": "Apple TV+",
             "description": "Apple 오리지널 콘텐츠를 제공하는 스트리밍 서비스",
             "website_url": "https://tv.apple.com",
+            "cancel_url": "https://support.apple.com/ko-kr/118428",
             "logo_url": "/logos/appletv.png",
             "is_popular": False,
             "plans": [
@@ -112,6 +119,7 @@ DEFAULT_SERVICES = {
             "name": "Coupang Play",
             "description": "쿠팡 로켓와우 회원을 위한 OTT 서비스",
             "website_url": "https://www.coupangplay.com",
+            "cancel_url": "https://www.coupang.com/np/coupangPlay/membership",
             "logo_url": "/logos/coupangplay.png",
             "is_popular": True,
             "plans": [
@@ -155,6 +163,7 @@ DEFAULT_SERVICES = {
             "name": "Spotify",
             "description": "전 세계 최대 음악 스트리밍 서비스",
             "website_url": "https://www.spotify.com",
+            "cancel_url": "https://www.spotify.com/account/subscription/",
             "logo_url": "/logos/spotify.png",
             "is_popular": True,
             "plans": [
@@ -169,6 +178,7 @@ DEFAULT_SERVICES = {
             "name": "Apple Music",
             "description": "Apple의 음악 스트리밍 서비스",
             "website_url": "https://music.apple.com",
+            "cancel_url": "https://support.apple.com/ko-kr/118428",
             "logo_url": "/logos/applemusic.png",
             "is_popular": True,
             "plans": [
@@ -180,6 +190,7 @@ DEFAULT_SERVICES = {
             "name": "Melon",
             "description": "국내 최대 음악 스트리밍 서비스",
             "website_url": "https://www.melon.com",
+            "cancel_url": "https://www.melon.com/mymusic/ticket/mymusicticket_listInfo.htm",
             "logo_url": "/logos/melon.png",
             "is_popular": True,
             "plans": [
@@ -213,6 +224,7 @@ DEFAULT_SERVICES = {
             "name": "YouTube Music",
             "description": "YouTube 기반 음악 스트리밍 서비스",
             "website_url": "https://music.youtube.com",
+            "cancel_url": "https://myaccount.google.com/subscriptions",
             "logo_url": "/logos/youtubemusic.png",
             "is_popular": True,
             "plans": [
@@ -279,6 +291,7 @@ DEFAULT_SERVICES = {
             "name": "ChatGPT Plus",
             "description": "OpenAI의 AI 챗봇 프리미엄 서비스",
             "website_url": "https://chat.openai.com",
+            "cancel_url": "https://chatgpt.com/settings/subscription",
             "logo_url": "/logos/chatgpt.png",
             "is_popular": True,
             "plans": [
@@ -291,6 +304,7 @@ DEFAULT_SERVICES = {
             "name": "Claude Pro",
             "description": "Anthropic의 AI 어시스턴트 프리미엄 서비스",
             "website_url": "https://claude.ai",
+            "cancel_url": "https://claude.ai/settings/billing",
             "logo_url": "/logos/claude.png",
             "is_popular": True,
             "plans": [
@@ -303,6 +317,7 @@ DEFAULT_SERVICES = {
             "name": "Notion",
             "description": "올인원 워크스페이스 — 문서, 위키, 프로젝트 관리",
             "website_url": "https://www.notion.so",
+            "cancel_url": "https://www.notion.so/my-account/plans",
             "logo_url": "/logos/notion.png",
             "is_popular": True,
             "plans": [
@@ -314,6 +329,7 @@ DEFAULT_SERVICES = {
             "name": "Figma",
             "description": "협업 디자인 툴 — UI/UX 디자인, 프로토타이핑",
             "website_url": "https://www.figma.com",
+            "cancel_url": "https://www.figma.com/settings/billing",
             "logo_url": "/logos/figma.png",
             "is_popular": True,
             "plans": [
@@ -1021,8 +1037,13 @@ async def seed_services(db: AsyncSession) -> None:
             plans_data = svc_data.get("plans", [])
 
             if svc_data["name"] in existing_services:
-                # Update existing service's plans
+                # Update existing service fields
                 service = existing_services[svc_data["name"]]
+                for field in ("cancel_url", "website_url", "logo_url", "description"):
+                    new_val = svc_data.get(field)
+                    if new_val and getattr(service, field) != new_val:
+                        setattr(service, field, new_val)
+                        changed = True
                 seed_plan_names = {p["name"] for p in plans_data}
 
                 for plan_data in plans_data:

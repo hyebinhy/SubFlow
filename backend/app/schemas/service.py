@@ -36,6 +36,7 @@ class ServiceResponse(BaseModel):
     category: CategoryResponse | None = None
     logo_url: str | None
     website_url: str | None
+    cancel_url: str | None = None
     is_popular: bool
     created_at: datetime
     plans: list[ServicePlanResponse] = []

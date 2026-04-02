@@ -44,7 +44,7 @@ const translations = {
   'home.spendingAnalysis': { en: 'Spending Analysis', ko: '지출 분석' },
   'home.subscribedFor': { en: 'Subscribed for', ko: '구독 기간' },
   'home.ofMonthlyCost': { en: 'of Monthly Cost', ko: '월 비용 비중' },
-  'home.paymentHistory': { en: 'Payment History', ko: '결제 이력' },
+  'home.paymentHistory': { en: 'Spend Share', ko: '지출 비중' },
   'home.billingSchedule': { en: 'Billing Schedule', ko: '결제 일정' },
   'home.priceIncrease': { en: 'Price increase expected next month', ko: '다음 달 가격 인상 예정' },
 

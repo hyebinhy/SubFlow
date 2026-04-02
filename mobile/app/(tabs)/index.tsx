@@ -6,6 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Modal,
+  Pressable,
+  TextInput,
+  Animated,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,20 +63,40 @@ function getDurationText(startDateStr: string) {
   return `Subscribed for ${months}m`;
 }
 
-// ── 바코드 스타일 진행 바 (Payment 카드용) ──
-function BarcodeProgress() {
-  const data = Array.from({ length: 45 }, (_, i) => ({
-    height: Math.random() * 20 + 10 + (i % 3 === 0 ? 5 : 0),
-    color: i < 28 ? Colors.success : Colors.borderLight, // 초록색(완료) vs 옅은 회색(대기)
-  }));
+// ── 구독 지출 비중 바코드 차트 ──
+function SpendShareChart({ subs, activeIndex }: { subs: Subscription[]; activeIndex: number }) {
+  const total = subs.reduce((s, sub) => s + sub.amount, 0);
+  if (total === 0 || subs.length === 0) return null;
+
+  // 구독당 최소 3개 바 보장, 비중에 비례해 추가 할당
+  const MIN_BARS = 3;
+  const expanded: { height: number; isActive: boolean }[] = [];
+
+  subs.forEach((sub, i) => {
+    const pct = (sub.amount / total) * 100;
+    const barCount = Math.max(Math.round(pct / 100 * 40), MIN_BARS);
+    const baseHeight = Math.max(pct * 0.4 + 8, 12);
+    const isActive = i === activeIndex;
+
+    for (let j = 0; j < barCount; j++) {
+      expanded.push({
+        height: baseHeight + (Math.random() * 8 - 4),
+        isActive,
+      });
+    }
+  });
+
   return (
     <View style={progressStyles.container}>
-      {data.map((bar, i) => (
-        <View key={i} style={progressStyles.barWrap}>
+      {expanded.map((bar, i) => (
+        <View key={i} style={[progressStyles.barWrap, { flex: 1 }]}>
           <View
             style={[
               progressStyles.bar,
-              { height: bar.height, backgroundColor: bar.color },
+              {
+                height: bar.height,
+                backgroundColor: bar.isActive ? Colors.success : Colors.borderLight,
+              },
             ]}
           />
         </View>
@@ -102,14 +127,70 @@ const progressStyles = StyleSheet.create({
 
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useSubscriptions, useAnalyticsOverview } from '../../src/hooks/useApi';
+import { useSettingsStore } from '../../src/store/settingsStore';
+import { notificationAPI } from '../../src/services/api';
 
 export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const { t } = useTranslation();
+  const [budgetModalVisible, setBudgetModalVisible] = React.useState(false);
+  const [budgetInput, setBudgetInput] = React.useState('');
+  const [showStatusInfo, setShowStatusInfo] = React.useState(false);
+  const { t, language } = useTranslation();
+  const { monthlyBudget, setMonthlyBudget } = useSettingsStore();
+  const subsQuery = useSubscriptions();
+  const overviewQuery = useAnalyticsOverview();
 
-  const totalMonthlySpend = MOCK_SUBSCRIPTIONS.reduce((sum, s) => sum + s.amount, 0);
-  const activeSub = MOCK_SUBSCRIPTIONS[activeIndex];
-  const spendPercent = ((activeSub.amount / totalMonthlySpend) * 100).toFixed(1);
+  // API 데이터가 있으면 사용, 없으면 mock fallback
+  const apiSubs = (subsQuery.data as any[]) ?? [];
+  const subs: Subscription[] = apiSubs.length > 0
+    ? apiSubs.filter((s: any) => s.status === 'active').map((s: any) => ({
+        id: String(s.id),
+        name: s.service_name ?? s.name ?? 'Unknown',
+        amount: s.billing_amount ?? s.amount ?? 0,
+        startDate: s.started_at ?? s.created_at ?? '2024-01-01',
+      }))
+    : MOCK_SUBSCRIPTIONS;
+
+  const totalMonthlySpend = subs.reduce((sum, s) => sum + s.amount, 0);
+  const activeSub = subs[Math.min(activeIndex, subs.length - 1)] ?? subs[0] ?? MOCK_SUBSCRIPTIONS[0];
+  const spendPercent = totalMonthlySpend > 0 ? ((activeSub.amount / totalMonthlySpend) * 100).toFixed(1) : '0';
+
+  // ── 예산 계산 ──
+  const budget = monthlyBudget ?? 0;
+  const budgetUsage = budget > 0 ? (totalMonthlySpend / budget) * 100 : 0;
+  const budgetStatus = budgetUsage > 100
+    ? { label: language === 'ko' ? '초과!' : 'Over!', color: Colors.danger }
+    : budgetUsage > 80
+    ? { label: language === 'ko' ? '주의' : 'Warning', color: '#FF9500' }
+    : budgetUsage > 50
+    ? { label: language === 'ko' ? '관리중' : 'On Track', color: Colors.success }
+    : { label: language === 'ko' ? '여유' : 'Good', color: Colors.success };
+
+  // 숫자에 콤마 추가 (1000 → 1,000)
+  const formatNumber = (val: string) => {
+    const num = val.replace(/[^0-9]/g, '');
+    if (!num) return '';
+    return Number(num).toLocaleString();
+  };
+
+  const handleBudgetInput = (val: string) => {
+    setBudgetInput(formatNumber(val));
+  };
+
+  const openBudgetModal = () => {
+    setBudgetInput(budget > 0 ? budget.toLocaleString() : '');
+    setBudgetModalVisible(true);
+  };
+
+  const saveBudget = () => {
+    const val = parseInt(budgetInput.replace(/[^0-9]/g, ''), 10);
+    if (val > 0) {
+      setMonthlyBudget(val);
+      notificationAPI.updateSettings({ monthly_budget: val }).catch(() => {});
+    }
+    setBudgetModalVisible(false);
+  };
 
   return (
     <LinearGradient
@@ -148,18 +229,20 @@ export default function HomeScreen() {
             <Text style={styles.subTitle}>{t('home.subtitle')}</Text>
             <Text style={styles.mainTitle}>{t('home.title')}</Text>
 
-            {/* 상태 뱃지 영역 (Glass) */}
+            {/* 상태 뱃지 영역 (Glass) — 예산 탭 가능 */}
             <View style={styles.statusPills}>
-              <View style={[styles.pillContainer, styles.glassPill]}>
+              <TouchableOpacity style={[styles.pillContainer, styles.glassPill]} onPress={openBudgetModal} activeOpacity={0.7}>
                 <Text style={styles.pillLabel}>{t('home.budget')}:</Text>
-                <Text style={styles.pillValue}>₩{totalMonthlySpend.toLocaleString()}</Text>
-              </View>
-              <View style={[styles.pillContainer, styles.glassPill]}>
+                <Text style={styles.pillValue}>
+                  {budget > 0 ? `₩${budget.toLocaleString()}` : (language === 'ko' ? '설정하기' : 'Set')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.pillContainer, styles.glassPill]} onPress={() => setShowStatusInfo(true)} activeOpacity={0.7}>
                 <Text style={styles.pillLabel}>{t('home.status')}:</Text>
-                <View style={[styles.statusBadge, { backgroundColor: Colors.success + '20' }]}>
-                  <Text style={[styles.statusText, { color: Colors.success }]}>{t('home.statusActive')}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: budgetStatus.color + '20' }]}>
+                  <Text style={[styles.statusText, { color: budgetStatus.color }]}>{budgetStatus.label}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -178,19 +261,19 @@ export default function HomeScreen() {
               style={styles.pagerScroll}
               onScroll={(e) => {
                 const index = Math.round(e.nativeEvent.contentOffset.x / SNAP_INTERVAL);
-                if (index !== activeIndex && index >= 0 && index < MOCK_SUBSCRIPTIONS.length) {
+                if (index !== activeIndex && index >= 0 && index < subs.length) {
                   setActiveIndex(index);
                 }
               }}
             >
-              {MOCK_SUBSCRIPTIONS.map((item, index) => {
+              {subs.map((item, index) => {
                 const isFocused = activeIndex === index;
                 return (
                   <View 
                     key={item.id} 
                     style={[
                       styles.pagerItem, 
-                      { width: ITEM_WIDTH, marginRight: index === MOCK_SUBSCRIPTIONS.length - 1 ? 0 : GAP },
+                      { width: ITEM_WIDTH, marginRight: index === subs.length - 1 ? 0 : GAP },
                       !isFocused && { opacity: 0.5, transform: [{ scale: 0.95 }] }
                     ]}
                   >
@@ -228,14 +311,14 @@ export default function HomeScreen() {
               <View style={styles.paymentWrap}>
                 <View style={styles.paymentHeader}>
                   <View style={styles.paymentHeaderTitle}>
-                    <Ionicons name="pie-chart" size={20} color={Colors.textPrimary} />
+                    <Ionicons name="analytics" size={20} color={Colors.textPrimary} />
                     <Text style={styles.paymentTitle}>{t('home.spendingAnalysis')}</Text>
                   </View>
-                  <View style={styles.roundArrowBtn}>
+                  <TouchableOpacity style={styles.roundArrowBtn} onPress={() => router.push('/(tabs)/analytics')}>
                     <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
-                  </View>
+                  </TouchableOpacity>
                 </View>
-                
+
                 <Text style={styles.durationText}>{getDurationText(activeSub.startDate)}</Text>
 
                 <View style={styles.percentRow}>
@@ -253,33 +336,186 @@ export default function HomeScreen() {
                   </View>
                 )}
 
-                {/* 바코드 섹션 */}
+                {/* 구독 비중 바코드 */}
                 <View style={[styles.barcodeSection, { marginTop: Spacing.xl }]}>
                   <View style={styles.barcodeLabels}>
                     <Text style={styles.bLabelText}>{t('home.paymentHistory')}</Text>
-                    <Text style={styles.bLabelText}>98%</Text>
+                    <Text style={styles.bLabelText}>{spendPercent}%</Text>
                   </View>
-                  <BarcodeProgress />
+                  <SpendShareChart subs={subs} activeIndex={Math.min(activeIndex, subs.length - 1)} />
                 </View>
               </View>
 
               <View style={[styles.paymentHeader, { marginTop: Spacing.xl }]}>
                 <View style={styles.paymentHeaderTitle}>
-                  <Ionicons name="document-text" size={20} color={Colors.textPrimary} />
+                  <Ionicons name="calendar-outline" size={20} color={Colors.textPrimary} />
                   <Text style={styles.paymentTitle}>{t('home.billingSchedule')}</Text>
                 </View>
-                <View style={styles.roundArrowBtn}>
+                <TouchableOpacity style={styles.roundArrowBtn} onPress={() => router.push('/(tabs)/calendar')}>
                   <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
-                </View>
+                </TouchableOpacity>
               </View>
+
+              {/* 다가오는 결제 미리보기 (최대 3개) */}
+              {subs.slice(0, 3).map((sub, i) => {
+                // 간단한 결제일 추정 (매월 7일, 12일, 15일, 20일, 22일...)
+                const payDays = [7, 12, 15, 20, 22];
+                const payDay = payDays[i % payDays.length];
+                const now = new Date();
+                const nextDate = new Date(now.getFullYear(), now.getMonth(), payDay);
+                if (nextDate < now) nextDate.setMonth(nextDate.getMonth() + 1);
+                const dateStr = language === 'ko'
+                  ? `${nextDate.getMonth() + 1}/${nextDate.getDate()}`
+                  : `${nextDate.getMonth() + 1}/${nextDate.getDate()}`;
+                return (
+                  <View key={i} style={styles.upcomingRow}>
+                    <ServiceLogo name={sub.name} size={32} />
+                    <View style={styles.upcomingInfo}>
+                      <Text style={styles.upcomingName}>{sub.name}</Text>
+                      <Text style={styles.upcomingDate}>₩{sub.amount.toLocaleString()}</Text>
+                    </View>
+                    <Text style={styles.upcomingPct}>{dateStr}</Text>
+                  </View>
+                );
+              })}
             </View>
           </View>
           <View style={{ height: 120 }} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* ── 상태 설명 모달 ── */}
+      <Modal visible={showStatusInfo} transparent animationType="fade" onRequestClose={() => setShowStatusInfo(false)}>
+        <Pressable style={budgetStyles.overlay} onPress={() => setShowStatusInfo(false)}>
+          <Pressable style={budgetStyles.sheet} onPress={e => e.stopPropagation()}>
+            <View style={budgetStyles.handle} />
+            <Text style={budgetStyles.title}>
+              {language === 'ko' ? '예산 상태 안내' : 'Budget Status Guide'}
+            </Text>
+
+            {[
+              { range: '< 50%', ko: '여유', en: 'Good', color: Colors.success },
+              { range: '50~80%', ko: '관리중', en: 'On Track', color: Colors.success },
+              { range: '80~100%', ko: '주의', en: 'Warning', color: '#FF9500' },
+              { range: '> 100%', ko: '초과!', en: 'Over!', color: Colors.danger },
+            ].map((item, i) => (
+              <View key={i} style={statusInfoStyles.row}>
+                <View style={[statusInfoStyles.dot, { backgroundColor: item.color }]} />
+                <Text style={statusInfoStyles.range}>{item.range}</Text>
+                <View style={[statusInfoStyles.badge, { backgroundColor: item.color + '20' }]}>
+                  <Text style={[statusInfoStyles.badgeText, { color: item.color }]}>
+                    {language === 'ko' ? item.ko : item.en}
+                  </Text>
+                </View>
+              </View>
+            ))}
+
+            {budget > 0 && (
+              <View style={statusInfoStyles.currentWrap}>
+                <Text style={statusInfoStyles.currentLabel}>
+                  {language === 'ko' ? '현재 사용률' : 'Current Usage'}
+                </Text>
+                <View style={statusInfoStyles.currentBar}>
+                  <View style={[statusInfoStyles.currentFill, { width: `${Math.min(budgetUsage, 100)}%`, backgroundColor: budgetStatus.color }]} />
+                </View>
+                <Text style={[statusInfoStyles.currentText, { color: budgetStatus.color }]}>
+                  {budgetUsage.toFixed(0)}% — {budgetStatus.label}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity style={[budgetStyles.saveBtn, { backgroundColor: Colors.textSecondary }]} onPress={() => setShowStatusInfo(false)}>
+              <Text style={budgetStyles.saveBtnText}>{language === 'ko' ? '확인' : 'OK'}</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── 월 예산 설정 모달 ── */}
+      <Modal visible={budgetModalVisible} transparent animationType="fade" onRequestClose={() => setBudgetModalVisible(false)}>
+        <Pressable style={budgetStyles.overlay} onPress={() => setBudgetModalVisible(false)}>
+          <Pressable style={budgetStyles.sheet} onPress={e => e.stopPropagation()}>
+            <View style={budgetStyles.handle} />
+            <Text style={budgetStyles.title}>
+              {language === 'ko' ? '월 예산 설정' : 'Set Monthly Budget'}
+            </Text>
+
+            <View style={budgetStyles.inputRow}>
+              <Text style={budgetStyles.currency}>₩</Text>
+              <TextInput
+                style={budgetStyles.input}
+                value={budgetInput}
+                onChangeText={handleBudgetInput}
+                keyboardType="number-pad"
+                placeholder="100,000"
+                placeholderTextColor={Colors.textTertiary}
+              />
+            </View>
+
+            {/* 현재 사용률 미리보기 */}
+            {parseInt(budgetInput.replace(/[^0-9]/g, ''), 10) > 0 && (
+              <View style={budgetStyles.previewWrap}>
+                <View style={budgetStyles.previewBar}>
+                  <View style={[
+                    budgetStyles.previewFill,
+                    {
+                      width: `${Math.min((totalMonthlySpend / parseInt(budgetInput.replace(/[^0-9]/g, ''), 10)) * 100, 100)}%`,
+                      backgroundColor: (totalMonthlySpend / parseInt(budgetInput.replace(/[^0-9]/g, ''), 10)) * 100 > 80 ? Colors.danger : Colors.success,
+                    }
+                  ]} />
+                </View>
+                <Text style={budgetStyles.previewText}>
+                  ₩{totalMonthlySpend.toLocaleString()} / ₩{parseInt(budgetInput.replace(/[^0-9]/g, ''), 10).toLocaleString()}
+                  {' '}({((totalMonthlySpend / parseInt(budgetInput.replace(/[^0-9]/g, ''), 10)) * 100).toFixed(0)}%)
+                </Text>
+              </View>
+            )}
+
+            <Text style={budgetStyles.hint}>
+              {language === 'ko' ? '⚠️ 80% 초과 시 알림을 받습니다' : '⚠️ You will be notified at 80% usage'}
+            </Text>
+
+            <TouchableOpacity style={budgetStyles.saveBtn} onPress={saveBudget}>
+              <Text style={budgetStyles.saveBtnText}>
+                {language === 'ko' ? '저장' : 'Save'}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </LinearGradient>
   );
 }
+
+const budgetStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', paddingHorizontal: 32 },
+  sheet: { backgroundColor: '#FFF', borderRadius: 28, padding: 28 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderLight, alignSelf: 'center', marginBottom: 20 },
+  title: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: 20, textAlign: 'center' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primarySoft, borderRadius: 16, paddingHorizontal: 16, height: 56 },
+  currency: { fontSize: 22, fontWeight: FontWeight.bold, color: Colors.primary, marginRight: 8 },
+  input: { flex: 1, fontSize: 22, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  previewWrap: { marginTop: 20 },
+  previewBar: { height: 10, borderRadius: 5, backgroundColor: Colors.borderLight, overflow: 'hidden' },
+  previewFill: { height: '100%', borderRadius: 5 },
+  previewText: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', fontWeight: FontWeight.medium },
+  hint: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 16, textAlign: 'center' },
+  saveBtn: { backgroundColor: Colors.primary, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginTop: 20, ...Shadow.sm },
+  saveBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: '#FFF' },
+});
+
+const statusInfoStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  range: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: FontWeight.medium, width: 70 },
+  badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 },
+  badgeText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  currentWrap: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: Colors.borderLight },
+  currentLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginBottom: 8 },
+  currentBar: { height: 8, borderRadius: 4, backgroundColor: Colors.borderLight, overflow: 'hidden' },
+  currentFill: { height: '100%', borderRadius: 4 },
+  currentText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginTop: 8, textAlign: 'center' },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -552,6 +788,34 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // ── Upcoming preview ──
+  upcomingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    marginTop: 2,
+  },
+  upcomingInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  upcomingName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+  },
+  upcomingDate: {
+    fontSize: FontSize.xs,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  upcomingPct: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.textSecondary,
   },
   percentRow: {
     flexDirection: 'row',
