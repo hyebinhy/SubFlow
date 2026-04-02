@@ -15,9 +15,46 @@
 - **절약 제안** - 비용 절감 추천
 - **알림 설정** - 결제 N일 전 알림, 이메일/푸시 알림 토글
 
+## 모바일 앱 (React Native)
+
+Expo + React Native 기반 크로스플랫폼 모바일 앱으로, 위 주요 기능을 모바일 환경에 최적화하여 제공합니다.
+
+### 모바일 기술 스택
+
+| 기술 | 용도 |
+|------|------|
+| Expo SDK | React Native 프레임워크 |
+| Expo Router | 파일 기반 라우팅 |
+| Zustand + AsyncStorage | 상태 관리 및 로컬 저장 |
+| Axios | HTTP 클라이언트 (JWT 인터셉터) |
+| expo-linear-gradient | 그라디언트 UI |
+| i18n (한/영) | 다국어 지원 |
+
+### 모바일 화면 구성
+
+| 화면 | 설명 |
+|------|------|
+| **홈 (대시보드)** | 구독 카드 페이저, 지출 비중, 결제 일정, 환율 변동 알림 |
+| **구독 관리** | 활성/일시정지/해지 구독 목록, 상태 관리 |
+| **서비스 카탈로그** | 30+ 서비스 탐색, 카탈로그/커스텀 구독 추가 |
+| **지출 분석** | 카테고리별 지출, 월별 추이, 절약 인사이트 + 중복 감지, 예산 현황 |
+| **캘린더/타임라인** | 결제일 캘린더 뷰 ↔ 구독 변경 이력 타임라인 탭 전환 |
+| **설정** | 알림(푸시/이메일), 예산, 언어, 환율 알림 설정 |
+
+### 모바일 앱 실행
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+- Expo Go 앱으로 QR 코드 스캔하여 실행
+- `w` 키로 웹 브라우저 실행 가능
+
 ## 기술 스택
 
-### Frontend
+### Frontend (Web)
 | 기술 | 용도 |
 |------|------|
 | React 19 + TypeScript | UI 프레임워크 |
@@ -98,6 +135,20 @@ npm run dev
 
 ```
 SubFlow/
+├── mobile/
+│   ├── app/
+│   │   ├── (auth)/               # 로그인/회원가입 화면
+│   │   ├── (tabs)/               # 탭 화면 (홈, 구독, 카탈로그, 분석, 캘린더, 설정)
+│   │   └── _layout.tsx           # 루트 레이아웃
+│   ├── src/
+│   │   ├── components/           # 재사용 컴포넌트 (ServiceLogo 등)
+│   │   ├── constants/            # 테마, 색상 상수
+│   │   ├── hooks/                # 커스텀 훅 (useApi, useTranslation)
+│   │   ├── i18n/                 # 다국어 번역 (한/영)
+│   │   ├── services/             # API 클라이언트
+│   │   ├── store/                # Zustand 상태 관리
+│   │   └── types/                # TypeScript 타입
+│   └── package.json
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI 앱 진입점

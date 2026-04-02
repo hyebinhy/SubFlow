@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useCalendarEvents } from '../../src/hooks/useApi';
+import { useCalendarEvents, useTimeline } from '../../src/hooks/useApi';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
 const DAYS_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -28,8 +28,10 @@ export default function CalendarScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [activeTab, setActiveTab] = useState<'calendar' | 'timeline'>('calendar');
 
   const calendarEvents = useCalendarEvents(year, month + 1);
+  const timeline = useTimeline();
 
   // Mock fallback 결제 이벤트
   const MOCK_EVENTS = [
@@ -39,6 +41,19 @@ export default function CalendarScreen() {
     { service_name: 'iCloud+', billing_amount: 3900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-20` },
     { service_name: 'ChatGPT Plus', billing_amount: 26000, billing_date: `${year}-${String(month+1).padStart(2,'0')}-22` },
   ];
+
+  // Mock timeline
+  const MOCK_TIMELINE = [
+    { id: '1', service_name: 'Netflix', action: 'created', description: 'Netflix 구독 시작', created_at: '2024-12-01T09:00:00Z' },
+    { id: '2', service_name: 'Netflix', action: 'plan_changed', description: 'Standard → Premium 플랜 변경', created_at: '2025-02-15T14:30:00Z' },
+    { id: '3', service_name: 'Spotify', action: 'created', description: 'Spotify Premium 구독 시작', created_at: '2025-01-10T11:00:00Z' },
+    { id: '4', service_name: 'YouTube Premium', action: 'cancelled', description: 'YouTube Premium 해지', created_at: '2025-03-20T16:00:00Z' },
+    { id: '5', service_name: 'ChatGPT Plus', action: 'created', description: 'ChatGPT Plus 구독 시작', created_at: '2025-03-01T10:00:00Z' },
+  ];
+
+  const timelineData = ((timeline.data as any)?.timeline ?? (timeline.data as any) ?? []).length > 0
+    ? ((timeline.data as any)?.timeline ?? (timeline.data as any))
+    : (timeline.error ? MOCK_TIMELINE : []);
 
   const apiEvents = (calendarEvents.data as any)?.events ?? [];
   const events = apiEvents.length > 0 ? apiEvents : (calendarEvents.error ? MOCK_EVENTS : apiEvents);
@@ -119,72 +134,141 @@ export default function CalendarScreen() {
             </View>
           </View>
 
+          {/* ── 탭 전환 버튼 ── */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'calendar' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('calendar')}
+            >
+              <Ionicons name="calendar" size={16} color={activeTab === 'calendar' ? Colors.primary : Colors.textTertiary} />
+              <Text style={[styles.tabBtnText, activeTab === 'calendar' && styles.tabBtnTextActive]}>
+                {t('calendar.calendarTab')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'timeline' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('timeline')}
+            >
+              <Ionicons name="git-commit" size={16} color={activeTab === 'timeline' ? Colors.primary : Colors.textTertiary} />
+              <Text style={[styles.tabBtnText, activeTab === 'timeline' && styles.tabBtnTextActive]}>
+                {t('calendar.timelineTab')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.cardContainer}>
             <View style={styles.mainWhiteCard}>
-              {/* 월 네비게이션 */}
-              <View style={styles.monthNav}>
-                <TouchableOpacity onPress={prevMonth}>
-                  <Ionicons name="chevron-back" size={20} color={Colors.textTertiary} />
-                </TouchableOpacity>
-                <Text style={styles.monthTitle}>
-                  {language === 'ko' ? MONTHS_KO[month] : MONTHS_EN[month]}
-                </Text>
-                <TouchableOpacity onPress={nextMonth}>
-                  <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
-                </TouchableOpacity>
-              </View>
+              {activeTab === 'calendar' ? (
+                <>
+                  {/* 월 네비게이션 */}
+                  <View style={styles.monthNav}>
+                    <TouchableOpacity onPress={prevMonth}>
+                      <Ionicons name="chevron-back" size={20} color={Colors.textTertiary} />
+                    </TouchableOpacity>
+                    <Text style={styles.monthTitle}>
+                      {language === 'ko' ? MONTHS_KO[month] : MONTHS_EN[month]}
+                    </Text>
+                    <TouchableOpacity onPress={nextMonth}>
+                      <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+                    </TouchableOpacity>
+                  </View>
 
-              <View style={styles.weekRow}>
-                {days.map((d, i) => <Text key={i} style={styles.weekDay}>{d}</Text>)}
-              </View>
+                  <View style={styles.weekRow}>
+                    {days.map((d, i) => <Text key={i} style={styles.weekDay}>{d}</Text>)}
+                  </View>
 
-              {calendarEvents.loading ? (
-                <ActivityIndicator style={{ padding: 40 }} color={Colors.primary} />
-              ) : (
-                <View style={styles.calGrid}>
-                  {calendarDays.map((day, i) => {
-                    const hasPayment = day ? paymentMap[day] : null;
-                    const isToday = day === todayDay;
-                    return (
-                      <View key={i} style={styles.calCell}>
-                        {day && (
-                          <View style={[styles.dayWrap, isToday && styles.todayWrap]}>
-                            <Text style={[styles.dayText, isToday && styles.todayText]}>{day}</Text>
-                            {hasPayment && (
-                              <View style={styles.dotRow}>
-                                {hasPayment.map((p: any, j: number) => (
-                                  <View key={j} style={[styles.payDot, { backgroundColor: Colors.danger }]} />
-                                ))}
+                  {calendarEvents.loading ? (
+                    <ActivityIndicator style={{ padding: 40 }} color={Colors.primary} />
+                  ) : (
+                    <View style={styles.calGrid}>
+                      {calendarDays.map((day, i) => {
+                        const hasPayment = day ? paymentMap[day] : null;
+                        const isToday = day === todayDay;
+                        return (
+                          <View key={i} style={styles.calCell}>
+                            {day && (
+                              <View style={[styles.dayWrap, isToday && styles.todayWrap]}>
+                                <Text style={[styles.dayText, isToday && styles.todayText]}>{day}</Text>
+                                {hasPayment && (
+                                  <View style={styles.dotRow}>
+                                    {hasPayment.map((p: any, j: number) => (
+                                      <View key={j} style={[styles.payDot, { backgroundColor: Colors.danger }]} />
+                                    ))}
+                                  </View>
+                                )}
                               </View>
                             )}
                           </View>
-                        )}
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  <View style={styles.divider} />
+
+                  <Text style={styles.sectionTitle}>{t('calendar.upcoming')}</Text>
+                  {upcoming.length > 0 ? upcoming.map((ev: any, i: number) => {
+                    const d = new Date(ev.billing_date ?? ev.next_billing_date);
+                    const dateStr = language === 'ko'
+                      ? `${d.getMonth() + 1}월 ${d.getDate()}일`
+                      : `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`;
+                    return (
+                      <View key={i} style={styles.upcomingItem}>
+                        <ServiceLogo name={ev.service_name} size={40} />
+                        <View style={styles.upcomingInfo}>
+                          <Text style={styles.upcomingName}>{ev.service_name}</Text>
+                          <Text style={styles.upcomingDate}>{dateStr}</Text>
+                        </View>
+                        <Text style={styles.upcomingAmount}>₩{(ev.billing_amount ?? ev.amount ?? 0).toLocaleString()}</Text>
                       </View>
                     );
-                  })}
-                </View>
-              )}
-
-              <View style={styles.divider} />
-
-              <Text style={styles.sectionTitle}>{t('calendar.upcoming')}</Text>
-              {upcoming.length > 0 ? upcoming.map((ev: any, i: number) => {
-                const d = new Date(ev.billing_date ?? ev.next_billing_date);
-                const dateStr = language === 'ko'
-                  ? `${d.getMonth() + 1}월 ${d.getDate()}일`
-                  : `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`;
-                return (
-                  <View key={i} style={styles.upcomingItem}>
-                    <ServiceLogo name={ev.service_name} size={40} />
-                    <View style={styles.upcomingInfo}>
-                      <Text style={styles.upcomingName}>{ev.service_name}</Text>
-                      <Text style={styles.upcomingDate}>{dateStr}</Text>
-                    </View>
-                    <Text style={styles.upcomingAmount}>₩{(ev.billing_amount ?? ev.amount ?? 0).toLocaleString()}</Text>
-                  </View>
-                );
-              }) : (
-                <Text style={styles.emptyText}>{t('common.noData')}</Text>
+                  }) : (
+                    <Text style={styles.emptyText}>{t('common.noData')}</Text>
+                  )}
+                </>
+              ) : (
+                /* ── 타임라인 뷰 ── */
+                <>
+                  {timeline.loading ? (
+                    <ActivityIndicator style={{ padding: 40 }} color={Colors.primary} />
+                  ) : timelineData.length > 0 ? (
+                    timelineData
+                      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                      .map((item: any, i: number) => {
+                        const date = new Date(item.created_at);
+                        const dateStr = language === 'ko'
+                          ? `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
+                          : `${MONTHS_EN[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+                        const actionIcon = item.action === 'created' ? 'add-circle'
+                          : item.action === 'cancelled' ? 'close-circle'
+                          : item.action === 'plan_changed' ? 'swap-horizontal-circle' as any
+                          : 'ellipse';
+                        const actionColor = item.action === 'created' ? Colors.success
+                          : item.action === 'cancelled' ? Colors.danger
+                          : '#FF9500';
+                        return (
+                          <View key={item.id ?? i} style={styles.timelineItem}>
+                            <View style={styles.timelineLine}>
+                              <Ionicons name={actionIcon} size={20} color={actionColor} />
+                              {i < timelineData.length - 1 && <View style={styles.timelineConnector} />}
+                            </View>
+                            <View style={styles.timelineContent}>
+                              <View style={styles.timelineRow}>
+                                <ServiceLogo name={item.service_name} size={32} />
+                                <View style={styles.timelineInfo}>
+                                  <Text style={styles.timelineName}>{item.service_name}</Text>
+                                  <Text style={styles.timelineDesc}>{item.description ?? item.action}</Text>
+                                  <Text style={styles.timelineDate}>{dateStr}</Text>
+                                </View>
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      })
+                  ) : (
+                    <Text style={styles.emptyText}>{t('calendar.timelineEmpty')}</Text>
+                  )}
+                </>
               )}
             </View>
           </View>
@@ -239,5 +323,28 @@ const styles = StyleSheet.create({
   upcomingName: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   upcomingDate: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   upcomingAmount: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
-  emptyText: { fontSize: FontSize.sm, color: Colors.textTertiary, textAlign: 'center' },
+  emptyText: { fontSize: FontSize.sm, color: Colors.textTertiary, textAlign: 'center', paddingVertical: Spacing.xxl },
+  // Tabs
+  tabContainer: {
+    flexDirection: 'row', gap: Spacing.sm, paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg,
+  },
+  tabBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  tabBtnActive: {
+    backgroundColor: Colors.surface, ...Shadow.sm,
+  },
+  tabBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.medium, color: Colors.textTertiary },
+  tabBtnTextActive: { color: Colors.primary, fontWeight: FontWeight.bold },
+  // Timeline
+  timelineItem: { flexDirection: 'row', minHeight: 70 },
+  timelineLine: { width: 30, alignItems: 'center' },
+  timelineConnector: { flex: 1, width: 2, backgroundColor: Colors.borderLight, marginVertical: 4 },
+  timelineContent: { flex: 1, paddingBottom: Spacing.lg, paddingLeft: Spacing.sm },
+  timelineRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  timelineInfo: { flex: 1 },
+  timelineName: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  timelineDesc: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  timelineDate: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
 });

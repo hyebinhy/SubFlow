@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useAnalyticsOverview, useCategoryBreakdown, useSpendingTrend, useSavingsSuggestions, useBudgetStatus } from '../../src/hooks/useApi';
+import { useAnalyticsOverview, useCategoryBreakdown, useSpendingTrend, useSavingsSuggestions, useBudgetStatus, useOverlaps } from '../../src/hooks/useApi';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
 // ── 월별 추이 바 차트 (디자인 유지) ──
@@ -52,6 +52,7 @@ export default function AnalyticsScreen() {
   const trend = useSpendingTrend();
   const savings = useSavingsSuggestions();
   const budget = useBudgetStatus();
+  const overlaps = useOverlaps();
 
   const isLoading = overview.loading;
 
@@ -75,6 +76,10 @@ export default function AnalyticsScreen() {
     { message: 'Netflix와 YouTube Premium 동시 사용 중 — YouTube 해지 시 월 ₩14,900 절약' },
     { message: 'ChatGPT Plus를 연간 결제로 전환 시 약 20% 할인 가능' },
   ];
+  const MOCK_OVERLAPS = [
+    { category: 'Entertainment', services: ['Netflix', 'YouTube Premium'], message: 'Netflix와 YouTube Premium이 엔터테인먼트 카테고리에서 중복됩니다' },
+    { category: 'Developer Tools', services: ['GitHub Copilot', 'ChatGPT Plus'], message: 'GitHub Copilot과 ChatGPT Plus가 AI 코딩 기능이 겹칩니다' },
+  ];
 
   const ov = (overview.data as any) ?? (overview.error ? MOCK_OVERVIEW : null);
   const cats = ((categories.data as any)?.categories ?? []).length > 0
@@ -83,6 +88,8 @@ export default function AnalyticsScreen() {
     ? (trend.data as any).months : (trend.error ? MOCK_TREND : []);
   const savingsList = ((savings.data as any)?.suggestions ?? []).length > 0
     ? (savings.data as any).suggestions : (savings.error ? MOCK_SAVINGS : []);
+  const overlapsList = ((overlaps.data as any)?.overlaps ?? []).length > 0
+    ? (overlaps.data as any).overlaps : (overlaps.error ? MOCK_OVERLAPS : []);
 
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
@@ -211,7 +218,27 @@ export default function AnalyticsScreen() {
                   </View>
                 ))}
 
-                {savingsList.length === 0 && (
+                {/* 중복 감지 섹션 */}
+                {overlapsList.length > 0 && (
+                  <>
+                    <View style={styles.overlapDivider} />
+                    <View style={styles.overlapHeader}>
+                      <Ionicons name="copy" size={16} color={Colors.danger} />
+                      <Text style={styles.overlapTitle}>{t('analytics.overlapDetected')}</Text>
+                    </View>
+                    <Text style={styles.overlapHint}>{t('analytics.overlapHint')}</Text>
+                    {overlapsList.map((o: any, i: number) => (
+                      <View key={`overlap-${i}`} style={styles.overlapRow}>
+                        <View style={styles.overlapBadge}>
+                          <Text style={styles.overlapBadgeText}>{o.category}</Text>
+                        </View>
+                        <Text style={styles.overlapMessage}>{o.message}</Text>
+                      </View>
+                    ))}
+                  </>
+                )}
+
+                {savingsList.length === 0 && overlapsList.length === 0 && (
                   <Text style={styles.emptyText}>{t('common.noData')}</Text>
                 )}
               </View>
@@ -312,4 +339,13 @@ const styles = StyleSheet.create({
   budgetLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.sm },
   budgetText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: FontWeight.medium },
   emptyText: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: Spacing.lg, textAlign: 'center' },
+  // Overlaps
+  overlapDivider: { height: 1, backgroundColor: Colors.borderLight, marginTop: Spacing.xl, marginBottom: Spacing.lg },
+  overlapHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  overlapTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.danger },
+  overlapHint: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4, marginBottom: Spacing.md },
+  overlapRow: { marginTop: Spacing.sm },
+  overlapBadge: { backgroundColor: Colors.danger + '15', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 4 },
+  overlapBadgeText: { fontSize: FontSize.xs, color: Colors.danger, fontWeight: FontWeight.bold },
+  overlapMessage: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20 },
 });

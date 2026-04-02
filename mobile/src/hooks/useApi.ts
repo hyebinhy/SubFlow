@@ -70,6 +70,10 @@ export function useOverlaps() {
   return useFetch(() => analyticsAPI.getOverlaps());
 }
 
+export function useExchangeRateAlerts() {
+  return useFetch(() => analyticsAPI.getExchangeRateAlerts());
+}
+
 // ── Services ──
 export function useServices() {
   return useFetch(() => servicesAPI.getAll());

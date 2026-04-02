@@ -75,11 +75,19 @@ const translations = {
   'analytics.byCategory': { en: 'By Category', ko: '카테고리별 지출' },
   'analytics.monthlyTrend': { en: 'Monthly Trend', ko: '월별 추이' },
   'analytics.savingInsight': { en: 'Saving Insight', ko: '절약 인사이트' },
+  'analytics.overlapDetected': { en: 'Duplicate Detected', ko: '중복 감지' },
+  'analytics.overlapHint': { en: 'Similar services in the same category', ko: '같은 카테고리 내 유사 서비스' },
 
   // ── Calendar ──
   'calendar.title': { en: 'Payment Calendar', ko: '결제 캘린더' },
   'calendar.thisMonth': { en: 'Payments this month', ko: '이번 달 결제 예정' },
   'calendar.upcoming': { en: 'Upcoming Payments', ko: '예정된 결제' },
+  'calendar.calendarTab': { en: 'Calendar', ko: '캘린더' },
+  'calendar.timelineTab': { en: 'Timeline', ko: '타임라인' },
+  'calendar.timelineEmpty': { en: 'No subscription history', ko: '구독 변경 이력이 없습니다' },
+
+  // ── Home extras ──
+  'home.exchangeAlert': { en: 'Exchange Rate Alert', ko: '환율 변동 알림' },
 
   // ── Settings ──
   'settings.title': { en: 'Settings', ko: '설정' },

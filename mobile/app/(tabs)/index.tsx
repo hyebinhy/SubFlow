@@ -127,7 +127,7 @@ const progressStyles = StyleSheet.create({
 
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useSubscriptions, useAnalyticsOverview } from '../../src/hooks/useApi';
+import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts } from '../../src/hooks/useApi';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { notificationAPI } from '../../src/services/api';
 
@@ -140,6 +140,16 @@ export default function HomeScreen() {
   const { monthlyBudget, setMonthlyBudget } = useSettingsStore();
   const subsQuery = useSubscriptions();
   const overviewQuery = useAnalyticsOverview();
+  const exchangeQuery = useExchangeRateAlerts();
+
+  // 환율 알림 mock & 데이터
+  const MOCK_EXCHANGE = [
+    { currency: 'USD', rate: 1380.5, change: +12.3, service_name: 'ChatGPT Plus' },
+    { currency: 'USD', rate: 1380.5, change: -5.1, service_name: 'GitHub Copilot' },
+  ];
+  const exchangeAlerts = ((exchangeQuery.data as any)?.alerts ?? []).length > 0
+    ? (exchangeQuery.data as any).alerts
+    : (exchangeQuery.error ? MOCK_EXCHANGE : []);
 
   // API 데이터가 있으면 사용, 없으면 mock fallback
   const apiSubs = (subsQuery.data as any[]) ?? [];
@@ -333,6 +343,36 @@ export default function HomeScreen() {
                   <View style={styles.newsBox}>
                     <Ionicons name="alert-circle" size={16} color={Colors.danger} />
                     <Text style={styles.newsText}>{t(activeSub.priceNews as any)}</Text>
+                  </View>
+                )}
+
+                {/* 환율 변동 알림 */}
+                {exchangeAlerts.length > 0 && (
+                  <View style={styles.exchangeBox}>
+                    <View style={styles.exchangeHeader}>
+                      <Ionicons name="swap-horizontal" size={16} color="#5856D6" />
+                      <Text style={styles.exchangeTitle}>{t('home.exchangeAlert')}</Text>
+                    </View>
+                    {exchangeAlerts.map((ea: any, i: number) => (
+                      <View key={i} style={styles.exchangeRow}>
+                        <Text style={styles.exchangeService}>{ea.service_name}</Text>
+                        <View style={styles.exchangeRateWrap}>
+                          <Text style={styles.exchangeRate}>
+                            {ea.currency} {ea.rate?.toLocaleString()}
+                          </Text>
+                          <View style={[styles.exchangeChangeBadge, { backgroundColor: ea.change > 0 ? Colors.danger + '15' : Colors.success + '15' }]}>
+                            <Ionicons
+                              name={ea.change > 0 ? 'arrow-up' : 'arrow-down'}
+                              size={10}
+                              color={ea.change > 0 ? Colors.danger : Colors.success}
+                            />
+                            <Text style={[styles.exchangeChangeText, { color: ea.change > 0 ? Colors.danger : Colors.success }]}>
+                              {Math.abs(ea.change).toFixed(1)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    ))}
                   </View>
                 )}
 
@@ -697,6 +737,56 @@ const styles = StyleSheet.create({
     color: Colors.danger,
     fontWeight: FontWeight.semibold,
     flex: 1,
+  },
+  // Exchange Rate
+  exchangeBox: {
+    backgroundColor: '#5856D6' + '10',
+    padding: 12,
+    borderRadius: 16,
+    marginTop: Spacing.md,
+  },
+  exchangeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  exchangeTitle: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    color: '#5856D6',
+  },
+  exchangeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  exchangeService: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    fontWeight: FontWeight.medium,
+  },
+  exchangeRateWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  exchangeRate: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+  },
+  exchangeChangeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  exchangeChangeText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
   },
   // ── Original Styles ──
   mainCardStack: {
