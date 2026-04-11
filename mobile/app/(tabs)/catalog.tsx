@@ -389,7 +389,7 @@ export default function CatalogScreen() {
                 <Text style={styles.headerTitle}>SubFlow</Text>
             </View>
             <View style={styles.headerRight}>
-                <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
+                <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/calendar')}>
                 <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
                 </TouchableOpacity>
                 <View style={styles.headerAvatar}>

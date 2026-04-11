@@ -81,13 +81,39 @@ export default function AnalyticsScreen() {
     { category: 'Developer Tools', services: ['GitHub Copilot', 'ChatGPT Plus'], message: 'GitHub Copilot과 ChatGPT Plus가 AI 코딩 기능이 겹칩니다' },
   ];
 
-  const ov = (overview.data as any) ?? (overview.error ? MOCK_OVERVIEW : null);
-  const cats = ((categories.data as any)?.categories ?? []).length > 0
-    ? (categories.data as any).categories : (categories.error ? MOCK_CATEGORIES : []);
-  const trendData = ((trend.data as any)?.months ?? []).length > 0
-    ? (trend.data as any).months : (trend.error ? MOCK_TREND : []);
-  const savingsList = ((savings.data as any)?.suggestions ?? []).length > 0
-    ? (savings.data as any).suggestions : (savings.error ? MOCK_SAVINGS : []);
+  // 백엔드 필드명 → 모바일 필드명 매핑
+  const rawOv = overview.data as any;
+  const ov = rawOv ? {
+    total_monthly_krw: Number(rawOv.total_monthly_cost ?? rawOv.total_monthly_krw ?? 0),
+    total_yearly_krw: Number(rawOv.total_yearly_cost ?? rawOv.total_yearly_krw ?? 0),
+    active_count: rawOv.total_active_subscriptions ?? rawOv.active_count ?? 0,
+    paused_count: rawOv.paused_count ?? 0,
+    trial_count: rawOv.trial_count ?? 0,
+  } : (overview.error ? MOCK_OVERVIEW : null);
+
+  const rawCats = (categories.data as any)?.breakdown ?? (categories.data as any)?.categories ?? [];
+  const cats = rawCats.length > 0
+    ? rawCats.map((c: any) => ({
+        category_name: c.category ?? c.category_name ?? '',
+        total_krw: Number(c.total ?? c.total_krw ?? 0),
+        percentage: c.percentage ?? 0,
+        color: c.color ?? Colors.primary,
+      }))
+    : (categories.error ? MOCK_CATEGORIES : []);
+
+  const rawTrend = (trend.data as any)?.data ?? (trend.data as any)?.months ?? [];
+  const trendData = rawTrend.length > 0
+    ? rawTrend.map((t: any) => ({
+        month: t.month_name ?? `${t.month ?? ''}`,
+        amount: Number(t.total ?? t.amount ?? 0),
+      }))
+    : (trend.error ? MOCK_TREND : []);
+
+  const rawSavings = (savings.data as any)?.suggestions ?? [];
+  const savingsList = rawSavings.length > 0
+    ? rawSavings.map((s: any) => ({ message: s.suggestion_text ?? s.message ?? '' }))
+    : (savings.error ? MOCK_SAVINGS : []);
+
   const overlapsList = ((overlaps.data as any)?.overlaps ?? []).length > 0
     ? (overlaps.data as any).overlaps : (overlaps.error ? MOCK_OVERLAPS : []);
 
@@ -103,7 +129,7 @@ export default function AnalyticsScreen() {
             <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/calendar')}>
               <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
@@ -129,9 +155,9 @@ export default function AnalyticsScreen() {
                     <Ionicons name="pie-chart" size={20} color={Colors.textPrimary} />
                     <Text style={styles.cardTitle}>{t('analytics.title')}</Text>
                   </View>
-                  <View style={styles.roundArrowBtn}>
+                  <TouchableOpacity style={styles.roundArrowBtn} onPress={() => router.push('/(tabs)/subscriptions')}>
                     <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
                 <Text style={styles.subText}>{t('analytics.monthly')}</Text>
@@ -183,9 +209,9 @@ export default function AnalyticsScreen() {
                     <Ionicons name="grid" size={20} color={Colors.textPrimary} />
                     <Text style={styles.cardTitle}>{t('analytics.byCategory')}</Text>
                   </View>
-                  <View style={styles.roundArrowBtn}>
+                  <TouchableOpacity style={styles.roundArrowBtn} onPress={() => router.push('/(tabs)/subscriptions')}>
                     <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
                 {cats.map((cat: any, i: number) => (
@@ -244,35 +270,41 @@ export default function AnalyticsScreen() {
               </View>
 
               {/* ── 예산 현황 ── */}
-              {((budget.data as any)?.monthly_budget > 0 || budget.error) && (
-                <View style={styles.card}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardTitleWrap}>
-                      <Ionicons name="wallet" size={20} color={Colors.textPrimary} />
-                      <Text style={styles.cardTitle}>{t('settings.monthlyBudget')}</Text>
+              {((budget.data as any)?.budget_monthly > 0 || (budget.data as any)?.monthly_budget > 0 || budget.error) && (() => {
+                const bd = budget.data as any;
+                const budgetAmount = Number(bd?.budget_monthly ?? bd?.monthly_budget ?? 0);
+                const spent = Number(bd?.current_spending ?? bd?.total_spent ?? 0);
+                const pct = Number(bd?.percentage_used ?? bd?.usage_percentage ?? 0);
+                return (
+                  <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                      <View style={styles.cardTitleWrap}>
+                        <Ionicons name="wallet" size={20} color={Colors.textPrimary} />
+                        <Text style={styles.cardTitle}>{t('settings.monthlyBudget')}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.budgetBar}>
+                      <View
+                        style={[
+                          styles.budgetFill,
+                          {
+                            width: `${Math.min(pct, 100)}%`,
+                            backgroundColor: pct > 80 ? Colors.danger : Colors.success,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.budgetLabels}>
+                      <Text style={styles.budgetText}>
+                        ₩{spent.toLocaleString()}
+                      </Text>
+                      <Text style={styles.budgetText}>
+                        / ₩{budgetAmount.toLocaleString()}
+                      </Text>
                     </View>
                   </View>
-                  <View style={styles.budgetBar}>
-                    <View
-                      style={[
-                        styles.budgetFill,
-                        {
-                          width: `${Math.min(((budget.data as any)?.usage_percentage ?? 0), 100)}%`,
-                          backgroundColor: ((budget.data as any)?.usage_percentage ?? 0) > 80 ? Colors.danger : Colors.success,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.budgetLabels}>
-                    <Text style={styles.budgetText}>
-                      ₩{((budget.data as any)?.total_spent ?? 0).toLocaleString()}
-                    </Text>
-                    <Text style={styles.budgetText}>
-                      / ₩{((budget.data as any)?.monthly_budget ?? 0).toLocaleString()}
-                    </Text>
-                  </View>
-                </View>
-              )}
+                );
+              })()}
             </>
           )}
 

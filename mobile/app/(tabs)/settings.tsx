@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert,
+  Modal, TextInput, Pressable, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,10 +46,31 @@ const rowStyles = StyleSheet.create({
   subtitle: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 2 },
 });
 
+const CURRENCIES = [
+  { code: 'KRW', symbol: '₩', label: '한국 원 (KRW)' },
+  { code: 'USD', symbol: '$', label: '미국 달러 (USD)' },
+  { code: 'EUR', symbol: '€', label: '유로 (EUR)' },
+  { code: 'JPY', symbol: '¥', label: '일본 엔 (JPY)' },
+  { code: 'GBP', symbol: '£', label: '영국 파운드 (GBP)' },
+];
+
+const DAYS_OPTIONS = [1, 2, 3, 5, 7];
+
 export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
-  const { language, setLanguage, pushEnabled, setPushEnabled, emailEnabled, setEmailEnabled, daysBefore, monthlyBudget } = useSettingsStore();
+  const {
+    language, setLanguage,
+    pushEnabled, setPushEnabled,
+    emailEnabled, setEmailEnabled,
+    daysBefore, setDaysBefore,
+    monthlyBudget, setMonthlyBudget,
+    currency, setCurrency,
+  } = useSettingsStore();
   const { t } = useTranslation();
+
+  const [budgetModalVisible, setBudgetModalVisible] = useState(false);
+  const [budgetInput, setBudgetInput] = useState('');
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(t('settings.logout'), '', [
@@ -77,6 +99,48 @@ export default function SettingsScreen() {
     notificationAPI.updateSettings({ email_enabled: v }).catch(() => {});
   };
 
+  const openBudgetModal = () => {
+    setBudgetInput(monthlyBudget ? monthlyBudget.toLocaleString() : '');
+    setBudgetModalVisible(true);
+  };
+
+  const saveBudget = () => {
+    const val = parseInt(budgetInput.replace(/[^0-9]/g, ''), 10);
+    if (val > 0) {
+      setMonthlyBudget(val);
+      notificationAPI.updateSettings({ monthly_budget: val }).catch(() => {});
+    }
+    setBudgetModalVisible(false);
+  };
+
+  const handleAlertTiming = () => {
+    const options = DAYS_OPTIONS.map(d =>
+      language === 'ko' ? `결제 ${d}일 전` : `${d} days before`
+    );
+    options.push(language === 'ko' ? '취소' : 'Cancel');
+    Alert.alert(
+      language === 'ko' ? '결제 알림 시점' : 'Alert Timing',
+      language === 'ko' ? '언제 알림을 받으시겠어요?' : 'When would you like to be notified?',
+      [
+        ...DAYS_OPTIONS.map(d => ({
+          text: language === 'ko' ? `결제 ${d}일 전` : `${d} day${d > 1 ? 's' : ''} before`,
+          onPress: () => {
+            setDaysBefore(d);
+            notificationAPI.updateSettings({ days_before: d }).catch(() => {});
+          },
+          style: d === daysBefore ? 'default' as const : 'default' as const,
+        })),
+        { text: language === 'ko' ? '취소' : 'Cancel', style: 'cancel' as const },
+      ]
+    );
+  };
+
+  const handleBudgetInput = (val: string) => {
+    const num = val.replace(/[^0-9]/g, '');
+    if (!num) { setBudgetInput(''); return; }
+    setBudgetInput(Number(num).toLocaleString());
+  };
+
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={{ flex: 1 }}>
       <SafeAreaView style={styles.safe}>
@@ -94,7 +158,16 @@ export default function SettingsScreen() {
                 <Text style={styles.profileName}>{user?.username ?? 'User'}</Text>
                 <Text style={styles.profileEmail}>{user?.email ?? 'user@example.com'}</Text>
               </View>
-              <TouchableOpacity style={styles.editBtn}>
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={() => Alert.alert(
+                  language === 'ko' ? '프로필 편집' : 'Edit Profile',
+                  language === 'ko'
+                    ? `이름: ${user?.username ?? '-'}\n이메일: ${user?.email ?? '-'}`
+                    : `Name: ${user?.username ?? '-'}\nEmail: ${user?.email ?? '-'}`,
+                  [{ text: language === 'ko' ? '확인' : 'OK' }]
+                )}
+              >
                 <Ionicons name="create-outline" size={18} color={Colors.primary} />
               </TouchableOpacity>
             </View>
@@ -123,16 +196,36 @@ export default function SettingsScreen() {
               }
             />
             <View style={styles.divider} />
-            <SettingRow icon="time" iconColor="#5AC8FA" title={t('settings.alertTiming')} subtitle={t('settings.daysBefore', { n: daysBefore })} />
+            <SettingRow
+              icon="time" iconColor="#5AC8FA"
+              title={t('settings.alertTiming')}
+              subtitle={t('settings.daysBefore', { n: daysBefore })}
+              onPress={handleAlertTiming}
+            />
           </Card>
 
           {/* 예산 */}
           <Text style={styles.sectionTitle}>{t('settings.budget')}</Text>
           <Card>
-            <SettingRow icon="wallet" iconColor="#34C759" title={t('settings.monthlyBudget')}
-              subtitle={monthlyBudget ? `₩${monthlyBudget.toLocaleString()}` : '-'} />
+            <SettingRow
+              icon="wallet" iconColor="#34C759"
+              title={t('settings.monthlyBudget')}
+              subtitle={monthlyBudget ? `₩${monthlyBudget.toLocaleString()}` : '-'}
+              onPress={openBudgetModal}
+            />
             <View style={styles.divider} />
-            <SettingRow icon="alert-circle" iconColor="#FF3B30" title={t('settings.budgetAlert')} subtitle={t('settings.budgetAlertDesc')} />
+            <SettingRow
+              icon="alert-circle" iconColor="#FF3B30"
+              title={t('settings.budgetAlert')}
+              subtitle={t('settings.budgetAlertDesc')}
+              onPress={() => Alert.alert(
+                language === 'ko' ? '예산 초과 알림' : 'Budget Alert',
+                language === 'ko'
+                  ? `월 예산의 80% 도달 시 알림이 발송됩니다.\n현재 예산: ${monthlyBudget ? `₩${monthlyBudget.toLocaleString()}` : '미설정'}`
+                  : `You'll be notified when you reach 80% of your budget.\nCurrent budget: ${monthlyBudget ? `₩${monthlyBudget.toLocaleString()}` : 'Not set'}`,
+                [{ text: language === 'ko' ? '확인' : 'OK' }]
+              )}
+            />
           </Card>
 
           {/* 일반 */}
@@ -152,13 +245,31 @@ export default function SettingsScreen() {
               }
             />
             <View style={styles.divider} />
-            <SettingRow icon="cash" title={t('settings.currency')} subtitle="KRW (₩)" />
+            <SettingRow
+              icon="cash"
+              title={t('settings.currency')}
+              subtitle={`${currency} (${CURRENCIES.find(c => c.code === currency)?.symbol ?? currency})`}
+              onPress={() => setCurrencyModalVisible(true)}
+            />
             <View style={styles.divider} />
-            <SettingRow icon="swap-horizontal" iconColor="#FF9500" title={t('settings.exchangeRate')} subtitle={t('settings.exchangeDesc')} />
+            <SettingRow
+              icon="swap-horizontal" iconColor="#FF9500"
+              title={t('settings.exchangeRate')}
+              subtitle={t('settings.exchangeDesc')}
+              onPress={() => router.push('/(tabs)/analytics')}
+            />
             <View style={styles.divider} />
-            <SettingRow icon="shield-checkmark" iconColor="#5AC8FA" title={t('settings.privacy')} />
+            <SettingRow
+              icon="shield-checkmark" iconColor="#5AC8FA"
+              title={t('settings.privacy')}
+              onPress={() => Linking.openURL('https://subflow.app/privacy').catch(() => {})}
+            />
             <View style={styles.divider} />
-            <SettingRow icon="document-text" iconColor="#6B7D8E" title={t('settings.terms')} />
+            <SettingRow
+              icon="document-text" iconColor="#6B7D8E"
+              title={t('settings.terms')}
+              onPress={() => Linking.openURL('https://subflow.app/terms').catch(() => {})}
+            />
           </Card>
 
           {/* 로그아웃 */}
@@ -173,6 +284,66 @@ export default function SettingsScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* 예산 설정 모달 */}
+      <Modal transparent animationType="fade" visible={budgetModalVisible} onRequestClose={() => setBudgetModalVisible(false)}>
+        <Pressable style={modalStyles.overlay} onPress={() => setBudgetModalVisible(false)}>
+          <Pressable style={modalStyles.box} onPress={() => {}}>
+            <Text style={modalStyles.title}>
+              {language === 'ko' ? '월 예산 설정' : 'Set Monthly Budget'}
+            </Text>
+            <Text style={modalStyles.subtitle}>
+              {language === 'ko' ? '월 구독 지출 목표 금액을 입력하세요' : 'Enter your monthly subscription spending goal'}
+            </Text>
+            <View style={modalStyles.inputRow}>
+              <Text style={modalStyles.currencySymbol}>₩</Text>
+              <TextInput
+                style={modalStyles.input}
+                value={budgetInput}
+                onChangeText={handleBudgetInput}
+                keyboardType="numeric"
+                placeholder="100,000"
+                placeholderTextColor={Colors.textTertiary}
+                autoFocus
+              />
+            </View>
+            <View style={modalStyles.btnRow}>
+              <TouchableOpacity style={[modalStyles.btn, modalStyles.btnCancel]} onPress={() => setBudgetModalVisible(false)}>
+                <Text style={modalStyles.btnCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[modalStyles.btn, modalStyles.btnSave]} onPress={saveBudget}>
+                <Text style={modalStyles.btnSaveText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 통화 선택 모달 */}
+      <Modal transparent animationType="slide" visible={currencyModalVisible} onRequestClose={() => setCurrencyModalVisible(false)}>
+        <Pressable style={modalStyles.overlay} onPress={() => setCurrencyModalVisible(false)}>
+          <Pressable style={[modalStyles.box, { paddingBottom: Spacing.lg }]} onPress={() => {}}>
+            <Text style={modalStyles.title}>
+              {language === 'ko' ? '기본 통화 선택' : 'Select Default Currency'}
+            </Text>
+            {CURRENCIES.map((cur) => (
+              <TouchableOpacity
+                key={cur.code}
+                style={[modalStyles.currencyRow, currency === cur.code && modalStyles.currencyRowActive]}
+                onPress={() => { setCurrency(cur.code); setCurrencyModalVisible(false); }}
+              >
+                <Text style={[modalStyles.currencySymbolItem, currency === cur.code && { color: Colors.primary }]}>
+                  {cur.symbol}
+                </Text>
+                <Text style={[modalStyles.currencyLabel, currency === cur.code && { color: Colors.primary, fontWeight: FontWeight.bold }]}>
+                  {cur.label}
+                </Text>
+                {currency === cur.code && <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />}
+              </TouchableOpacity>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -200,4 +371,59 @@ const styles = StyleSheet.create({
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingVertical: Spacing.xs },
   logoutText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.danger },
   version: { textAlign: 'center', fontSize: FontSize.xs, color: 'rgba(255,255,255,0.5)', marginTop: Spacing.sm },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  box: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    width: '85%',
+  },
+  title: {
+    fontSize: FontSize.lg, fontWeight: FontWeight.bold,
+    color: Colors.textPrimary, marginBottom: Spacing.xs,
+  },
+  subtitle: {
+    fontSize: FontSize.sm, color: Colors.textTertiary,
+    marginBottom: Spacing.lg,
+  },
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1.5, borderColor: Colors.border,
+    borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  currencySymbol: {
+    fontSize: FontSize.xl, fontWeight: FontWeight.bold,
+    color: Colors.primary, marginRight: Spacing.sm,
+  },
+  input: {
+    flex: 1, fontSize: FontSize.xl, fontWeight: FontWeight.bold,
+    color: Colors.textPrimary, paddingVertical: Spacing.md,
+  },
+  btnRow: { flexDirection: 'row', gap: Spacing.md },
+  btn: { flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.md, alignItems: 'center' },
+  btnCancel: { backgroundColor: Colors.borderLight },
+  btnSave: { backgroundColor: Colors.primary },
+  btnCancelText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textSecondary },
+  btnSaveText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textWhite },
+  currencyRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md, marginBottom: Spacing.xs,
+  },
+  currencyRowActive: { backgroundColor: Colors.primaryLight },
+  currencySymbolItem: {
+    fontSize: FontSize.lg, fontWeight: FontWeight.bold,
+    color: Colors.textTertiary, width: 32,
+  },
+  currencyLabel: {
+    flex: 1, fontSize: FontSize.md,
+    color: Colors.textPrimary, marginLeft: Spacing.sm,
+  },
 });

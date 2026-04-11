@@ -33,17 +33,30 @@ interface Subscription {
   id: string;
   name: string;
   amount: number;
+  currency: string;
   startDate: string; // YYYY-MM-DD
   priceNews?: string;
 }
 
 const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  { id: '1', name: 'Netflix', amount: 17000, startDate: '2023-01-15', priceNews: 'home.priceIncrease' as const },
-  { id: '2', name: 'Spotify', amount: 10900, startDate: '2024-05-10' },
-  { id: '3', name: 'YouTube Premium', amount: 14900, startDate: '2022-11-20' },
-  { id: '4', name: 'iCloud+', amount: 3900, startDate: '2021-08-05' },
-  { id: '5', name: 'ChatGPT Plus', amount: 26000, startDate: '2023-07-22' },
+  { id: '1', name: 'Netflix', amount: 17000, currency: 'KRW', startDate: '2023-01-15', priceNews: 'home.priceIncrease' as const },
+  { id: '2', name: 'Spotify', amount: 10900, currency: 'KRW', startDate: '2024-05-10' },
+  { id: '3', name: 'YouTube Premium', amount: 14900, currency: 'KRW', startDate: '2022-11-20' },
+  { id: '4', name: 'iCloud+', amount: 3900, currency: 'KRW', startDate: '2021-08-05' },
+  { id: '5', name: 'ChatGPT Plus', amount: 26000, currency: 'USD', startDate: '2023-07-22' },
 ];
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  KRW: '₩', USD: '$', EUR: '€', JPY: '¥', GBP: '£',
+};
+
+function formatPrice(amount: number, currency: string = 'KRW') {
+  const symbol = CURRENCY_SYMBOLS[currency] ?? currency + ' ';
+  if (currency === 'KRW' || currency === 'JPY') {
+    return `${symbol}${Math.round(amount).toLocaleString()}`;
+  }
+  return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function getDurationText(startDateStr: string) {
   const start = new Date(startDateStr);
@@ -147,8 +160,9 @@ export default function HomeScreen() {
     { currency: 'USD', rate: 1380.5, change: +12.3, service_name: 'ChatGPT Plus' },
     { currency: 'USD', rate: 1380.5, change: -5.1, service_name: 'GitHub Copilot' },
   ];
-  const exchangeAlerts = ((exchangeQuery.data as any)?.alerts ?? []).length > 0
-    ? (exchangeQuery.data as any).alerts
+  const rawAlerts = (exchangeQuery.data as any)?.alerts ?? [];
+  const exchangeAlerts = rawAlerts.length > 0
+    ? rawAlerts.map((a: any) => ({ ...a, rate: Number(a.current_rate ?? a.rate ?? 0), change: Number(a.change_percentage ?? a.change ?? 0) }))
     : (exchangeQuery.error ? MOCK_EXCHANGE : []);
 
   // API 데이터가 있으면 사용, 없으면 mock fallback
@@ -157,8 +171,9 @@ export default function HomeScreen() {
     ? apiSubs.filter((s: any) => s.status === 'active').map((s: any) => ({
         id: String(s.id),
         name: s.service_name ?? s.name ?? 'Unknown',
-        amount: s.billing_amount ?? s.amount ?? 0,
-        startDate: s.started_at ?? s.created_at ?? '2024-01-01',
+        amount: Number(s.cost ?? s.billing_amount ?? 0),
+        currency: s.currency ?? 'KRW',
+        startDate: s.start_date ?? s.started_at ?? s.created_at ?? '2024-01-01',
       }))
     : MOCK_SUBSCRIPTIONS;
 
@@ -217,7 +232,7 @@ export default function HomeScreen() {
             <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/calendar')}>
               <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
@@ -293,7 +308,7 @@ export default function HomeScreen() {
                         <ServiceLogo name={item.name} size={42} />
                         <View>
                           <Text style={styles.fName}>{item.name}</Text>
-                          <Text style={styles.fId}>ID: {1000 + Number(item.id)}</Text>
+                          <Text style={styles.fId}>{item.currency} · {item.amount > 0 ? (item.currency === 'KRW' ? 'monthly' : 'monthly') : ''}</Text>
                         </View>
                       </View>
                       <View style={styles.rotateBtn}>
@@ -305,7 +320,7 @@ export default function HomeScreen() {
                     <View style={styles.revenueWrapper}>
                       <View style={[styles.floatingRevenue, styles.glassPill]}>
                         <Text style={styles.revenueLabel}>{t('home.monthlyPrice')}</Text>
-                        <Text style={styles.revenueValue}>₩{item.amount.toLocaleString()}</Text>
+                        <Text style={styles.revenueValue}>{formatPrice(item.amount, item.currency)}</Text>
                         <Ionicons name="arrow-up-circle" size={14} color={Colors.success} style={{ marginLeft: 4 }} />
                       </View>
                     </View>
@@ -412,7 +427,7 @@ export default function HomeScreen() {
                     <ServiceLogo name={sub.name} size={32} />
                     <View style={styles.upcomingInfo}>
                       <Text style={styles.upcomingName}>{sub.name}</Text>
-                      <Text style={styles.upcomingDate}>₩{sub.amount.toLocaleString()}</Text>
+                      <Text style={styles.upcomingDate}>{formatPrice(sub.amount, sub.currency)}</Text>
                     </View>
                     <Text style={styles.upcomingPct}>{dateStr}</Text>
                   </View>
