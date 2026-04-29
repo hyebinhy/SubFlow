@@ -37,17 +37,38 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     set({ currency });
   },
 
-  setPushEnabled: (enabled) => set({ pushEnabled: enabled }),
-  setEmailEnabled: (enabled) => set({ emailEnabled: enabled }),
-  setDaysBefore: (days) => set({ daysBefore: days }),
-  setMonthlyBudget: (budget) => set({ monthlyBudget: budget }),
+  setPushEnabled: (enabled) => {
+    AsyncStorage.setItem('pushEnabled', String(enabled));
+    set({ pushEnabled: enabled });
+  },
+  setEmailEnabled: (enabled) => {
+    AsyncStorage.setItem('emailEnabled', String(enabled));
+    set({ emailEnabled: enabled });
+  },
+  setDaysBefore: (days) => {
+    AsyncStorage.setItem('daysBefore', String(days));
+    set({ daysBefore: days });
+  },
+  setMonthlyBudget: (budget) => {
+    if (budget !== null) AsyncStorage.setItem('monthlyBudget', String(budget));
+    else AsyncStorage.removeItem('monthlyBudget');
+    set({ monthlyBudget: budget });
+  },
 
   loadSettings: async () => {
     const lang = await AsyncStorage.getItem('language');
     const curr = await AsyncStorage.getItem('currency');
+    const push = await AsyncStorage.getItem('pushEnabled');
+    const email = await AsyncStorage.getItem('emailEnabled');
+    const days = await AsyncStorage.getItem('daysBefore');
+    const budget = await AsyncStorage.getItem('monthlyBudget');
     set({
       language: (lang as Language) || 'en',
       currency: curr || 'KRW',
+      pushEnabled: push !== null ? push === 'true' : true,
+      emailEnabled: email !== null ? email === 'true' : false,
+      daysBefore: days !== null ? Number(days) : 3,
+      monthlyBudget: budget !== null ? Number(budget) : 70000,
     });
   },
 }));
