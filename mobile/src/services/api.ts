@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 // 웹: localhost OK / 모바일: PC의 실제 IP 필요
 const API_BASE_URL = __DEV__
@@ -20,10 +21,22 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// 401 발생 시 토큰 정리 + 로그인 화면으로 자동 이동 (반복 알림 방지를 위해 디바운스)
+let lastAuthRedirect = 0;
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) await AsyncStorage.removeItem('access_token');
+    if (error.response?.status === 401) {
+      await AsyncStorage.removeItem('access_token');
+      // /auth/login 호출 자체의 401(잘못된 비번)은 redirect 안 함
+      const url: string | undefined = error.config?.url;
+      const isLoginCall = url?.includes('/auth/login') || url?.includes('/auth/register');
+      const now = Date.now();
+      if (!isLoginCall && now - lastAuthRedirect > 1500) {
+        lastAuthRedirect = now;
+        try { router.replace('/(auth)/login'); } catch { /* router 미준비 시 무시 */ }
+      }
+    }
     return Promise.reject(error);
   }
 );

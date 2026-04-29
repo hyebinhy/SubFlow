@@ -14,25 +14,29 @@ import { GradientButton } from '../../src/components/GradientButton';
 import { subscriptionAPI } from '../../src/services/api';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
-// ── 월별 추이 바 차트 (디자인 유지) ──
-function TrendBarChart({ data }: { data: { month: string; amount: number }[] }) {
+// ── 월별 추이 바 차트 (실제 데이터 + 이번 달 강조 + 라벨) ──
+function TrendBarChart({ data }: { data: { month: string; amount: number; isForecast?: boolean }[] }) {
   const max = Math.max(...data.map(d => d.amount), 1);
   return (
     <View style={chartStyles.container}>
       {data.map((bar, i) => {
         const isLast = i === data.length - 1;
+        const heightPx = Math.max((bar.amount / max) * 100, 4);
         return (
           <View key={i} style={chartStyles.barWrap}>
             <View
               style={[
                 chartStyles.bar,
                 {
-                  height: (bar.amount / max) * 100,
-                  backgroundColor: isLast ? Colors.success : '#AEEA00',
-                  opacity: isLast ? 1 : 0.6,
+                  height: heightPx,
+                  backgroundColor: isLast ? Colors.primary : '#B7D4F0',
+                  opacity: bar.isForecast ? 0.5 : 1,
                 },
               ]}
             />
+            <Text style={[chartStyles.barLabel, isLast && { color: Colors.primary, fontWeight: '800' }]}>
+              {bar.month}
+            </Text>
           </View>
         );
       })}
@@ -42,11 +46,13 @@ function TrendBarChart({ data }: { data: { month: string; amount: number }[] }) 
 
 const chartStyles = StyleSheet.create({
   container: {
-    flexDirection: 'row', alignItems: 'flex-end', height: 120,
+    flexDirection: 'row', alignItems: 'flex-end', height: 130,
     marginTop: Spacing.xl, paddingHorizontal: Spacing.sm,
+    gap: 6,
   },
   barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  bar: { width: 3, borderRadius: 2 },
+  bar: { width: '70%', minWidth: 6, borderRadius: 4 },
+  barLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 6, fontWeight: '600' },
 });
 
 export default function AnalyticsScreen() {
@@ -63,6 +69,11 @@ export default function AnalyticsScreen() {
   const [confirmSub, setConfirmSub] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const toastAnim = React.useRef(new Animated.Value(0)).current;
+
+  // 상세 바텀시트 상태
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
+  const [trendDetailOpen, setTrendDetailOpen] = useState(false);
+  const [categoryListOpen, setCategoryListOpen] = useState(false);
 
   // 토스트 자동 닫힘
   useEffect(() => {
@@ -82,7 +93,10 @@ export default function AnalyticsScreen() {
 
   const handleApplySuggestion = (s: any) => {
     if (!s.subscription_id || !s.action_type) {
-      setToast({ type: 'info', text: '이 제안은 자동 적용할 수 없어요.' });
+      setToast({
+        type: 'info',
+        text: '데모 데이터예요. 백엔드 연결 시 자동 적용됩니다.',
+      });
       return;
     }
     setConfirmSub(s);
@@ -170,16 +184,28 @@ export default function AnalyticsScreen() {
         total_krw: Number(c.total ?? c.total_krw ?? 0),
         percentage: c.percentage ?? 0,
         color: c.color ?? Colors.primary,
+        icon: c.icon ?? null,
+        count: c.count ?? 0,
       }))
     : (categories.error ? MOCK_CATEGORIES : []);
 
+  const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const rawTrend = (trend.data as any)?.data ?? (trend.data as any)?.months ?? [];
   const trendData = rawTrend.length > 0
     ? rawTrend.map((t: any) => ({
-        month: t.month_name ?? `${t.month ?? ''}`,
+        month: t.month_name ?? (typeof t.month === 'number' ? MONTH_ABBR[t.month - 1] : `${t.month ?? ''}`),
         amount: Number(t.total ?? t.amount ?? 0),
+        isForecast: !!t.is_forecast,
       }))
     : (trend.error ? MOCK_TREND : []);
+
+  // 지난달 대비 변화량
+  const lastMonth = trendData.length >= 2 ? trendData[trendData.length - 2] : null;
+  const thisMonth = trendData.length >= 1 ? trendData[trendData.length - 1] : null;
+  const momChange = lastMonth && thisMonth && lastMonth.amount > 0
+    ? ((thisMonth.amount - lastMonth.amount) / lastMonth.amount) * 100
+    : 0;
+  const momDelta = thisMonth && lastMonth ? thisMonth.amount - lastMonth.amount : 0;
 
   const rawSavings = (savings.data as any)?.suggestions ?? [];
   const savingsList = rawSavings.length > 0
@@ -227,15 +253,35 @@ export default function AnalyticsScreen() {
                     <Ionicons name="pie-chart" size={20} color={Colors.textPrimary} />
                     <Text style={styles.cardTitle}>{t('analytics.title')}</Text>
                   </View>
-                  <TouchableOpacity style={styles.roundArrowBtn} onPress={() => router.push('/(tabs)/subscriptions')}>
+                  <TouchableOpacity style={styles.roundArrowBtn} onPress={() => setTrendDetailOpen(true)}>
                     <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
                   </TouchableOpacity>
                 </View>
 
                 <Text style={styles.subText}>{t('analytics.monthly')}</Text>
-                <Text style={styles.largePercent}>
-                  ₩{(ov?.total_monthly_krw ?? 0).toLocaleString()}
-                </Text>
+                <View style={styles.totalRow}>
+                  <Text style={styles.largePercent}>
+                    ₩{(ov?.total_monthly_krw ?? 0).toLocaleString()}
+                  </Text>
+                  {lastMonth && thisMonth && (
+                    <View style={[
+                      styles.momPill,
+                      { backgroundColor: momChange >= 0 ? Colors.danger + '15' : Colors.success + '15' },
+                    ]}>
+                      <Ionicons
+                        name={momChange >= 0 ? 'trending-up' : 'trending-down'}
+                        size={11}
+                        color={momChange >= 0 ? Colors.danger : Colors.success}
+                      />
+                      <Text style={[
+                        styles.momPillText,
+                        { color: momChange >= 0 ? Colors.danger : Colors.success },
+                      ]}>
+                        {momChange >= 0 ? '+' : ''}{momChange.toFixed(1)}%
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
                 {/* 월별 추이 차트 */}
                 {trendData.length > 0 && (
@@ -274,25 +320,56 @@ export default function AnalyticsScreen() {
                 </View>
               </View>
 
-              {/* ── 카테고리별 지출 (기존 AI Assistant 위치) ── */}
+              {/* ── 카테고리별 지출 ── */}
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitleWrap}>
                     <Ionicons name="grid" size={20} color={Colors.textPrimary} />
                     <Text style={styles.cardTitle}>{t('analytics.byCategory')}</Text>
                   </View>
-                  <TouchableOpacity style={styles.roundArrowBtn} onPress={() => router.push('/(tabs)/subscriptions')}>
+                  <TouchableOpacity
+                    style={styles.roundArrowBtn}
+                    onPress={() => setCategoryListOpen(true)}
+                  >
                     <Ionicons name="arrow-forward" size={16} color={Colors.textPrimary} />
                   </TouchableOpacity>
                 </View>
 
-                {cats.map((cat: any, i: number) => (
-                  <View key={i} style={styles.catRow}>
-                    <View style={[styles.catDot, { backgroundColor: cat.color || Colors.primary }]} />
-                    <Text style={styles.catName}>{cat.category_name}</Text>
-                    <Text style={styles.catPercent}>{cat.percentage?.toFixed(0)}%</Text>
-                    <Text style={styles.catAmount}>₩{(cat.total_krw ?? 0).toLocaleString()}</Text>
+                {cats.length > 0 && (
+                  <View style={styles.stackedBar}>
+                    {cats.map((cat: any, i: number) => (
+                      <View
+                        key={i}
+                        style={{
+                          flex: cat.percentage || 1,
+                          backgroundColor: cat.color || Colors.primary,
+                          opacity: 0.9,
+                        }}
+                      />
+                    ))}
                   </View>
+                )}
+
+                {cats.map((cat: any, i: number) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.catRow}
+                    activeOpacity={0.6}
+                    onPress={() => setSelectedCategory(cat)}
+                  >
+                    <View style={[styles.catDot, { backgroundColor: cat.color || Colors.primary }]} />
+                    <View style={styles.catInfo}>
+                      <Text style={styles.catName}>{cat.category_name}</Text>
+                      {cat.count > 0 && (
+                        <Text style={styles.catSubText}>구독 {cat.count}개</Text>
+                      )}
+                    </View>
+                    <View style={styles.catRight}>
+                      <Text style={styles.catAmount}>₩{(cat.total_krw ?? 0).toLocaleString()}</Text>
+                      <Text style={styles.catPercent}>{cat.percentage?.toFixed(0)}%</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+                  </TouchableOpacity>
                 ))}
 
                 {cats.length === 0 && (
@@ -327,7 +404,6 @@ export default function AnalyticsScreen() {
                 {savingsList.map((s: any, i: number) => {
                   const text = s.suggestion_text ?? s.message ?? '';
                   const saving = Number(s.max_savings_krw ?? 0);
-                  const canApply = !!s.subscription_id && !!s.action_type;
                   const isApplying = applyingId === s.subscription_id;
                   return (
                     <View key={i} style={styles.savingItem}>
@@ -360,17 +436,15 @@ export default function AnalyticsScreen() {
                         )}
                       </View>
 
-                      {canApply && (
-                        <GradientButton
-                          label="지금 적용"
-                          icon="flash"
-                          variant="glass"
-                          size="md"
-                          loading={isApplying}
-                          onPress={() => handleApplySuggestion(s)}
-                          style={{ marginTop: Spacing.sm }}
-                        />
-                      )}
+                      <GradientButton
+                        label="지금 적용"
+                        icon="flash"
+                        variant="glass"
+                        size="md"
+                        loading={isApplying}
+                        onPress={() => handleApplySuggestion(s)}
+                        style={{ marginTop: Spacing.sm }}
+                      />
                     </View>
                   );
                 })}
@@ -445,6 +519,170 @@ export default function AnalyticsScreen() {
           <View style={{ height: 160 }} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* ── 지출 추이 상세 바텀시트 ── */}
+      <Modal visible={trendDetailOpen} transparent animationType="slide" onRequestClose={() => setTrendDetailOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setTrendDetailOpen(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>월별 지출 추이</Text>
+            <Text style={styles.sheetSubtitle}>최근 {trendData.length}개월</Text>
+
+            {trendData.length > 0 && <TrendBarChart data={trendData} />}
+
+            <View style={styles.sheetStatsRow}>
+              <View style={styles.sheetStat}>
+                <Text style={styles.sheetStatLabel}>이번 달</Text>
+                <Text style={styles.sheetStatValue}>
+                  ₩{Number(thisMonth?.amount ?? 0).toLocaleString()}
+                </Text>
+              </View>
+              <View style={styles.sheetStat}>
+                <Text style={styles.sheetStatLabel}>지난 달</Text>
+                <Text style={styles.sheetStatValue}>
+                  ₩{Number(lastMonth?.amount ?? 0).toLocaleString()}
+                </Text>
+              </View>
+              <View style={styles.sheetStat}>
+                <Text style={styles.sheetStatLabel}>변동</Text>
+                <Text style={[
+                  styles.sheetStatValue,
+                  { color: momDelta >= 0 ? Colors.danger : Colors.success },
+                ]}>
+                  {momDelta >= 0 ? '+' : ''}₩{Math.abs(momDelta).toLocaleString()}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.sheetMonthList}>
+              {trendData.slice().reverse().map((m: any, i: number) => (
+                <View key={i} style={styles.sheetMonthRow}>
+                  <Text style={styles.sheetMonthLabel}>{m.month}</Text>
+                  <Text style={styles.sheetMonthAmount}>₩{Number(m.amount).toLocaleString()}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={{ marginTop: Spacing.xl }}>
+              <GradientButton
+                label="닫기"
+                variant="neutral"
+                size="md"
+                onPress={() => setTrendDetailOpen(false)}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── 카테고리 풀 리스트 시트 ── */}
+      <Modal visible={categoryListOpen} transparent animationType="slide" onRequestClose={() => setCategoryListOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setCategoryListOpen(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>카테고리별 지출</Text>
+            <Text style={styles.sheetSubtitle}>총 {cats.length}개 카테고리</Text>
+
+            {cats.length > 0 && (
+              <View style={[styles.stackedBar, { height: 14, marginTop: Spacing.lg }]}>
+                {cats.map((cat: any, i: number) => (
+                  <View
+                    key={i}
+                    style={{ flex: cat.percentage || 1, backgroundColor: cat.color || Colors.primary }}
+                  />
+                ))}
+              </View>
+            )}
+
+            <ScrollView style={{ maxHeight: 380, marginTop: Spacing.md }}>
+              {cats.map((cat: any, i: number) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.catRow}
+                  activeOpacity={0.6}
+                  onPress={() => {
+                    setCategoryListOpen(false);
+                    setSelectedCategory(cat);
+                  }}
+                >
+                  <View style={[styles.catDot, { backgroundColor: cat.color || Colors.primary }]} />
+                  <View style={styles.catInfo}>
+                    <Text style={styles.catName}>{cat.category_name}</Text>
+                    <Text style={styles.catSubText}>구독 {cat.count ?? 0}개 · {cat.percentage?.toFixed(0)}%</Text>
+                  </View>
+                  <Text style={styles.catAmount}>₩{(cat.total_krw ?? 0).toLocaleString()}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <View style={{ marginTop: Spacing.lg }}>
+              <GradientButton
+                label="닫기"
+                variant="neutral"
+                size="md"
+                onPress={() => setCategoryListOpen(false)}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── 카테고리 상세 시트 ── */}
+      <Modal visible={!!selectedCategory} transparent animationType="slide" onRequestClose={() => setSelectedCategory(null)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setSelectedCategory(null)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            {selectedCategory && (
+              <>
+                <View style={styles.catDetailHeader}>
+                  <View style={[styles.catDetailDot, { backgroundColor: selectedCategory.color || Colors.primary }]}>
+                    <Text style={styles.catDetailEmoji}>{selectedCategory.icon ?? '📦'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.sheetTitle}>{selectedCategory.category_name}</Text>
+                    <Text style={styles.sheetSubtitle}>
+                      구독 {selectedCategory.count ?? 0}개 · 전체의 {selectedCategory.percentage?.toFixed(0)}%
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={[styles.savingHero, { marginTop: Spacing.lg }]}>
+                  <Text style={styles.savingHeroLabel}>월 지출</Text>
+                  <Text style={styles.savingHeroAmount}>
+                    ₩{Number(selectedCategory.total_krw ?? 0).toLocaleString()}
+                  </Text>
+                </View>
+
+                <Text style={[styles.sheetSubtitle, { marginTop: Spacing.xl, marginBottom: Spacing.sm }]}>
+                  💡 더 자세한 구독 목록은 [내 구독] 탭에서 확인할 수 있어요.
+                </Text>
+
+                <View style={{ marginTop: Spacing.lg }}>
+                  <GradientButton
+                    label="구독 보기"
+                    icon="list"
+                    variant="primary"
+                    size="md"
+                    onPress={() => {
+                      setSelectedCategory(null);
+                      router.push('/(tabs)/subscriptions');
+                    }}
+                  />
+                </View>
+                <View style={{ marginTop: Spacing.sm }}>
+                  <GradientButton
+                    label="닫기"
+                    variant="neutral"
+                    size="md"
+                    onPress={() => setSelectedCategory(null)}
+                  />
+                </View>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* ── 적용 확인 모달 ── */}
       <Modal visible={!!confirmSub} transparent animationType="fade" onRequestClose={cancelConfirm}>
@@ -568,11 +806,64 @@ const styles = StyleSheet.create({
   statNumber: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   statLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4 },
   // Category
-  catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm },
-  catDot: { width: 10, height: 10, borderRadius: 5, marginRight: Spacing.md },
-  catName: { flex: 1, fontSize: FontSize.md, color: Colors.textPrimary, fontWeight: FontWeight.medium },
-  catPercent: { fontSize: FontSize.sm, color: Colors.textTertiary, marginRight: Spacing.md },
-  catAmount: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textPrimary },
+  catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.md, gap: 4 },
+  catDot: { width: 10, height: 10, borderRadius: 5, marginRight: Spacing.sm },
+  catInfo: { flex: 1 },
+  catName: { fontSize: FontSize.md, color: Colors.textPrimary, fontWeight: FontWeight.semibold },
+  catSubText: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 2 },
+  catRight: { alignItems: 'flex-end', marginRight: Spacing.sm },
+  catPercent: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 2 },
+  catAmount: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  stackedBar: {
+    flexDirection: 'row', height: 10, borderRadius: 5,
+    overflow: 'hidden', marginTop: Spacing.lg, marginBottom: Spacing.md,
+    backgroundColor: Colors.borderLight,
+  },
+  // 지출 분석 변동 핀
+  totalRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: -4 },
+  momPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+    alignSelf: 'flex-start', marginBottom: 8,
+  },
+  momPillText: { fontSize: 11, fontWeight: FontWeight.heavy },
+  // 바텀시트 공통
+  sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    paddingHorizontal: Spacing.xxl, paddingTop: Spacing.lg, paddingBottom: Spacing.xxxl,
+    maxHeight: '85%',
+  },
+  sheetHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: Colors.borderLight, alignSelf: 'center', marginBottom: Spacing.lg,
+  },
+  sheetTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
+  sheetSubtitle: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: 4 },
+  sheetStatsRow: {
+    flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xl,
+  },
+  sheetStat: {
+    flex: 1, backgroundColor: Colors.surfaceLight,
+    borderRadius: 14, paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
+  },
+  sheetStatLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginBottom: 2 },
+  sheetStatValue: { fontSize: FontSize.md, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
+  sheetMonthList: { marginTop: Spacing.lg },
+  sheetMonthRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: Colors.borderLight,
+  },
+  sheetMonthLabel: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: FontWeight.semibold },
+  sheetMonthAmount: { fontSize: FontSize.sm, color: Colors.textPrimary, fontWeight: FontWeight.bold },
+  catDetailHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  catDetailDot: {
+    width: 48, height: 48, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  catDetailEmoji: { fontSize: 24 },
   // Saving Insights
   savingIconCircle: {
     width: 32, height: 32, borderRadius: 16,

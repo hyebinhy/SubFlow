@@ -9,12 +9,13 @@ import { Colors, FontSize, FontWeight, Spacing } from '../constants/theme';
 export type GradientVariant = 'primary' | 'warning' | 'danger' | 'success' | 'neutral' | 'glass';
 export type GradientSize = 'md' | 'lg';
 
+// 모든 솔리드 변형은 alpha 0.78~0.82로 살짝 투명하게 — 배경이 비치는 부드러운 톤
 const VARIANTS: Record<GradientVariant, { colors: readonly [string, ...string[]]; shadow: string }> = {
-  primary: { colors: ['#7B7BFF', Colors.primary, '#5856D6'] as const, shadow: Colors.primary },
-  warning: { colors: ['#FFB347', '#FF8A00'] as const, shadow: '#FF8A00' },
-  danger:  { colors: ['#FF7B7B', '#E03131'] as const, shadow: '#E03131' },
-  success: { colors: ['#4ADE80', '#059669'] as const, shadow: '#059669' },
-  neutral: { colors: ['#9CA3AF', '#4B5563'] as const, shadow: '#4B5563' },
+  primary: { colors: ['rgba(123,123,255,0.78)', 'rgba(74,144,217,0.78)', 'rgba(88,86,214,0.82)'] as const, shadow: Colors.primary },
+  warning: { colors: ['rgba(255,179,71,0.78)', 'rgba(255,138,0,0.82)'] as const, shadow: '#FF8A00' },
+  danger:  { colors: ['rgba(255,123,123,0.78)', 'rgba(224,49,49,0.82)'] as const, shadow: '#E03131' },
+  success: { colors: ['rgba(74,222,128,0.78)', 'rgba(5,150,105,0.82)'] as const, shadow: '#059669' },
+  neutral: { colors: ['rgba(156,163,175,0.78)', 'rgba(75,85,99,0.82)'] as const, shadow: '#4B5563' },
   glass:   { colors: ['rgba(255,255,255,0.9)', 'rgba(235,243,255,0.7)', 'rgba(214,232,247,0.55)'] as const, shadow: Colors.primary },
 };
 
@@ -43,7 +44,8 @@ export function GradientButton({
   const isLg = size === 'lg';
   const isGlass = variant === 'glass';
   const radius = isLg ? 22 : 18;
-  const height = isLg ? 52 : 44;
+  // 모든 버튼 높이 동일하게 통일
+  const height = 48;
   const iconCircleSize = isLg ? 24 : 22;
   const innerIconSize = isLg ? 14 : 13;
   // 모든 버튼 동일한 글꼴: 작고 통일된 사이즈
@@ -66,12 +68,14 @@ export function GradientButton({
       onPressOut={() => setPressed(false)}
       style={[
         {
+          height,
           borderRadius: radius,
           shadowColor: v.shadow,
-          shadowOpacity: isInactive ? 0 : (pressed ? (isGlass ? 0.08 : 0.2) : (isGlass ? 0.18 : (isLg ? 0.45 : 0.35))),
-          shadowRadius: isGlass ? 14 : (isLg ? 18 : 12),
-          shadowOffset: { width: 0, height: pressed ? 2 : (isGlass ? 4 : (isLg ? 10 : 6)) },
-          elevation: isInactive ? 0 : (pressed ? 2 : (isGlass ? 3 : (isLg ? 10 : 6))),
+          // 중간 톤 그림자: 입체감은 충분히, 인접 UI 침범은 최소화
+          shadowOpacity: isInactive ? 0 : (pressed ? 0.15 : (isGlass ? 0.14 : 0.3)),
+          shadowRadius: isGlass ? 10 : (isLg ? 14 : 12),
+          shadowOffset: { width: 0, height: pressed ? 2 : (isGlass ? 3 : (isLg ? 6 : 5)) },
+          elevation: isInactive ? 0 : (pressed ? 2 : (isGlass ? 3 : (isLg ? 6 : 5))),
           transform: [{ scale: pressed ? 0.97 : 1 }],
         },
         disabled && { opacity: 0.5 },
@@ -84,7 +88,7 @@ export function GradientButton({
         end={{ x: 1, y: 1 }}
         style={[
           styles.gradient,
-          { borderRadius: radius, height },
+          { borderRadius: radius, flex: 1 },
           isGlass && {
             borderWidth: 1.2,
             borderColor: 'rgba(255,255,255,0.7)',

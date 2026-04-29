@@ -28,6 +28,8 @@ class CategoryBreakdownItem(BaseModel):
     total: Decimal
     count: int
     percentage: float
+    color: str | None = None
+    icon: str | None = None
 
 
 class CategoryBreakdown(BaseModel):

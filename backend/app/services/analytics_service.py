@@ -115,12 +115,21 @@ class AnalyticsService:
     async def get_category_breakdown(self, user_id: UUID, year: int, month: int) -> CategoryBreakdown:
         subs = await self._get_active_subscriptions(user_id)
 
-        by_category: dict[str, dict] = defaultdict(lambda: {"total": Decimal("0"), "count": 0})
+        # 카테고리별로 total/count + color/icon 메타도 함께 모음
+        by_category: dict[str, dict] = defaultdict(
+            lambda: {"total": Decimal("0"), "count": 0, "color": None, "icon": None}
+        )
         for s in subs:
             cat_name = s.category.name if s.category else "미분류"
+            cat_color = s.category.color if s.category else None
+            cat_icon = s.category.icon if s.category else None
             monthly = await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency)
             by_category[cat_name]["total"] += monthly
             by_category[cat_name]["count"] += 1
+            # 첫 번째로 발견된 카테고리 메타 보존
+            if by_category[cat_name]["color"] is None:
+                by_category[cat_name]["color"] = cat_color
+                by_category[cat_name]["icon"] = cat_icon
 
         total = sum((v["total"] for v in by_category.values()), Decimal("0"))
         breakdown = []
@@ -131,6 +140,8 @@ class AnalyticsService:
                 total=data["total"].quantize(Decimal("1")),
                 count=data["count"],
                 percentage=round(pct, 1),
+                color=data["color"],
+                icon=data["icon"],
             ))
 
         return CategoryBreakdown(
