@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
+import { GradientButton } from '../../src/components/GradientButton';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
 
 export default function RegisterScreen() {
@@ -117,17 +118,15 @@ export default function RegisterScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity 
-                style={styles.registerBtn} 
-                onPress={handleRegister} 
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <Text style={styles.registerBtnText}>가입하기</Text>
-                )}
-              </TouchableOpacity>
+              <GradientButton
+                label="가입하기"
+                icon="person-add-outline"
+                variant="primary"
+                size="lg"
+                loading={loading}
+                onPress={handleRegister}
+                style={{ marginTop: Spacing.md }}
+              />
 
               <View style={styles.footerContainer}>
                 <Text style={styles.footerText}>이미 계정이 있으신가요? </Text>
@@ -188,21 +187,6 @@ const styles = StyleSheet.create({
     flex: 1, 
     fontSize: FontSize.md, 
     color: Colors.textPrimary,
-  },
-  registerBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: '#737DFF', 
-    height: 52, 
-    borderRadius: 12, 
-    marginTop: Spacing.md,
-    ...Shadow.sm,
-  },
-  registerBtnText: { 
-    fontSize: FontSize.lg, 
-    fontWeight: FontWeight.bold, 
-    color: Colors.textWhite,
   },
   footerContainer: {
     flexDirection: 'row',

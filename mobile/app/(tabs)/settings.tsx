@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Card } from '../../src/components/Card';
+import { GradientButton } from '../../src/components/GradientButton';
 import { notificationAPI } from '../../src/services/api';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
@@ -162,12 +163,15 @@ export default function SettingsScreen() {
           </Card>
 
           {/* 로그아웃 */}
-          <Card style={styles.logoutCard}>
-            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
-              <Text style={styles.logoutText}>{t('settings.logout')}</Text>
-            </TouchableOpacity>
-          </Card>
+          <View style={styles.logoutCard}>
+            <GradientButton
+              label={t('settings.logout')}
+              icon="log-out-outline"
+              variant="danger"
+              size="lg"
+              onPress={handleLogout}
+            />
+          </View>
 
           <Text style={styles.version}>SubFlow v1.0.0</Text>
           <View style={{ height: 100 }} />
@@ -196,8 +200,6 @@ const styles = StyleSheet.create({
   langOption: { fontSize: FontSize.sm, fontWeight: FontWeight.medium, color: Colors.textTertiary },
   langActive: { color: Colors.primary, fontWeight: FontWeight.bold },
   langSep: { color: Colors.borderLight },
-  logoutCard: { marginTop: Spacing.sm },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingVertical: Spacing.xs },
-  logoutText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.danger },
+  logoutCard: { marginTop: Spacing.lg },
   version: { textAlign: 'center', fontSize: FontSize.xs, color: 'rgba(255,255,255,0.5)', marginTop: Spacing.sm },
 });

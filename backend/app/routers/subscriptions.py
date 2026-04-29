@@ -12,6 +12,7 @@ from app.models.subscription import BillingCycle, SubscriptionStatus
 from app.models.subscription_history import SubscriptionHistory
 from app.models.user import User
 from app.schemas.subscription import (
+    ApplySuggestionRequest,
     CalendarEvent,
     CalendarEventsResponse,
     SubscriptionCreateRequest,
@@ -225,3 +226,21 @@ async def delete_subscription(
 ):
     service = SubscriptionService(db)
     await service.delete(subscription_id, current_user.id)
+
+
+@router.post("/{subscription_id}/apply-suggestion", response_model=SubscriptionResponse)
+async def apply_suggestion(
+    subscription_id: UUID,
+    data: ApplySuggestionRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """절약 인사이트의 추천 액션을 구독에 적용한다.
+    외부 서비스 자체는 사용자가 별도로 처리해야 하며, 이 호출은 우리 DB만 갱신한다."""
+    service = SubscriptionService(db)
+    return await service.apply_suggestion(
+        subscription_id=subscription_id,
+        user_id=current_user.id,
+        action_type=data.action_type,
+        target_plan_id=data.target_plan_id,
+    )

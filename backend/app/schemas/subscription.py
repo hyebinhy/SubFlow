@@ -118,3 +118,9 @@ class SubscriptionHistoryItem(BaseModel):
 
 class SubscriptionTimelineResponse(BaseModel):
     events: list[SubscriptionHistoryItem]
+
+
+class ApplySuggestionRequest(BaseModel):
+    """절약 인사이트 적용 요청. downgrade/cancel/switch_billing 중 하나."""
+    action_type: str = Field(pattern="^(downgrade|cancel|switch_billing)$")
+    target_plan_id: int | None = None

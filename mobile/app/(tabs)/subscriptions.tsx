@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { GradientButton } from '../../src/components/GradientButton';
 import { useSubscriptions } from '../../src/hooks/useApi';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
@@ -106,11 +107,15 @@ export default function SubscriptionsScreen() {
   const apiSubs = (subsQuery.data as any[]) ?? [];
   const allSubs: Sub[] = apiSubs.length > 0
     ? apiSubs.map((s: any) => ({
-        id: String(s.id), name: s.service_name ?? s.name ?? 'Unknown',
-        plan: s.plan_name ?? '-', amount: s.billing_amount ?? s.amount ?? 0,
-        cycle: s.billing_cycle ?? 'monthly', nextDate: s.next_billing_date ?? '—',
-        status: (s.status ?? 'active') as any, category: s.category_name ?? '',
-        cancelUrl: s.cancel_url ?? '',
+        id: String(s.id),
+        name: s.service_name ?? s.name ?? 'Unknown',
+        plan: s.plan?.name ?? s.plan_name ?? '-',
+        amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
+        cycle: s.billing_cycle ?? 'monthly',
+        nextDate: s.next_billing_date ?? '—',
+        status: (s.status ?? 'active') as any,
+        category: s.category?.name ?? s.category_name ?? '',
+        cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
       }))
     : MOCK_SUBSCRIPTIONS;
 
@@ -447,45 +452,55 @@ export default function SubscriptionsScreen() {
             {/* 액션 버튼들 */}
             <View style={styles.modalActions}>
               {selectedSub.status === 'active' && (
-                <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: '#FF9500' }]} onPress={() => {
-                  if (selectedSub.cancelUrl) Linking.openURL(selectedSub.cancelUrl);
-                  else handleCancel();
-                }}>
-                  <Ionicons name="open-outline" size={18} color="#FFF" />
-                  <Text style={[styles.modalActionText, { color: '#FFF' }]}>
-                    {language === 'ko' ? '구독 해지' : 'Cancel Sub'}
-                  </Text>
-                </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                  <GradientButton
+                    label={language === 'ko' ? '구독 해지' : 'Cancel Sub'}
+                    icon="open-outline"
+                    variant="warning"
+                    size="md"
+                    onPress={() => {
+                      if (selectedSub.cancelUrl) Linking.openURL(selectedSub.cancelUrl);
+                      else handleCancel();
+                    }}
+                  />
+                </View>
               )}
-              <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: Colors.danger }]} onPress={handleDelete}>
-                <Ionicons name="trash" size={18} color="#FFF" />
-                <Text style={[styles.modalActionText, { color: '#FFF' }]}>
-                  {language === 'ko' ? '삭제' : 'Delete'}
-                </Text>
-              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <GradientButton
+                  label={language === 'ko' ? '삭제' : 'Delete'}
+                  icon="trash"
+                  variant="danger"
+                  size="md"
+                  onPress={handleDelete}
+                />
+              </View>
             </View>
 
             {/* 저장 버튼 */}
-            <TouchableOpacity style={styles.modalSaveBtn} onPress={async () => {
-              try {
-                const updateData: Record<string, unknown> = {};
-                if (editDate && editDate !== '—' && editDate !== selectedSub.nextDate) {
-                  updateData.next_billing_date = editDate;
-                }
-                if (selectedPlan) {
-                  updateData.cost = selectedPlan.price;
-                  updateData.billing_cycle = selectedPlan.cycle;
-                  updateData.plan_name = selectedPlan.name;
-                }
-                if (Object.keys(updateData).length > 0) {
-                  await subscriptionAPI.update(selectedSub.id, updateData);
-                }
-              } catch {}
-              closeModal();
-              subsQuery.refetch();
-            }}>
-              <Text style={styles.modalSaveBtnText}>{language === 'ko' ? '저장' : 'Save'}</Text>
-            </TouchableOpacity>
+            <GradientButton
+              label={language === 'ko' ? '저장하기' : 'Save Changes'}
+              icon="checkmark"
+              variant="primary"
+              size="lg"
+              onPress={async () => {
+                try {
+                  const updateData: Record<string, unknown> = {};
+                  if (editDate && editDate !== '—' && editDate !== selectedSub.nextDate) {
+                    updateData.next_billing_date = editDate;
+                  }
+                  if (selectedPlan) {
+                    updateData.cost = selectedPlan.price;
+                    updateData.billing_cycle = selectedPlan.cycle;
+                    updateData.plan_name = selectedPlan.name;
+                  }
+                  if (Object.keys(updateData).length > 0) {
+                    await subscriptionAPI.update(selectedSub.id, updateData);
+                  }
+                } catch {}
+                closeModal();
+                subsQuery.refetch();
+              }}
+            />
             </ScrollView>
           </Animated.View>
         </View>
@@ -572,8 +587,4 @@ const styles = StyleSheet.create({
   calDayText: { fontSize: 13, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   calDayTextSelected: { color: '#FFF' },
   modalActions: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.lg },
-  modalActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
-  modalActionText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  modalSaveBtn: { backgroundColor: Colors.primary, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', ...Shadow.sm },
-  modalSaveBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: '#FFF' },
 });

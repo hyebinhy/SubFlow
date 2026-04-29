@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Pressable, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAnalyticsOverview, useCategoryBreakdown, useSpendingTrend, useSavingsSuggestions, useBudgetStatus, useOverlaps } from '../../src/hooks/useApi';
+import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { GradientButton } from '../../src/components/GradientButton';
+import { subscriptionAPI } from '../../src/services/api';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
 // ── 월별 추이 바 차트 (디자인 유지) ──
@@ -55,6 +59,64 @@ export default function AnalyticsScreen() {
   const overlaps = useOverlaps();
 
   const isLoading = overview.loading;
+  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [confirmSub, setConfirmSub] = useState<any | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const toastAnim = React.useRef(new Animated.Value(0)).current;
+
+  // 토스트 자동 닫힘
+  useEffect(() => {
+    if (!toast) return;
+    Animated.timing(toastAnim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+    const timer = setTimeout(() => {
+      Animated.timing(toastAnim, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => {
+        setToast(null);
+      });
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const refreshAfterApply = async () => {
+    await Promise.all([savings.refetch(), overview.refetch(), categories.refetch(), budget.refetch()]);
+  };
+
+  const handleApplySuggestion = (s: any) => {
+    if (!s.subscription_id || !s.action_type) {
+      setToast({ type: 'info', text: '이 제안은 자동 적용할 수 없어요.' });
+      return;
+    }
+    setConfirmSub(s);
+  };
+
+  const cancelConfirm = () => setConfirmSub(null);
+
+  const runApply = async () => {
+    const s = confirmSub;
+    if (!s) return;
+
+    // 외부 페이지는 사용자 클릭 직후 동기적으로 열어야 웹 팝업 차단을 피할 수 있음
+    if (s.action_url) {
+      try { Linking.openURL(s.action_url); } catch { /* ignore */ }
+    }
+
+    setConfirmSub(null);
+    setApplyingId(s.subscription_id);
+
+    try {
+      await subscriptionAPI.applySuggestion(s.subscription_id, {
+        action_type: s.action_type,
+        target_plan_id: s.target_plan_id,
+      });
+      await refreshAfterApply();
+      const cheapest = s.cheaper_plans?.[0];
+      const targetText = cheapest ? cheapest.plan_name : '추천 플랜';
+      setToast({ type: 'success', text: `${s.service_name} → ${targetText} 으로 갱신됨` });
+    } catch (e: any) {
+      setToast({ type: 'error', text: e?.response?.data?.detail ?? e?.message ?? '적용에 실패했어요.' });
+    } finally {
+      setApplyingId(null);
+    }
+  };
 
   // API 데이터 없으면 mock fallback
   const MOCK_OVERVIEW = {
@@ -73,8 +135,18 @@ export default function AnalyticsScreen() {
     { month: 'Mar', amount: 72700 }, { month: 'Apr', amount: 72700 },
   ];
   const MOCK_SAVINGS = [
-    { message: 'Netflix와 YouTube Premium 동시 사용 중 — YouTube 해지 시 월 ₩14,900 절약' },
-    { message: 'ChatGPT Plus를 연간 결제로 전환 시 약 20% 할인 가능' },
+    {
+      service_name: 'Netflix',
+      current_plan_name: '프리미엄',
+      suggestion_text: '스탠다드 플랜으로 변경 시 월 ₩3,500 절약 가능',
+      max_savings_krw: 3500,
+    },
+    {
+      service_name: 'ChatGPT Plus',
+      current_plan_name: 'Plus',
+      suggestion_text: '연간 결제로 전환 시 약 20% 할인',
+      max_savings_krw: 5200,
+    },
   ];
   const MOCK_OVERLAPS = [
     { category: 'Entertainment', services: ['Netflix', 'YouTube Premium'], message: 'Netflix와 YouTube Premium이 엔터테인먼트 카테고리에서 중복됩니다' },
@@ -206,17 +278,76 @@ export default function AnalyticsScreen() {
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitleWrap}>
-                    <Ionicons name="bulb" size={20} color={Colors.textPrimary} />
+                    <View style={styles.savingIconCircle}>
+                      <Ionicons name="bulb" size={18} color="#F59E0B" />
+                    </View>
                     <Text style={styles.cardTitle}>{t('analytics.savingInsight')}</Text>
                   </View>
                 </View>
 
-                {savingsList.map((s: any, i: number) => (
-                  <View key={i} style={styles.suggestionRow}>
-                    <Ionicons name="arrow-down-circle" size={16} color={Colors.success} />
-                    <Text style={styles.suggestionText}>{s.message}</Text>
-                  </View>
-                ))}
+                {savingsList.length > 0 && (() => {
+                  const totalSavings = savingsList.reduce(
+                    (sum: number, s: any) => sum + Number(s.max_savings_krw ?? 0),
+                    0,
+                  );
+                  return totalSavings > 0 ? (
+                    <View style={styles.savingHero}>
+                      <Text style={styles.savingHeroLabel}>월 최대 절감 가능</Text>
+                      <Text style={styles.savingHeroAmount}>₩{totalSavings.toLocaleString()}</Text>
+                    </View>
+                  ) : null;
+                })()}
+
+                {savingsList.map((s: any, i: number) => {
+                  const text = s.suggestion_text ?? s.message ?? '';
+                  const saving = Number(s.max_savings_krw ?? 0);
+                  const canApply = !!s.subscription_id && !!s.action_type;
+                  const isApplying = applyingId === s.subscription_id;
+                  return (
+                    <View key={i} style={styles.savingItem}>
+                      <View style={styles.savingTop}>
+                        {s.service_name ? (
+                          <ServiceLogo name={s.service_name} size={36} />
+                        ) : (
+                          <View style={styles.savingFallbackIcon}>
+                            <Ionicons name="trending-down" size={18} color={Colors.success} />
+                          </View>
+                        )}
+                        <View style={styles.savingBody}>
+                          {s.service_name && (
+                            <View style={styles.savingTitleRow}>
+                              <Text style={styles.savingService}>{s.service_name}</Text>
+                              {s.current_plan_name && (
+                                <View style={styles.savingPlanBadge}>
+                                  <Text style={styles.savingPlanText}>{s.current_plan_name}</Text>
+                                </View>
+                              )}
+                            </View>
+                          )}
+                          <Text style={styles.savingDesc}>{text}</Text>
+                        </View>
+                        {saving > 0 && (
+                          <View style={styles.savingPill}>
+                            <Ionicons name="arrow-down" size={11} color={Colors.success} />
+                            <Text style={styles.savingPillText}>₩{saving.toLocaleString()}</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {canApply && (
+                        <GradientButton
+                          label="지금 적용"
+                          icon="flash"
+                          variant="glass"
+                          size="md"
+                          loading={isApplying}
+                          onPress={() => handleApplySuggestion(s)}
+                          style={{ marginTop: Spacing.sm }}
+                        />
+                      )}
+                    </View>
+                  );
+                })}
 
                 {/* 중복 감지 섹션 */}
                 {overlapsList.length > 0 && (
@@ -239,7 +370,10 @@ export default function AnalyticsScreen() {
                 )}
 
                 {savingsList.length === 0 && overlapsList.length === 0 && (
-                  <Text style={styles.emptyText}>{t('common.noData')}</Text>
+                  <View style={styles.emptySaving}>
+                    <Ionicons name="checkmark-circle" size={28} color={Colors.success} />
+                    <Text style={styles.emptySavingText}>현재 가장 합리적인 플랜을 사용 중이에요</Text>
+                  </View>
                 )}
               </View>
 
@@ -279,6 +413,83 @@ export default function AnalyticsScreen() {
           <View style={{ height: 160 }} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* ── 적용 확인 모달 ── */}
+      <Modal visible={!!confirmSub} transparent animationType="fade" onRequestClose={cancelConfirm}>
+        <Pressable style={styles.confirmOverlay} onPress={cancelConfirm}>
+          <Pressable style={styles.confirmSheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.confirmIconWrap}>
+              <Ionicons name="flash" size={28} color={Colors.primary} />
+            </View>
+            <Text style={styles.confirmTitle}>플랜 변경 적용</Text>
+            {confirmSub && (
+              <>
+                <Text style={styles.confirmBody}>
+                  <Text style={{ fontWeight: FontWeight.heavy }}>{confirmSub.service_name}</Text>
+                  {' → '}
+                  <Text style={{ fontWeight: FontWeight.heavy, color: Colors.primary }}>
+                    {confirmSub.cheaper_plans?.[0]?.plan_name ?? '추천 플랜'}
+                  </Text>
+                </Text>
+                {Number(confirmSub.max_savings_krw ?? 0) > 0 && (
+                  <View style={styles.confirmSavingPill}>
+                    <Ionicons name="arrow-down" size={11} color={Colors.success} />
+                    <Text style={styles.confirmSavingText}>
+                      월 ₩{Number(confirmSub.max_savings_krw).toLocaleString()} 절약
+                    </Text>
+                  </View>
+                )}
+                <Text style={styles.confirmHint}>
+                  ① {confirmSub.service_name} 관리 페이지를 새 창으로 열어드려요{'\n'}
+                  ② SubFlow에 새 플랜을 자동 반영합니다
+                </Text>
+              </>
+            )}
+            <View style={styles.confirmActions}>
+              <View style={{ flex: 1 }}>
+                <GradientButton
+                  label="취소"
+                  variant="neutral"
+                  size="md"
+                  onPress={cancelConfirm}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <GradientButton
+                  label="열고 적용"
+                  icon="open-outline"
+                  variant="primary"
+                  size="md"
+                  onPress={runApply}
+                />
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── 토스트 ── */}
+      {toast && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.toast,
+            toast.type === 'error' && styles.toastError,
+            toast.type === 'info' && styles.toastInfo,
+            {
+              opacity: toastAnim,
+              transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }],
+            },
+          ]}
+        >
+          <Ionicons
+            name={toast.type === 'success' ? 'checkmark-circle' : toast.type === 'error' ? 'alert-circle' : 'information-circle'}
+            size={18}
+            color="#FFF"
+          />
+          <Text style={styles.toastText}>{toast.text}</Text>
+        </Animated.View>
+      )}
     </LinearGradient>
   );
 }
@@ -330,9 +541,49 @@ const styles = StyleSheet.create({
   catName: { flex: 1, fontSize: FontSize.md, color: Colors.textPrimary, fontWeight: FontWeight.medium },
   catPercent: { fontSize: FontSize.sm, color: Colors.textTertiary, marginRight: Spacing.md },
   catAmount: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textPrimary },
-  // Suggestions
-  suggestionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm, marginTop: Spacing.md },
-  suggestionText: { flex: 1, fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20 },
+  // Saving Insights
+  savingIconCircle: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  savingHero: {
+    marginTop: Spacing.lg,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 20,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  savingHeroLabel: { fontSize: FontSize.xs, color: '#047857', fontWeight: FontWeight.semibold, marginBottom: 2 },
+  savingHeroAmount: { fontSize: 28, fontWeight: FontWeight.heavy, color: '#065F46', letterSpacing: -0.5 },
+  savingItem: {
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1, borderBottomColor: Colors.borderLight,
+  },
+  savingTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  savingFallbackIcon: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#ECFDF5',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  savingBody: { flex: 1 },
+  savingTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  savingService: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  savingPlanBadge: { backgroundColor: Colors.borderLight, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
+  savingPlanText: { fontSize: 9, color: Colors.textTertiary, fontWeight: FontWeight.semibold },
+  savingDesc: { fontSize: FontSize.xs, color: Colors.textSecondary, lineHeight: 16 },
+  savingPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
+    backgroundColor: '#ECFDF5',
+  },
+  savingPillText: { fontSize: 10, fontWeight: FontWeight.bold, color: Colors.success },
+  emptySaving: {
+    alignItems: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm,
+  },
+  emptySavingText: { fontSize: FontSize.sm, color: Colors.textSecondary, textAlign: 'center' },
   // Budget
   budgetBar: { height: 8, borderRadius: 4, backgroundColor: Colors.borderLight, marginTop: Spacing.lg, overflow: 'hidden' },
   budgetFill: { height: '100%', borderRadius: 4 },
@@ -348,4 +599,48 @@ const styles = StyleSheet.create({
   overlapBadge: { backgroundColor: Colors.danger + '15', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 4 },
   overlapBadgeText: { fontSize: FontSize.xs, color: Colors.danger, fontWeight: FontWeight.bold },
   overlapMessage: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20 },
+  // ── 적용 확인 모달 ──
+  confirmOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', paddingHorizontal: 32,
+  },
+  confirmSheet: {
+    backgroundColor: '#FFF', borderRadius: 28, padding: 28,
+    alignItems: 'center', gap: 12,
+  },
+  confirmIconWrap: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: 'rgba(74,144,217,0.15)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 4,
+  },
+  confirmTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
+  confirmBody: { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  confirmSavingPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#ECFDF5', borderRadius: 12,
+    paddingHorizontal: 12, paddingVertical: 6,
+    marginTop: 4,
+  },
+  confirmSavingText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.success },
+  confirmHint: {
+    fontSize: FontSize.xs, color: Colors.textTertiary,
+    textAlign: 'center', lineHeight: 18, marginTop: 4,
+  },
+  confirmActions: {
+    flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg,
+    alignSelf: 'stretch',
+  },
+  // ── 토스트 ──
+  toast: {
+    position: 'absolute', top: 60, left: 20, right: 20,
+    backgroundColor: Colors.success,
+    borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 }, elevation: 10,
+  },
+  toastError: { backgroundColor: Colors.danger },
+  toastInfo: { backgroundColor: Colors.textSecondary },
+  toastText: { flex: 1, fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFF' },
 });

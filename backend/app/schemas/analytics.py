@@ -116,6 +116,10 @@ class SavingSuggestionItem(BaseModel):
     cheaper_plans: list[CheaperPlanInfo]
     max_savings_krw: Decimal
     suggestion_text: str
+    # ── 액션 가능 정보 ──
+    action_type: str | None = None  # 'downgrade' | 'cancel' | 'switch_billing'
+    action_url: str | None = None  # 외부 서비스 관리 페이지 URL
+    target_plan_id: int | None = None  # downgrade/switch_billing 대상 plan
 
 
 class SavingsSuggestionsResponse(BaseModel):

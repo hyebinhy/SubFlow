@@ -212,6 +212,82 @@ class SubscriptionService:
         )
         return result.scalar_one()
 
+    async def apply_suggestion(
+        self,
+        subscription_id: UUID,
+        user_id: UUID,
+        action_type: str,
+        target_plan_id: int | None,
+    ) -> Subscription:
+        """절약 인사이트의 액션을 구독에 적용한다.
+        외부 서비스를 직접 조작하지는 못하므로, 우리 DB의 상태만 갱신한다."""
+        subscription = await self.get_by_id(subscription_id, user_id)
+
+        if action_type == "cancel":
+            old_status = subscription.status.value if subscription.status else None
+            subscription.status = SubscriptionStatus.CANCELLED
+            await self._record_history(
+                subscription_id=subscription.id,
+                user_id=user_id,
+                event_type=HistoryEventType.STATUS_CHANGED,
+                description=f"{old_status} → cancelled",
+                old_value=old_status,
+                new_value="cancelled",
+            )
+
+        elif action_type in ("downgrade", "switch_billing"):
+            if target_plan_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="target_plan_id is required for downgrade/switch_billing",
+                )
+            plan_result = await self.db.execute(
+                select(ServicePlan).where(ServicePlan.id == target_plan_id)
+            )
+            new_plan = plan_result.scalar_one_or_none()
+            if new_plan is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="target plan not found",
+                )
+
+            old_plan_name = subscription.plan.name if subscription.plan else str(subscription.plan_id)
+            old_cost = subscription.cost
+            await self._record_history(
+                subscription_id=subscription.id,
+                user_id=user_id,
+                event_type=HistoryEventType.PLAN_CHANGED,
+                description=f"{old_plan_name} → {new_plan.name}",
+                old_value=old_plan_name,
+                new_value=new_plan.name,
+            )
+            if Decimal(str(old_cost)) != Decimal(str(new_plan.price)):
+                await self._record_history(
+                    subscription_id=subscription.id,
+                    user_id=user_id,
+                    event_type=HistoryEventType.PRICE_CHANGED,
+                    description=f"{old_cost:,.0f}{subscription.currency} → {new_plan.price:,.0f}{new_plan.currency}",
+                    old_value=str(old_cost),
+                    new_value=str(new_plan.price),
+                )
+
+            subscription.plan_id = new_plan.id
+            subscription.cost = new_plan.price
+            subscription.currency = new_plan.currency
+            subscription.billing_cycle = new_plan.billing_cycle
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"unknown action_type: {action_type}",
+            )
+
+        await self.db.commit()
+        result = await self.db.execute(
+            select(Subscription).options(*EAGER_LOADS).where(Subscription.id == subscription.id)
+        )
+        return result.scalar_one()
+
     async def delete(self, subscription_id: UUID, user_id: UUID) -> None:
         subscription = await self.get_by_id(subscription_id, user_id)
 

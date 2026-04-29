@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { subscriptionAPI } from '../../src/services/api';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { GradientButton } from '../../src/components/GradientButton';
 import {
   Colors,
   Spacing,
@@ -596,18 +597,16 @@ export default function CatalogScreen() {
                 )}
 
                 {/* 구독 추가 버튼 */}
-                <TouchableOpacity
-                  style={[styles.modalSubscribeBtn, isSubmitting && { opacity: 0.6 }]}
+                <GradientButton
+                  label={isSubmitting
+                    ? (language === 'ko' ? '추가 중...' : 'Adding...')
+                    : t('catalog.addSubscription')}
+                  icon="add-circle"
+                  variant="primary"
+                  size="lg"
+                  loading={isSubmitting}
                   onPress={handleSubscribe}
-                  disabled={isSubmitting}
-                >
-                  <Ionicons name="add-circle" size={20} color="#FFF" />
-                  <Text style={styles.modalSubscribeBtnText}>
-                    {isSubmitting
-                      ? (language === 'ko' ? '추가 중...' : 'Adding...')
-                      : t('catalog.addSubscription')}
-                  </Text>
-                </TouchableOpacity>
+                />
                 <View style={{ height: 20 }} />
               </ScrollView>
             )}
@@ -761,9 +760,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: Colors.borderLight, marginBottom: Spacing.lg,
   },
   modalWebText: { flex: 1, fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.medium },
-  modalSubscribeBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: Colors.primary, height: 52, borderRadius: 16, ...Shadow.sm,
-  },
-  modalSubscribeBtnText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#FFF' },
 });

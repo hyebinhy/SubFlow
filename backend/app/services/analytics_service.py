@@ -357,6 +357,9 @@ class AnalyticsService:
                 cheaper_plans.sort(key=lambda p: p.monthly_cost_krw)
                 max_savings = current_monthly_krw - cheaper_plans[0].monthly_cost_krw
 
+                # 외부 서비스 플랜 관리 페이지 URL (cancel_url이 곧 관리 페이지인 케이스가 다수)
+                manage_url = s.service.cancel_url or s.service.website_url
+
                 suggestions.append(SavingSuggestionItem(
                     subscription_id=str(s.id),
                     service_name=s.service_name,
@@ -366,6 +369,9 @@ class AnalyticsService:
                     cheaper_plans=cheaper_plans,
                     max_savings_krw=max_savings.quantize(Decimal("1")),
                     suggestion_text=f"'{s.service_name}'을(를) '{cheaper_plans[0].plan_name}' 플랜으로 변경하면 월 {max_savings.quantize(Decimal('1')):,}원을 절약할 수 있습니다.",
+                    action_type="downgrade",
+                    action_url=manage_url,
+                    target_plan_id=cheaper_plans[0].plan_id,
                 ))
 
         suggestions.sort(key=lambda x: x.max_savings_krw, reverse=True)

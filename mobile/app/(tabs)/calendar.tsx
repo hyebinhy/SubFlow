@@ -29,6 +29,7 @@ export default function CalendarScreen() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [activeTab, setActiveTab] = useState<'calendar' | 'timeline'>('calendar');
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const calendarEvents = useCalendarEvents(year, month + 1);
   const timeline = useTimeline();
@@ -64,39 +65,57 @@ export default function CalendarScreen() {
   const days = language === 'ko' ? DAYS_KO : DAYS_EN;
   const monthName = language === 'ko' ? `${year}년 ${MONTHS_KO[month]}` : `${MONTHS_EN[month]} ${year}`;
 
-  // 결제일 맵 (day → events[])
+  // 표시 중인 달(year/month)에 해당하는 이벤트만 추림
+  const monthEvents = useMemo(() => {
+    return events.filter((ev: any) => {
+      const raw = ev.billing_date ?? ev.next_billing_date ?? ev.date;
+      if (!raw) return false;
+      const d = new Date(raw);
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+  }, [events, year, month]);
+
+  // 결제일 맵 (day → events[]) — 같은 서비스가 같은 날 중복되지 않도록 dedupe
   const paymentMap = useMemo(() => {
     const map: Record<number, any[]> = {};
-    for (const ev of events) {
-      const d = new Date(ev.billing_date ?? ev.next_billing_date).getDate();
+    for (const ev of monthEvents) {
+      const raw = ev.billing_date ?? ev.next_billing_date ?? ev.date;
+      const d = new Date(raw).getDate();
       if (!map[d]) map[d] = [];
-      map[d].push(ev);
+      if (!map[d].some((e: any) => e.service_name === ev.service_name)) {
+        map[d].push(ev);
+      }
     }
     return map;
-  }, [events]);
+  }, [monthEvents]);
 
   const calendarDays: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) calendarDays.push(null);
   for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
-  const monthTotal = events.reduce((s: number, e: any) => s + (e.billing_amount ?? e.amount ?? 0), 0);
+  // 이번 달 합계는 day별 dedupe된 결과 기준
+  const monthTotal = Object.values(paymentMap)
+    .flat()
+    .reduce((s: number, e: any) => s + Number(e.cost ?? e.billing_amount ?? e.amount ?? 0), 0);
 
-  // 다가오는 결제 (오늘 이후)
-  const upcoming = events
-    .filter((e: any) => {
-      const d = new Date(e.billing_date ?? e.next_billing_date).getDate();
-      return d >= todayDay;
-    })
-    .sort((a: any, b: any) => new Date(a.billing_date ?? a.next_billing_date).getTime() - new Date(b.billing_date ?? b.next_billing_date).getTime());
+  // 다가오는 결제 (이번 달, 오늘 이후)
+  const upcoming = Object.entries(paymentMap)
+    .filter(([day]) => Number(day) >= todayDay)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .flatMap(([, list]) => list);
 
   const prevMonth = () => {
+    setSelectedDay(null);
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
     else setMonth(m => m - 1);
   };
   const nextMonth = () => {
+    setSelectedDay(null);
     if (month === 11) { setYear(y => y + 1); setMonth(0); }
     else setMonth(m => m + 1);
   };
+
+  const selectedEvents = selectedDay ? (paymentMap[selectedDay] ?? []) : [];
 
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
@@ -184,19 +203,42 @@ export default function CalendarScreen() {
                       {calendarDays.map((day, i) => {
                         const hasPayment = day ? paymentMap[day] : null;
                         const isToday = day === todayDay;
-                        return (
-                          <View key={i} style={styles.calCell}>
-                            {day && (
-                              <View style={[styles.dayWrap, isToday && styles.todayWrap]}>
-                                <Text style={[styles.dayText, isToday && styles.todayText]}>{day}</Text>
-                                {hasPayment && (
-                                  <View style={styles.dotRow}>
-                                    {hasPayment.map((p: any, j: number) => (
-                                      <View key={j} style={[styles.payDot, { backgroundColor: Colors.danger }]} />
-                                    ))}
+                        const isSelected = day === selectedDay;
+                        const cellInner = (
+                          <View
+                            style={[
+                              styles.dayWrap,
+                              isSelected && styles.selectedWrap,
+                            ]}
+                          >
+                            <View style={[styles.dayCircle, isToday && styles.todayCircle]}>
+                              <Text style={[styles.dayText, isToday && styles.todayText]}>{day}</Text>
+                            </View>
+                            {hasPayment && (
+                              <View style={styles.iconRow}>
+                                {hasPayment.slice(0, 2).map((p: any, j: number) => (
+                                  <ServiceLogo key={j} name={p.service_name} size={14} />
+                                ))}
+                                {hasPayment.length > 2 && (
+                                  <View style={styles.moreBadge}>
+                                    <Text style={styles.moreText}>+{hasPayment.length - 2}</Text>
                                   </View>
                                 )}
                               </View>
+                            )}
+                          </View>
+                        );
+                        return (
+                          <View key={i} style={styles.calCell}>
+                            {day && (
+                              hasPayment ? (
+                                <TouchableOpacity
+                                  activeOpacity={0.7}
+                                  onPress={() => setSelectedDay(day === selectedDay ? null : day)}
+                                >
+                                  {cellInner}
+                                </TouchableOpacity>
+                              ) : cellInner
                             )}
                           </View>
                         );
@@ -206,9 +248,34 @@ export default function CalendarScreen() {
 
                   <View style={styles.divider} />
 
+                  {selectedDay && selectedEvents.length > 0 && (
+                    <>
+                      <Text style={styles.sectionTitle}>
+                        {language === 'ko'
+                          ? `${MONTHS_KO[month]} ${selectedDay}일 결제`
+                          : `${MONTHS_EN[month]} ${selectedDay} payments`}
+                      </Text>
+                      {selectedEvents.map((ev: any, i: number) => (
+                        <View key={i} style={styles.upcomingItem}>
+                          <ServiceLogo name={ev.service_name} size={40} />
+                          <View style={styles.upcomingInfo}>
+                            <Text style={styles.upcomingName}>{ev.service_name}</Text>
+                            <Text style={styles.upcomingDate}>
+                              {language === 'ko' ? '오늘 결제' : 'Billing today'}
+                            </Text>
+                          </View>
+                          <Text style={styles.upcomingAmount}>
+                            ₩{Number(ev.billing_amount ?? ev.amount ?? ev.cost ?? 0).toLocaleString()}
+                          </Text>
+                        </View>
+                      ))}
+                      <View style={styles.divider} />
+                    </>
+                  )}
+
                   <Text style={styles.sectionTitle}>{t('calendar.upcoming')}</Text>
                   {upcoming.length > 0 ? upcoming.map((ev: any, i: number) => {
-                    const d = new Date(ev.billing_date ?? ev.next_billing_date);
+                    const d = new Date(ev.billing_date ?? ev.next_billing_date ?? ev.date);
                     const dateStr = language === 'ko'
                       ? `${d.getMonth() + 1}월 ${d.getDate()}일`
                       : `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`;
@@ -219,7 +286,7 @@ export default function CalendarScreen() {
                           <Text style={styles.upcomingName}>{ev.service_name}</Text>
                           <Text style={styles.upcomingDate}>{dateStr}</Text>
                         </View>
-                        <Text style={styles.upcomingAmount}>₩{(ev.billing_amount ?? ev.amount ?? 0).toLocaleString()}</Text>
+                        <Text style={styles.upcomingAmount}>₩{Number(ev.billing_amount ?? ev.amount ?? ev.cost ?? 0).toLocaleString()}</Text>
                       </View>
                     );
                   }) : (
@@ -309,13 +376,22 @@ const styles = StyleSheet.create({
   weekRow: { flexDirection: 'row', marginBottom: Spacing.md },
   weekDay: { flex: 1, textAlign: 'center', fontSize: 10, fontWeight: FontWeight.heavy, color: Colors.textTertiary, textTransform: 'uppercase' },
   calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  calCell: { width: '14.28%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center' },
-  dayWrap: { width: 34, height: 34, borderRadius: 12, justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  todayWrap: { backgroundColor: Colors.primarySoft },
+  calCell: { width: '14.28%', minHeight: 56, paddingVertical: 2, justifyContent: 'flex-start', alignItems: 'center' },
+  dayWrap: { width: 40, paddingVertical: 4, borderRadius: 12, justifyContent: 'flex-start', alignItems: 'center' },
+  selectedWrap: { borderWidth: 1.5, borderColor: Colors.primary },
+  dayCircle: {
+    width: 28, height: 28, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  todayCircle: { backgroundColor: Colors.primarySoft },
   dayText: { fontSize: 13, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   todayText: { color: Colors.primary },
-  dotRow: { flexDirection: 'row', gap: 2, position: 'absolute', bottom: 4 },
-  payDot: { width: 3, height: 3, borderRadius: 1.5 },
+  iconRow: { flexDirection: 'row', alignItems: 'center', gap: 1, marginTop: 3 },
+  moreBadge: {
+    minWidth: 14, height: 14, borderRadius: 7, paddingHorizontal: 3,
+    backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center',
+  },
+  moreText: { fontSize: 8, fontWeight: FontWeight.heavy, color: Colors.textWhite },
   divider: { height: 1, backgroundColor: Colors.borderLight, marginVertical: Spacing.xl },
   sectionTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.lg },
   upcomingItem: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg },

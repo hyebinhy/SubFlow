@@ -48,6 +48,8 @@ export const subscriptionAPI = {
     api.post('/subscriptions/from-catalog', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/subscriptions/${id}`, data),
   cancel: (id: string) => api.delete(`/subscriptions/${id}`),
+  applySuggestion: (id: string, data: { action_type: 'downgrade' | 'cancel' | 'switch_billing'; target_plan_id?: number }) =>
+    api.post(`/subscriptions/${id}/apply-suggestion`, data),
   getUpcoming: () => api.get('/subscriptions/upcoming'),
   getCalendarEvents: (year: number, month: number) =>
     api.get(`/subscriptions/calendar-events?year=${year}&month=${month}`),

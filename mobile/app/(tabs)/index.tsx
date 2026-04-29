@@ -126,6 +126,7 @@ const progressStyles = StyleSheet.create({
 });
 
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { GradientButton } from '../../src/components/GradientButton';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts } from '../../src/hooks/useApi';
 import { useSettingsStore } from '../../src/store/settingsStore';
@@ -154,11 +155,11 @@ export default function HomeScreen() {
   // API 데이터가 있으면 사용, 없으면 mock fallback
   const apiSubs = (subsQuery.data as any[]) ?? [];
   const subs: Subscription[] = apiSubs.length > 0
-    ? apiSubs.filter((s: any) => s.status === 'active').map((s: any) => ({
-        id: String(s.id),
+    ? apiSubs.filter((s: any) => s.status === 'active').map((s: any, idx: number) => ({
+        id: String(s.id ?? idx + 1),
         name: s.service_name ?? s.name ?? 'Unknown',
-        amount: s.billing_amount ?? s.amount ?? 0,
-        startDate: s.started_at ?? s.created_at ?? '2024-01-01',
+        amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
+        startDate: s.start_date ?? s.started_at ?? s.created_at ?? '2024-01-01',
       }))
     : MOCK_SUBSCRIPTIONS;
 
@@ -278,11 +279,12 @@ export default function HomeScreen() {
             >
               {subs.map((item, index) => {
                 const isFocused = activeIndex === index;
+                const displayId = 1000 + index + 1;
                 return (
-                  <View 
-                    key={item.id} 
+                  <View
+                    key={item.id}
                     style={[
-                      styles.pagerItem, 
+                      styles.pagerItem,
                       { width: ITEM_WIDTH, marginRight: index === subs.length - 1 ? 0 : GAP },
                       !isFocused && { opacity: 0.5, transform: [{ scale: 0.95 }] }
                     ]}
@@ -293,7 +295,7 @@ export default function HomeScreen() {
                         <ServiceLogo name={item.name} size={42} />
                         <View>
                           <Text style={styles.fName}>{item.name}</Text>
-                          <Text style={styles.fId}>ID: {1000 + Number(item.id)}</Text>
+                          <Text style={styles.fId}>ID: {displayId}</Text>
                         </View>
                       </View>
                       <View style={styles.rotateBtn}>
@@ -464,9 +466,14 @@ export default function HomeScreen() {
               </View>
             )}
 
-            <TouchableOpacity style={[budgetStyles.saveBtn, { backgroundColor: Colors.textSecondary }]} onPress={() => setShowStatusInfo(false)}>
-              <Text style={budgetStyles.saveBtnText}>{language === 'ko' ? '확인' : 'OK'}</Text>
-            </TouchableOpacity>
+            <GradientButton
+              label={language === 'ko' ? '확인' : 'OK'}
+              icon="checkmark"
+              variant="neutral"
+              size="lg"
+              onPress={() => setShowStatusInfo(false)}
+              style={{ marginTop: Spacing.lg }}
+            />
           </Pressable>
         </Pressable>
       </Modal>
@@ -515,11 +522,14 @@ export default function HomeScreen() {
               {language === 'ko' ? '⚠️ 80% 초과 시 알림을 받습니다' : '⚠️ You will be notified at 80% usage'}
             </Text>
 
-            <TouchableOpacity style={budgetStyles.saveBtn} onPress={saveBudget}>
-              <Text style={budgetStyles.saveBtnText}>
-                {language === 'ko' ? '저장' : 'Save'}
-              </Text>
-            </TouchableOpacity>
+            <GradientButton
+              label={language === 'ko' ? '저장' : 'Save'}
+              icon="checkmark"
+              variant="primary"
+              size="lg"
+              onPress={saveBudget}
+              style={{ marginTop: Spacing.lg }}
+            />
           </Pressable>
         </Pressable>
       </Modal>
@@ -540,8 +550,6 @@ const budgetStyles = StyleSheet.create({
   previewFill: { height: '100%', borderRadius: 5 },
   previewText: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', fontWeight: FontWeight.medium },
   hint: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 16, textAlign: 'center' },
-  saveBtn: { backgroundColor: Colors.primary, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginTop: 20, ...Shadow.sm },
-  saveBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: '#FFF' },
 });
 
 const statusInfoStyles = StyleSheet.create({

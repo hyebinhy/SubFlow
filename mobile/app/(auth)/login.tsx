@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
+import { GradientButton } from '../../src/components/GradientButton';
 import {
   Colors,
   Spacing,
@@ -97,18 +98,15 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <TouchableOpacity 
-              style={styles.loginBtn} 
-              onPress={handleLogin} 
-              activeOpacity={0.8} 
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <Text style={styles.loginBtnText}>로그인</Text>
-              )}
-            </TouchableOpacity>
+            <GradientButton
+              label="로그인"
+              icon="log-in-outline"
+              variant="primary"
+              size="lg"
+              loading={loading}
+              onPress={handleLogin}
+              style={{ marginTop: Spacing.md }}
+            />
 
             <View style={styles.footerContainer}>
               <Text style={styles.footerText}>계정이 없으신가요? </Text>
@@ -167,21 +165,6 @@ const styles = StyleSheet.create({
     flex: 1, 
     fontSize: FontSize.md, 
     color: Colors.textPrimary,
-  },
-  loginBtn: {
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    backgroundColor: '#737DFF', 
-    height: 52, 
-    borderRadius: 12, 
-    marginTop: Spacing.md,
-    ...Shadow.sm,
-  },
-  loginBtnText: { 
-    fontSize: FontSize.lg, 
-    fontWeight: FontWeight.bold, 
-    color: Colors.textWhite,
   },
   footerContainer: {
     flexDirection: 'row',
