@@ -1,3 +1,4 @@
+import { CreditCard } from "lucide-react";
 import type { ServiceListItem } from "../../types/service";
 
 interface Props {
@@ -27,16 +28,16 @@ export default function ServiceCard({ service, onClick }: Props) {
         />
       ) : null}
       <div
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-xl ${service.logo_url ? "hidden" : ""}`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-slate-500 ${service.logo_url ? "hidden" : ""}`}
         style={{ backgroundColor: service.category?.color ?? "#E5E7EB" }}
       >
-        {service.category?.icon ?? "💳"}
+        <CreditCard className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-slate-900">{service.name}</h3>
           {service.is_popular && (
-            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
               인기
             </span>
           )}

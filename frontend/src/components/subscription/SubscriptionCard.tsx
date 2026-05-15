@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { CreditCard, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import type { Subscription } from "../../types/subscription";
 
 interface Props {
@@ -8,17 +9,17 @@ interface Props {
 }
 
 const statusColors: Record<string, string> = {
-  active: "bg-green-500/10 text-green-700",
-  paused: "bg-yellow-500/10 text-yellow-700",
-  cancelled: "bg-red-500/10 text-red-700",
-  trial: "bg-blue-500/10 text-blue-700",
+  active: "bg-emerald-500/10 text-emerald-700",
+  paused: "bg-amber-500/10 text-amber-700",
+  cancelled: "bg-rose-500/10 text-rose-700",
+  trial: "bg-indigo-500/10 text-indigo-700",
 };
 
 const statusLabels: Record<string, string> = {
   active: "활성",
   paused: "일시정지",
   cancelled: "취소됨",
-  trial: "체험판",
+  trial: "체험 중",
 };
 
 const cycleLabels: Record<string, string> = {
@@ -32,9 +33,9 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
   const costDisplay = new Intl.NumberFormat("ko-KR").format(subscription.cost);
 
   return (
-    <div className="glass p-5 transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
+    <div className="glass p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           {subscription.service?.logo_url || subscription.logo_url ? (
             <img
               src={subscription.service?.logo_url ?? subscription.logo_url ?? ""}
@@ -43,58 +44,60 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
             />
           ) : (
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-lg"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500"
               style={{ backgroundColor: subscription.category?.color ?? "#E5E7EB" }}
             >
-              {subscription.category?.icon ?? "💳"}
+              <CreditCard className="h-5 w-5" />
             </div>
           )}
-          <div>
-            <h3 className="font-semibold text-slate-900">{subscription.service_name}</h3>
-            <p className="text-xs text-slate-400">{subscription.category?.name ?? "미분류"}</p>
+          <div className="min-w-0">
+            <h3 className="truncate font-semibold text-slate-900">{subscription.service_name}</h3>
+            <p className="truncate text-xs text-slate-400">{subscription.category?.name ?? "미분류"}</p>
           </div>
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[subscription.status]}`}>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[subscription.status]}`}>
           {statusLabels[subscription.status]}
         </span>
       </div>
 
-      <div className="mt-4 flex items-end justify-between">
-        <div>
-          <p className="text-2xl font-bold text-slate-900">
-            {costDisplay}
-            <span className="text-sm font-normal text-slate-400">
-              {" "}{subscription.currency}/{cycleLabels[subscription.billing_cycle]}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            다음 결제: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onEdit(subscription)}
-            className="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-white/40"
+      <div className="mt-4">
+        <p className="text-2xl font-bold text-slate-900">
+          {costDisplay}
+          <span className="text-sm font-normal text-slate-400">
+            {" "}{subscription.currency}/{cycleLabels[subscription.billing_cycle]}
+          </span>
+        </p>
+        <p className="mt-1 text-xs text-slate-400">
+          다음 결제: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
+        <button
+          onClick={() => onEdit(subscription)}
+          className="btn-secondary-glass inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          수정
+        </button>
+        {subscription.service?.cancel_url && subscription.status === "active" && (
+          <a
+            href={subscription.service.cancel_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-warning-glass inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
           >
-            수정
-          </button>
-          {subscription.service?.cancel_url && subscription.status === "active" && (
-            <a
-              href={subscription.service.cancel_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50"
-            >
-              해지하기
-            </a>
-          )}
-          <button
-            onClick={() => onDelete(subscription.id)}
-            className="rounded-lg px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-          >
-            삭제
-          </button>
-        </div>
+            <ExternalLink className="h-3.5 w-3.5" />
+            해지하기
+          </a>
+        )}
+        <button
+          onClick={() => onDelete(subscription.id)}
+          className="btn-danger-glass inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          삭제
+        </button>
       </div>
     </div>
   );

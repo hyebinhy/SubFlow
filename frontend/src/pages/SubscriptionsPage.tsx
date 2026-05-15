@@ -1,5 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Plus } from "lucide-react";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { subscriptionApi } from "../api/subscriptions";
 import SubscriptionCard from "../components/subscription/SubscriptionCard";
@@ -72,7 +73,7 @@ export default function SubscriptionsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">구독 관리</h2>
           <p className="mt-1 text-sm text-slate-400">
@@ -82,23 +83,25 @@ export default function SubscriptionsPage() {
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="btn-primary-glass px-4 py-2 text-sm font-medium"
+          className="btn-primary-glass inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium"
         >
-          + 구독 추가
+          <Plus className="h-4 w-4" />
+          구독 추가
         </button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
         </div>
       ) : subscriptions.length === 0 ? (
         <div className="glass py-12 text-center">
           <p className="text-slate-400">아직 등록된 구독이 없습니다.</p>
           <button
             onClick={() => setModalOpen(true)}
-            className="mt-2 text-sm text-blue-600 hover:underline"
+            className="btn-primary-glass mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-sm"
           >
+            <Plus className="h-4 w-4" />
             첫 번째 구독 추가하기
           </button>
         </div>

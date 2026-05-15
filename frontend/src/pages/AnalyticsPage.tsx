@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
         <p className="text-center text-slate-400">분석 개요 데이터가 없습니다.</p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-[1.45fr_0.85fr]">
         {spendingTrend ? <SpendingTrendChart trend={spendingTrend} /> : (
           <p className="text-center text-slate-400">지출 추이 데이터가 없습니다.</p>
         )}

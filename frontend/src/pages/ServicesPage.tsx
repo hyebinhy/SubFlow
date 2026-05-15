@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Tag } from "lucide-react";
 import { serviceApi } from "../api/services";
 import { subscriptionApi } from "../api/subscriptions";
 import { categoryApi } from "../api/categories";
@@ -198,7 +199,10 @@ export default function ServicesPage() {
                 : "glass text-slate-500 hover:bg-white/40"
             }`}
           >
-            {cat.icon} {cat.name}
+            <span className="inline-flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              {cat.name}
+            </span>
           </button>
         ))}
       </div>

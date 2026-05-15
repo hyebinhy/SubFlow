@@ -1,12 +1,12 @@
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceDot,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceDot,
 } from "recharts";
 import type { SpendingTrend } from "../../types/analytics";
 
@@ -14,22 +14,42 @@ interface Props {
   trend: SpendingTrend;
 }
 
+type ForecastLabelProps = {
+  viewBox?: {
+    x?: number;
+    y?: number;
+  };
+};
+
+function ForecastLabel({ viewBox }: ForecastLabelProps) {
+  if (!viewBox || viewBox.x == null || viewBox.y == null) return null;
+
+  return (
+    <text
+      x={viewBox.x - 12}
+      y={viewBox.y - 14}
+      fill="#818CF8"
+      fontSize={11}
+      fontWeight={700}
+      textAnchor="end"
+    >
+      예상 지출
+    </text>
+  );
+}
+
 export default function SpendingTrendChart({ trend }: Props) {
-  // Split into actual and forecast
   const actualData = trend.data.filter((d) => !d.is_forecast);
   const forecastData = trend.data.filter((d) => d.is_forecast);
 
-  // Combine: actual line solid, forecast line dashed
   const allData = trend.data.map((d) => ({
     name: `${d.month}월`,
     actual: d.is_forecast ? undefined : Number(d.total),
     forecast: d.is_forecast ? Number(d.total) : undefined,
-    // Bridge: last actual point also in forecast for connected line
     total: Number(d.total),
     isForecast: d.is_forecast ?? false,
   }));
 
-  // Add bridge: copy last actual value into forecast field so lines connect
   if (actualData.length > 0 && forecastData.length > 0) {
     const lastActualIdx = allData.findIndex((d) => d.isForecast) - 1;
     if (lastActualIdx >= 0) {
@@ -46,7 +66,7 @@ export default function SpendingTrendChart({ trend }: Props) {
         <h3 className="font-semibold text-slate-900">지출 추이</h3>
         <div className="flex items-center gap-3 text-xs text-slate-400">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-0.5 w-4 bg-indigo-500 rounded" />
+            <span className="inline-block h-0.5 w-4 rounded bg-indigo-500" />
             실제
           </span>
           <span className="flex items-center gap-1">
@@ -56,7 +76,7 @@ export default function SpendingTrendChart({ trend }: Props) {
         </div>
       </div>
       <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={allData}>
+        <AreaChart data={allData} margin={{ top: 28, right: 36, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#6366F1" stopOpacity={0.15} />
@@ -83,16 +103,16 @@ export default function SpendingTrendChart({ trend }: Props) {
             tickFormatter={fmt}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              `${new Intl.NumberFormat("ko-KR").format(value)}원`,
+            formatter={(value, name) => [
+              `${new Intl.NumberFormat("ko-KR").format(Number(value ?? 0))}원`,
               name === "forecast" ? "예상 지출" : "지출",
             ]}
             contentStyle={{
-              background: "rgba(255,255,255,0.8)",
+              background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.6)",
-              borderRadius: "12px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+              border: "0",
+              borderRadius: "14px",
+              boxShadow: "0 12px 30px rgba(15,23,42,0.16)",
             }}
           />
           <Area
@@ -119,12 +139,7 @@ export default function SpendingTrendChart({ trend }: Props) {
               x={`${forecastData[0].month}월`}
               y={Number(forecastData[0].total)}
               r={0}
-              label={{
-                value: "예상",
-                position: "top",
-                fill: "#818CF8",
-                fontSize: 11,
-              }}
+              label={<ForecastLabel />}
             />
           )}
         </AreaChart>

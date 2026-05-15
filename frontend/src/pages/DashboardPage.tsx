@@ -1,14 +1,35 @@
-import { useAnalytics } from "../hooks/useAnalytics";
-import { useSubscriptions } from "../hooks/useSubscriptions";
-import MonthlySpendingChart from "../components/analytics/MonthlySpendingChart";
+import { format } from "date-fns";
+import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  BellRing,
+  CalendarDays,
+  CreditCard,
+  Lightbulb,
+  Package,
+  PiggyBank,
+  ShieldCheck,
+  TrendingDown,
+} from "lucide-react";
 import CategoryPieChart from "../components/analytics/CategoryPieChart";
+import MonthlySpendingChart from "../components/analytics/MonthlySpendingChart";
 import BudgetStatus from "../components/dashboard/BudgetStatus";
-import TrialTracker from "../components/dashboard/TrialTracker";
-import OverlapWarning from "../components/dashboard/OverlapWarning";
 import ExchangeRateAlert from "../components/dashboard/ExchangeRateAlert";
+import NewsWidget from "../components/dashboard/NewsWidget";
+import OverlapWarning from "../components/dashboard/OverlapWarning";
 import PriceChangeAlert from "../components/dashboard/PriceChangeAlert";
 import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
-import { format } from "date-fns";
+import TrialTracker from "../components/dashboard/TrialTracker";
+import Header from "../components/layout/Header";
+import { useAnalytics } from "../hooks/useAnalytics";
+import { useNews } from "../hooks/useNews";
+import { useSubscriptions } from "../hooks/useSubscriptions";
+import { useAuthStore } from "../store/authStore";
+
+const sideCardClass =
+  "rounded-3xl bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]";
+
+const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
 export default function DashboardPage() {
   const {
@@ -25,226 +46,286 @@ export default function DashboardPage() {
     error: analyticsError,
   } = useAnalytics();
   const { subscriptions, error: subscriptionsError } = useSubscriptions();
-
-  const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
+  const { news, loading: newsLoading, error: newsError } = useNews();
+  const { user } = useAuthStore();
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
       </div>
     );
   }
 
   if (analyticsError || subscriptionsError) {
     return (
-      <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
+      <div className="rounded-2xl bg-rose-100/70 p-4 text-rose-600 shadow-sm">
         {analyticsError || subscriptionsError}
       </div>
     );
   }
 
-  const upcoming = subscriptions
-    .filter((s) => s.status === "active")
+  const activeSubscriptions = subscriptions.filter((s) => s.status === "active");
+  const upcoming = activeSubscriptions
     .sort((a, b) => a.next_billing_date.localeCompare(b.next_billing_date))
-    .slice(0, 5);
-
-  const upcomingCount = subscriptions.filter(
+    .slice(0, 3);
+  const upcomingCount = activeSubscriptions.filter(
     (s) =>
-      s.status === "active" &&
-      new Date(s.next_billing_date).getTime() - Date.now() <=
-        7 * 24 * 60 * 60 * 1000
+      new Date(s.next_billing_date).getTime() - Date.now() <= 7 * 24 * 60 * 60 * 1000
   ).length;
-
   const savingsEstimate = savingsSuggestions?.total_potential_savings_krw ?? 0;
+  const overlapCount = overlaps?.overlaps.length ?? 0;
+  const priceChangeCount = priceChanges?.alerts.length ?? 0;
+  const trialCount = trials?.trials.length ?? 0;
+  const healthScore = Math.max(
+    48,
+    100 -
+      overlapCount * 9 -
+      priceChangeCount * 6 -
+      upcomingCount * 3 -
+      (budgetStatus?.is_over_budget ? 14 : 0)
+  );
+  const topActionTitle = budgetStatus?.is_over_budget
+    ? "예산을 먼저 조정해보세요"
+    : overlapCount > 0
+      ? "중복 구독을 먼저 정리해보세요"
+      : savingsEstimate > 0
+        ? "절약 후보를 확인해보세요"
+        : "이번 달 구독 상태가 안정적이에요";
+  const topActionCopy = budgetStatus?.is_over_budget
+    ? "현재 지출이 월 예산을 넘어서고 있어요. 기준 예산을 조정하거나 구독 정리가 필요합니다."
+    : overlapCount > 0
+      ? "비슷한 카테고리의 구독이 겹쳐 있어요. 하나로 묶거나 낮은 요금제를 검토해볼 만합니다."
+      : savingsEstimate > 0
+        ? `요금제 조정으로 월 최대 ${fmt(savingsEstimate)}원까지 줄일 수 있어요.`
+        : "다가오는 결제와 가격 변동만 가볍게 확인하면 됩니다.";
 
   return (
-    <div className="space-y-6">
-      {/* Page title */}
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">대시보드</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          {format(new Date(), "yyyy년 MM월 dd일")} 기준
-        </p>
-      </div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
+      <aside className="flex flex-col gap-5">
+        <div className="flex gap-1.5">
+          <div className="h-3 w-3 rounded-full bg-rose-400" />
+          <div className="h-3 w-3 rounded-full bg-amber-400" />
+          <div className="h-3 w-3 rounded-full bg-emerald-400" />
+        </div>
 
-      {/* Summary cards */}
-      {overview && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {/* 월 총 지출 */}
-          <div className="glass p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-400">월 총 지출</p>
-                <p className="mt-2 text-2xl font-extrabold gradient-text">
-                  {fmt(overview.total_monthly_cost)}원
-                </p>
+        <div className="mt-4">
+          <p className="text-sm font-medium text-slate-500">Hi {user?.username || "testuser"},</p>
+          <h2 className="mt-1 text-2xl font-bold leading-snug text-slate-800">
+            오늘도 똑똑하게
+            <br />
+            구독을 관리해보세요
+          </h2>
+        </div>
+
+        <NewsWidget news={news} loading={newsLoading} error={newsError} />
+
+        <Link to="/analytics" className={`block ${sideCardClass}`}>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <PiggyBank className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900">이번 달 절약 힌트</h3>
+              <p className="text-xs text-slate-500">중복 구독과 요금제 기준 추천</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="rounded-2xl bg-slate-50 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-slate-700">절약 가능 금액</span>
+                <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700">
+                  월 {fmt(savingsEstimate)}원
+                </span>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-2xl">
-                💰
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                사용 빈도와 낮은 요금제를 기준으로 먼저 확인할 후보를 정리했어요.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-slate-700">다음 점검일</span>
+                <span className="text-sm font-bold text-slate-900">05.20</span>
               </div>
             </div>
           </div>
+        </Link>
+      </aside>
 
-          {/* 활성 구독 */}
-          <div className="glass p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-400">활성 구독</p>
-                <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {overview.total_active_subscriptions}개
-                </p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-2xl">
-                📦
-              </div>
-            </div>
-          </div>
+      <section className="flex flex-col rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">대시보드</h1>
+          <Header />
+        </div>
 
-          {/* 다가오는 결제 */}
-          <div className="glass p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-400">다가오는 결제</p>
-                <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {upcomingCount}건
-                </p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-2xl">
-                🔔
-              </div>
+        <div className="mb-6 grid gap-4 xl:grid-cols-[1fr_280px]">
+          <Link to={budgetStatus?.is_over_budget || overlapCount > 0 ? "/analytics" : "/subscriptions"} className="rounded-3xl bg-indigo-50/90 p-6 shadow-[0_18px_45px_rgba(79,70,229,0.12)] transition hover:-translate-y-0.5">
+            <div className="mb-4 flex items-center gap-2 text-sm font-bold text-indigo-700">
+              <Lightbulb className="h-4 w-4" />
+              오늘의 관리 액션
             </div>
-          </div>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">{topActionTitle}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{topActionCopy}</p>
+            <div className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-indigo-700">
+              자세히 보기
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          </Link>
 
-          {/* 절약 금액 */}
-          <div className="glass p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-400">절약 금액</p>
-                <p className="mt-2 text-2xl font-extrabold text-emerald-500">
-                  {fmt(savingsEstimate)}원
-                </p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
-                📉
-              </div>
+          <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-indigo-100">
+              <ShieldCheck className="h-4 w-4" />
+              구독 건강 점수
             </div>
+            <div className="mt-4 flex items-end gap-2">
+              <span className="text-5xl font-extrabold">{healthScore}</span>
+              <span className="mb-1 text-sm text-slate-300">/ 100</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              중복 {overlapCount}건, 가격 변동 {priceChangeCount}건, 체험 만료 {trialCount}건 기준입니다.
+            </p>
           </div>
         </div>
-      )}
 
-      {/* Budget status */}
-      {budgetStatus && <BudgetStatus budgetStatus={budgetStatus} />}
-
-      {/* Smart subscription alerts */}
-      {trials && trials.trials.length > 0 && (
-        <TrialTracker trials={trials.trials} />
-      )}
-      {overlaps && overlaps.overlaps.length > 0 && (
-        <OverlapWarning overlaps={overlaps.overlaps} />
-      )}
-      {priceChanges && priceChanges.alerts.length > 0 && (
-        <PriceChangeAlert alerts={priceChanges.alerts} />
-      )}
-      {exchangeRateAlerts && exchangeRateAlerts.alerts.length > 0 && (
-        <ExchangeRateAlert alerts={exchangeRateAlerts.alerts} />
-      )}
-
-      {/* Charts row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {spendingTrend && (
-          <MonthlySpendingChart trend={spendingTrend} />
-        )}
-        {categoryBreakdown && (
-          <CategoryPieChart breakdown={categoryBreakdown} />
-        )}
-      </div>
-
-      {/* Savings suggestions */}
-      {savingsSuggestions && savingsSuggestions.suggestions.length > 0 && (
-        <SavingsSuggestions
-          suggestions={savingsSuggestions.suggestions}
-          totalSavings={savingsSuggestions.total_potential_savings_krw}
-        />
-      )}
-
-      {/* Upcoming payments */}
-      <div className="glass p-6">
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">
-          다가오는 결제
-        </h3>
-        {upcoming.length === 0 ? (
-          <p className="text-sm text-slate-400">예정된 결제가 없습니다.</p>
-        ) : (
-          <div className="space-y-2">
-            {upcoming.map((sub) => {
-              const daysLeft = Math.ceil(
-                (new Date(sub.next_billing_date).getTime() - Date.now()) /
-                  (1000 * 60 * 60 * 24)
-              );
-              const isUrgent = daysLeft <= 3;
-              const isSoon = daysLeft <= 7 && !isUrgent;
-
-              return (
-                <div
-                  key={sub.id}
-                  className="flex items-center justify-between rounded-2xl px-4 py-3 transition-colors hover:bg-white/40"
-                >
-                  <div className="flex items-center gap-3">
-                    {sub.logo_url ? (
-                      <img
-                        src={sub.logo_url}
-                        alt={sub.service_name}
-                        className="h-11 w-11 rounded-[14px] object-cover shadow-md"
-                      />
-                    ) : (
-                      <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-gradient-to-br from-blue-400 to-indigo-500 shadow-md">
-                        <span className="text-lg text-white">
-                          {sub.category?.icon ?? "💳"}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">
-                        {sub.service_name}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {format(
-                          new Date(sub.next_billing_date),
-                          "yyyy.MM.dd"
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {isUrgent && (
-                      <span className="rounded-xl bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">
-                        {daysLeft}일 후
-                      </span>
-                    )}
-                    {isSoon && (
-                      <span className="rounded-xl bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-600">
-                        {daysLeft}일 후
-                      </span>
-                    )}
-                    {!isUrgent && !isSoon && (
-                      <span className="rounded-xl bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-500">
-                        {daysLeft}일 후
-                      </span>
-                    )}
-                    <p className="text-sm font-semibold text-slate-900">
-                      {sub.currency === "KRW"
-                        ? `${fmt(sub.cost)}원`
-                        : new Intl.NumberFormat("en-US", { style: "currency", currency: sub.currency }).format(sub.cost)}
-                    </p>
-                  </div>
+        {overview && (
+          <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Link to="/subscriptions" className="glass p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-slate-400">월 총 지출</p>
+                  <p className="mt-2 text-2xl font-extrabold gradient-text">{fmt(overview.total_monthly_cost)}원</p>
                 </div>
-              );
-            })}
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100/70 text-amber-600">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+              </div>
+            </Link>
+
+            <Link to="/subscriptions" className="glass p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-slate-400">활성 구독</p>
+                  <p className="mt-2 text-2xl font-extrabold text-slate-900">{overview.total_active_subscriptions}개</p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                  <Package className="h-5 w-5" />
+                </div>
+              </div>
+            </Link>
+
+            <Link to="/calendar" className="glass p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-slate-400">다가오는 결제</p>
+                  <p className="mt-2 text-2xl font-extrabold text-slate-900">{upcomingCount}건</p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100/70 text-orange-500">
+                  <BellRing className="h-5 w-5" />
+                </div>
+              </div>
+            </Link>
+
+            <Link to="/analytics" className="glass p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-slate-400">절약 금액</p>
+                  <p className="mt-2 text-2xl font-extrabold text-emerald-600">{fmt(savingsEstimate)}원</p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100/70 text-emerald-700">
+                  <TrendingDown className="h-5 w-5" />
+                </div>
+              </div>
+            </Link>
           </div>
         )}
-      </div>
+
+        {budgetStatus && (
+          <div className="mb-8">
+            <BudgetStatus budgetStatus={budgetStatus} />
+          </div>
+        )}
+
+        <div className="mb-8 grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <Link to="/calendar" className="flex flex-col justify-between rounded-3xl bg-slate-50 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.06)]">
+            <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
+              <CalendarDays className="h-4 w-4" />
+              다음 결제 미리보기
+            </div>
+            {upcoming.length > 0 ? (
+              <div className="mt-2 space-y-3">
+                {upcoming.map((sub) => (
+                  <div key={sub.id} className="flex items-center justify-between rounded-xl bg-white p-2.5 shadow-sm">
+                    <div className="flex min-w-0 items-center gap-2">
+                      {sub.logo_url ? (
+                        <img src={sub.logo_url} alt="" className="h-6 w-6 rounded-md object-contain" />
+                      ) : (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-100 text-[10px] font-bold text-indigo-500">
+                          {sub.service_name[0]}
+                        </div>
+                      )}
+                      <span className="w-24 truncate text-sm font-semibold text-slate-700">{sub.service_name}</span>
+                    </div>
+                    <span className="text-xs font-medium text-slate-400">
+                      {format(new Date(sub.next_billing_date), "MM.dd")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400">예정된 결제가 없습니다.</p>
+            )}
+          </Link>
+
+          <Link to="/analytics" className="flex flex-col justify-between rounded-3xl bg-slate-50 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.06)]">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+              <PiggyBank className="h-4 w-4 text-indigo-600" />
+              절약 체크
+            </div>
+            <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-slate-700">중복 구독 후보</span>
+                <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700">{overlapCount}건</span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                같은 목적의 서비스가 겹치면 구독료가 조용히 커져요. 먼저 겹치는 카테고리부터 확인해보세요.
+              </p>
+            </div>
+          </Link>
+        </div>
+
+        <div className="mb-8 space-y-4">
+          {trials && trials.trials.length > 0 && <TrialTracker trials={trials.trials} />}
+          {overlaps && overlaps.overlaps.length > 0 && <OverlapWarning overlaps={overlaps.overlaps} />}
+          {priceChanges && priceChanges.alerts.length > 0 && <PriceChangeAlert alerts={priceChanges.alerts} />}
+          {exchangeRateAlerts && exchangeRateAlerts.alerts.length > 0 && (
+            <ExchangeRateAlert alerts={exchangeRateAlerts.alerts} />
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Link to="/analytics" className="h-[420px] rounded-3xl bg-slate-50 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]">
+            <h3 className="mb-4 font-bold text-slate-800">카테고리별 지출</h3>
+            <div className="h-[340px]">
+              {categoryBreakdown && <CategoryPieChart breakdown={categoryBreakdown} />}
+            </div>
+          </Link>
+          <Link to="/analytics" className="h-[420px] rounded-3xl bg-slate-50 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]">
+            <h3 className="mb-4 font-bold text-slate-800">월별 지출 추이</h3>
+            <div className="h-[340px]">
+              {spendingTrend && <MonthlySpendingChart trend={spendingTrend} />}
+            </div>
+          </Link>
+        </div>
+
+        {savingsSuggestions && savingsSuggestions.suggestions.length > 0 && (
+          <div className="mt-6">
+            <SavingsSuggestions
+              suggestions={savingsSuggestions.suggestions}
+              totalSavings={savingsSuggestions.total_potential_savings_krw}
+            />
+          </div>
+        )}
+      </section>
     </div>
   );
 }

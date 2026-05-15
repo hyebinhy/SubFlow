@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CreditCard } from "lucide-react";
 import { serviceApi } from "../../api/services";
 import type { Service, ServicePlan } from "../../types/service";
 import PlanSelector from "./PlanSelector";
@@ -71,10 +72,10 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
             />
           ) : (
             <div
-              className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl"
+              className="flex h-16 w-16 items-center justify-center rounded-xl text-slate-500"
               style={{ backgroundColor: service.category?.color ?? "#E5E7EB" }}
             >
-              {service.category?.icon ?? "💳"}
+              <CreditCard className="h-7 w-7" />
             </div>
           )}
           <div>

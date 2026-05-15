@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ArrowRight, WalletCards } from "lucide-react";
 import type { BudgetStatus as BudgetStatusType } from "../../types/analytics";
 
 interface Props {
@@ -7,92 +8,92 @@ interface Props {
 
 const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
-function getProgressColor(percentage: number): string {
-  if (percentage > 90) return "bg-red-500";
-  if (percentage > 70) return "bg-amber-500";
-  return "bg-emerald-500";
-}
-
-function getProgressBgColor(percentage: number): string {
-  if (percentage > 90) return "bg-red-100";
-  if (percentage > 70) return "bg-amber-100";
-  return "bg-emerald-100";
+function getProgressTone(percentage: number) {
+  if (percentage > 90) {
+    return {
+      bar: "bg-rose-400",
+      track: "bg-rose-100/70",
+      text: "text-rose-600",
+      chip: "bg-rose-100 text-rose-700",
+    };
+  }
+  if (percentage > 70) {
+    return {
+      bar: "bg-amber-400",
+      track: "bg-amber-100/70",
+      text: "text-amber-600",
+      chip: "bg-amber-100 text-amber-700",
+    };
+  }
+  return {
+    bar: "bg-emerald-400",
+    track: "bg-emerald-100/70",
+    text: "text-emerald-600",
+    chip: "bg-emerald-100 text-emerald-700",
+  };
 }
 
 export default function BudgetStatus({ budgetStatus }: Props) {
-  const { budget_monthly, current_spending, remaining, percentage_used, is_over_budget } =
-    budgetStatus;
+  const { budget_monthly, current_spending, remaining, percentage_used, is_over_budget } = budgetStatus;
 
-  // No budget set
   if (budget_monthly === null) {
     return (
       <div className="glass p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-lg">
-            💰
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <WalletCards className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">월 예산</h3>
+              <p className="text-sm text-slate-500">예산을 설정하면 지출 속도를 더 쉽게 볼 수 있어요.</p>
+            </div>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">월 예산</h3>
+          <Link to="/settings" className="btn-primary-glass inline-flex shrink-0 items-center gap-1.5 px-4 py-2 text-sm">
+            설정하기
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
-        <p className="text-sm text-slate-500">
-          월 예산을 설정하면 지출을 관리할 수 있어요.
-        </p>
-        <Link
-          to="/settings"
-          className="mt-3 inline-block text-sm font-medium text-blue-600 hover:text-blue-700"
-        >
-          설정에서 예산 설정하기 →
-        </Link>
       </div>
     );
   }
 
   const pct = percentage_used ?? 0;
   const barWidth = Math.min(pct, 100);
-  const progressColor = getProgressColor(pct);
-  const progressBgColor = getProgressBgColor(pct);
+  const tone = getProgressTone(pct);
+  const statusText = is_over_budget
+    ? `예산을 ${fmt(Math.abs(remaining ?? 0))}원 초과했어요.`
+    : `이번 달 남은 예산은 ${fmt(remaining ?? 0)}원입니다.`;
 
   return (
-    <div className="glass p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-lg">
-          💰
+    <Link to="/settings" className="glass block p-6">
+      <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <WalletCards className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">월 예산</h3>
+              <p className="text-sm text-slate-500">현재 {fmt(current_spending)}원 / 기준 {fmt(budget_monthly)}원</p>
+            </div>
+          </div>
+
+          <div className={`h-3 w-full rounded-full ${tone.track}`}>
+            <div className={`h-3 rounded-full transition-all duration-500 ${tone.bar}`} style={{ width: `${barWidth}%` }} />
+          </div>
+
+          <p className={`mt-3 text-sm font-semibold ${tone.text}`}>{statusText}</p>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">월 예산</h3>
-        <span className="ml-auto text-sm font-medium text-slate-500">
-          {fmt(current_spending)}원 / {fmt(budget_monthly)}원
-        </span>
-      </div>
 
-      {/* Progress bar */}
-      <div className={`h-3 w-full rounded-full ${progressBgColor}`}>
-        <div
-          className={`h-3 rounded-full transition-all duration-500 ${progressColor}`}
-          style={{ width: `${barWidth}%` }}
-        />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-slate-400">
-          {pct.toFixed(1)}% 사용
-        </span>
-        {remaining !== null && !is_over_budget && (
-          <span className="text-xs text-slate-500">
-            잔여 {fmt(remaining)}원
+        <div className="rounded-3xl bg-white/65 px-6 py-5 text-right shadow-sm">
+          <p className="text-xs font-medium text-slate-400">예산 소진율</p>
+          <p className="mt-1 text-3xl font-extrabold text-slate-900">{pct.toFixed(0)}%</p>
+          <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${tone.chip}`}>
+            {is_over_budget ? "조정 필요" : "관리 중"}
           </span>
-        )}
+        </div>
       </div>
-
-      {/* Warnings */}
-      {is_over_budget && remaining !== null && (
-        <div className="mt-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
-          예산을 {fmt(Math.abs(remaining))}원 초과했습니다!
-        </div>
-      )}
-      {!is_over_budget && pct > 80 && (
-        <div className="mt-3 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-600">
-          예산의 {pct.toFixed(1)}%를 사용했습니다
-        </div>
-      )}
-    </div>
+    </Link>
   );
 }

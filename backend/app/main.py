@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    from app.routers import auth, subscriptions, categories, analytics, notifications, services
+    from app.routers import auth, subscriptions, categories, analytics, notifications, services, news
 
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
     app.include_router(services.router, prefix="/api/v1/services", tags=["services"])
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(categories.router, prefix="/api/v1/categories", tags=["categories"])
     app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
     app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
+    app.include_router(news.router, prefix="/api/v1/news", tags=["news"])
 
     return app
 

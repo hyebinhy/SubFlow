@@ -6,8 +6,8 @@ import { router } from 'expo-router';
 // 웹: localhost OK / 모바일: PC의 실제 IP 필요
 const API_BASE_URL = __DEV__
   ? Platform.OS === 'web'
-    ? 'http://localhost:8001/api/v1'
-    : 'http://172.30.1.44:8001/api/v1'
+    ? 'http://localhost:8000/api/v1'
+    : 'http://172.30.1.44:8000/api/v1'
   : 'https://api.subflow.app/api/v1';
 
 const api = axios.create({

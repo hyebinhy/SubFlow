@@ -8,6 +8,18 @@
 ## 실행
 
 ```bash
+# 1. DB 시작 (최초 1회 또는 스키마 변경 시 alembic upgrade head 추가)
+docker-compose up db -d
+
+# 2. 백엔드 실행
+cd backend
+venv\Scripts\activate            # Windows
+# source venv/bin/activate       # macOS/Linux
+alembic upgrade head             # 최초 또는 마이그레이션 변경 시
+uvicorn app.main:app --reload --port 8000
+```
+
+```bash
 cd mobile
 npm install
 npx expo start
