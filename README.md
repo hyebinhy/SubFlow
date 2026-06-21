@@ -52,6 +52,169 @@ npx expo start
 - Expo Go 앱으로 QR 코드 스캔하여 실행
 - `w` 키로 웹 브라우저 실행 가능
 
+## 현재 아키텍처
+
+```mermaid
+flowchart LR
+    User["사용자"]
+
+    subgraph Clients["클라이언트"]
+        Web["Web App<br/>React 19 + Vite + Zustand"]
+        Mobile["Mobile App<br/>Expo + React Native + AsyncStorage"]
+    end
+
+    subgraph ApiLayer["API 서버"]
+        FastAPI["FastAPI App<br/>CORS + Lifespan Seed"]
+        Auth["Auth Router<br/>JWT + bcrypt"]
+        Services["Services Router<br/>서비스/요금제 카탈로그"]
+        Subs["Subscriptions Router<br/>구독 CRUD + 캘린더 + 타임라인"]
+        Analytics["Analytics Router<br/>지출/중복/예산/절약 분석"]
+        Notifications["Notifications Router<br/>알림 설정 + 예정 결제"]
+        Categories["Categories Router<br/>카테고리"]
+        News["News Router<br/>뉴스 위젯"]
+    end
+
+    subgraph Domain["도메인/서비스 계층"]
+        AuthService["auth_service"]
+        SubscriptionService["subscription_service"]
+        AnalyticsService["analytics_service"]
+        NotificationService["notification_service"]
+        ExchangeRate["exchange_rate util"]
+        SeedData["seed_data util"]
+    end
+
+    subgraph Data["데이터 계층"]
+        SQLAlchemy["SQLAlchemy 2.0 Async ORM"]
+        Alembic["Alembic Migrations"]
+        Postgres[("PostgreSQL 16<br/>Docker Compose")]
+    end
+
+    User --> Web
+    User --> Mobile
+    Web -->|"Axios /api/v1<br/>Bearer access token + refresh"| FastAPI
+    Mobile -->|"Axios /api/v1<br/>Bearer access token"| FastAPI
+
+    FastAPI --> Auth
+    FastAPI --> Services
+    FastAPI --> Subs
+    FastAPI --> Analytics
+    FastAPI --> Notifications
+    FastAPI --> Categories
+    FastAPI --> News
+
+    Auth --> AuthService
+    Subs --> SubscriptionService
+    Analytics --> AnalyticsService
+    Notifications --> NotificationService
+    Services --> SeedData
+    AnalyticsService --> ExchangeRate
+
+    AuthService --> SQLAlchemy
+    SubscriptionService --> SQLAlchemy
+    AnalyticsService --> SQLAlchemy
+    NotificationService --> SQLAlchemy
+    SeedData --> SQLAlchemy
+    SQLAlchemy --> Postgres
+    Alembic --> Postgres
+```
+
+```mermaid
+erDiagram
+    USERS ||--o{ SUBSCRIPTIONS : owns
+    USERS ||--|| NOTIFICATION_SETTINGS : configures
+    USERS ||--o{ PAYMENT_HISTORY : records
+    USERS ||--o{ SUBSCRIPTION_HISTORY : records
+    CATEGORIES ||--o{ SUBSCRIPTIONS : groups
+    CATEGORIES ||--o{ SERVICES : classifies
+    SERVICES ||--o{ SERVICE_PLANS : offers
+    SERVICES ||--o{ SUBSCRIPTIONS : sourced_from
+    SERVICE_PLANS ||--o{ SUBSCRIPTIONS : selected_as
+    SERVICE_PLANS ||--o{ PLAN_PRICE_HISTORY : tracks
+    SUBSCRIPTIONS ||--o{ PAYMENT_HISTORY : generates
+    SUBSCRIPTIONS ||--o{ SUBSCRIPTION_HISTORY : changes
+
+    USERS {
+        uuid id PK
+        string email UK
+        string username
+        boolean is_active
+    }
+
+    SUBSCRIPTIONS {
+        uuid id PK
+        uuid user_id FK
+        int category_id FK
+        int service_id FK
+        int plan_id FK
+        string service_name
+        numeric cost
+        string currency
+        enum billing_cycle
+        enum status
+        date next_billing_date
+    }
+
+    SERVICES {
+        int id PK
+        int category_id FK
+        string name UK
+        string logo_url
+        string cancel_url
+        boolean is_popular
+    }
+
+    SERVICE_PLANS {
+        int id PK
+        int service_id FK
+        string name
+        numeric price
+        string currency
+        enum billing_cycle
+        boolean is_active
+    }
+
+    CATEGORIES {
+        int id PK
+        string name UK
+        string icon
+        string color
+    }
+
+    NOTIFICATION_SETTINGS {
+        uuid id PK
+        uuid user_id FK
+        int notify_days_before
+        boolean email_notifications
+        boolean push_notifications
+        int budget_monthly
+    }
+
+    PAYMENT_HISTORY {
+        uuid id PK
+        uuid subscription_id FK
+        uuid user_id FK
+        numeric amount
+        string currency
+        date paid_at
+    }
+
+    SUBSCRIPTION_HISTORY {
+        uuid id PK
+        uuid subscription_id FK
+        uuid user_id FK
+        string event_type
+        string description
+    }
+
+    PLAN_PRICE_HISTORY {
+        int id PK
+        int plan_id FK
+        numeric price
+        string currency
+        date effective_date
+    }
+```
+
 ## 기술 스택
 
 ### Frontend (Web)
