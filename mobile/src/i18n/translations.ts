@@ -34,6 +34,16 @@ const translations = {
   'auth.loginFailed': { en: 'Login failed. Check your credentials.', ko: '로그인 실패. 이메일과 비밀번호를 확인하세요.' },
   'auth.registerFailed': { en: 'Registration failed. Try again.', ko: '회원가입 실패. 다시 시도해주세요.' },
 
+  // ── Inbox ──
+  'inbox.title': { en: 'Notifications', ko: '알림' },
+  'inbox.empty': { en: 'No notifications yet', ko: '아직 알림이 없어요' },
+  'inbox.emptyHint': { en: 'Alerts about overlaps, price changes and news will appear here.', ko: '중복 구독·요금 변동·소식 알림이 여기에 표시됩니다.' },
+  'inbox.markAllRead': { en: 'Mark all read', ko: '모두 읽음' },
+  'inbox.justNow': { en: 'Just now', ko: '방금 전' },
+  'inbox.minutesAgo': { en: '{n}m ago', ko: '{n}분 전' },
+  'inbox.hoursAgo': { en: '{n}h ago', ko: '{n}시간 전' },
+  'inbox.daysAgo': { en: '{n}d ago', ko: '{n}일 전' },
+
   // ── Home ──
   'home.subtitle': { en: 'Subscription Dashboard', ko: '구독 관리 대시보드' },
   'home.title': { en: 'My Subscriptions', ko: '내 구독 현황' },

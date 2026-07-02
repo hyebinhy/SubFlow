@@ -1,79 +1,45 @@
-import asyncio
-import xml.etree.ElementTree as ET
-from typing import List
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-import httpx
-from fastapi import APIRouter
-
+from app.core.deps import get_current_user_optional, get_db
+from app.models.subscription import Subscription, SubscriptionStatus
+from app.models.user import User
 from app.schemas.news import NewsItem, NewsResponse
+from app.services.news_service import get_cached_news, personalize_news, refresh_news_cache
 
 router = APIRouter()
 
-FALLBACK_NEWS = [
-    NewsItem(
-        title="GPT-5.5 공개 이후 업무 자동화 기능 업데이트가 늘고 있습니다",
-        link="https://openai.com/",
-        pub_date="",
-        source="SubFlow Brief",
-        image_url=None,
-        category="AI Updates",
-    ),
-    NewsItem(
-        title="주요 구독 서비스의 요금제 변경을 확인해보세요",
-        link="https://support.google.com/",
-        pub_date="",
-        source="SubFlow Brief",
-        image_url=None,
-        category="Price Alerts",
-    ),
-    NewsItem(
-        title="연간 결제 전환 전, 월간 사용 빈도와 중복 구독을 먼저 점검하세요",
-        link="https://www.subflow.local/",
-        pub_date="",
-        source="SubFlow Tip",
-        image_url=None,
-        category="Price Alerts",
-    ),
-]
 
-
-async def fetch_rss(query: str, category: str, max_items: int = 3) -> List[NewsItem]:
-    url = f"https://news.google.com/rss/search?q={query}&hl=ko&gl=KR&ceid=KR:ko"
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=2.0)
-            response.raise_for_status()
-
-        root = ET.fromstring(response.text)
-        items = []
-
-        for item in root.findall(".//item")[:max_items]:
-            title = item.findtext("title", default="")
-            link = item.findtext("link", default="")
-            pub_date = item.findtext("pubDate", default="")
-            source = item.findtext("source", default="Google News")
-
-            if " - " in title:
-                title = " - ".join(title.split(" - ")[:-1])
-
-            items.append(
-                NewsItem(
-                    title=title,
-                    link=link,
-                    pub_date=pub_date,
-                    source=source,
-                    image_url=None,
-                    category=category,
-                )
-            )
-        return items
-    except Exception as exc:
-        print(f"Error fetching RSS for {query}: {exc}")
-        return []
+async def _subscribed_service_names(db: AsyncSession, user_id) -> list[str]:
+    result = await db.execute(
+        select(Subscription.service_name).where(
+            Subscription.user_id == user_id,
+            Subscription.status == SubscriptionStatus.ACTIVE,
+        )
+    )
+    return [n for n in result.scalars().all() if n]
 
 
 @router.get("/", response_model=NewsResponse)
-async def get_news():
-    # Keep the dashboard fast and predictable. Live RSS fetching can be moved to
-    # a background cache later so page rendering never waits on an external site.
-    return NewsResponse(items=FALLBACK_NEWS)
+async def get_news(
+    only_matched: bool = Query(default=False),
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user_optional),
+):
+    """캐시에서 서빙. 로그인 상태면 내 구독 서비스 관련 뉴스를 우선 정렬(개인화)."""
+    # 개인화 여지를 위해 넉넉히 가져온 뒤 상위 6개만 반환
+    items = await get_cached_news(db, limit=12)
+    if user:
+        names = await _subscribed_service_names(db, user.id)
+        if names:
+            items = personalize_news(items, names, only_matched=only_matched)
+    return NewsResponse(items=[NewsItem(**item) for item in items[:6]])
+
+
+@router.post("/refresh", response_model=NewsResponse)
+async def refresh_news(db: AsyncSession = Depends(get_db)):
+    """수동 갱신 트리거 (개발/디버깅용)."""
+    await refresh_news_cache(db)
+    items = await get_cached_news(db, limit=6)
+    return NewsResponse(items=[NewsItem(**item) for item in items])

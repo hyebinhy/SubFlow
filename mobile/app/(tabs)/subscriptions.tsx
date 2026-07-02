@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { useSubscriptions } from '../../src/hooks/useApi';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
@@ -235,9 +236,7 @@ export default function SubscriptionsScreen() {
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.logoMark}>
-              <Ionicons name="contract" size={20} color={Colors.textWhite} />
-            </View>
+            <AppLogoMark />
             <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>

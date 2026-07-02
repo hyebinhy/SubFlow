@@ -7,6 +7,7 @@ export interface NewsItem {
   source: string;
   image_url: string | null;
   category: string;
+  matched?: boolean;
 }
 
 export interface NewsResponse {

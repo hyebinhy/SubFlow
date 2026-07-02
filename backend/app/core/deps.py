@@ -11,6 +11,8 @@ from app.database import async_session_maker
 from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# 토큰이 없어도 401을 던지지 않는 선택적 인증 (공개+개인화 겸용 엔드포인트용)
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -42,4 +44,24 @@ async def get_current_user(
     if user is None or not user.is_active:
         raise credentials_exception
 
+    return user
+
+
+async def get_current_user_optional(
+    token: str | None = Depends(oauth2_scheme_optional),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """토큰이 있으면 유저를, 없거나 유효하지 않으면 None을 반환 (예외 없음)."""
+    if not token:
+        return None
+    payload = decode_token(token)
+    if payload is None or payload.get("type") != "access":
+        return None
+    user_id = payload.get("sub")
+    if user_id is None:
+        return None
+    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        return None
     return user

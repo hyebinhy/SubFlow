@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 const API_BASE_URL = __DEV__
   ? Platform.OS === 'web'
     ? 'http://localhost:8000/api/v1'
-    : 'http://172.30.1.44:8000/api/v1'
+    : 'http://172.30.1.48:8000/api/v1'
   : 'https://api.subflow.app/api/v1';
 
 const api = axios.create({
@@ -97,4 +97,12 @@ export const notificationAPI = {
   updateSettings: (settings: Record<string, unknown>) =>
     api.put('/notifications/settings', settings),
   getUpcoming: () => api.get('/notifications/upcoming'),
+  // 인박스
+  getInbox: (unreadOnly = false) =>
+    api.get(`/notifications/inbox?unread_only=${unreadOnly}`),
+  markRead: (id: string) => api.post(`/notifications/inbox/${id}/read`),
+  markAllRead: () => api.post('/notifications/inbox/read-all'),
+  dismiss: (id: string) => api.delete(`/notifications/inbox/${id}`),
+  registerPushToken: (push_token: string) =>
+    api.put('/notifications/push-token', { push_token }),
 };

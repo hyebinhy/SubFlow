@@ -9,6 +9,9 @@ from app.models.notification_setting import NotificationSetting
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 
+# 존재하지 않는 이메일에도 동일한 시간을 소요시켜 타이밍 기반 사용자 열거를 막는다
+_DUMMY_HASH = hash_password("timing_attack_mitigation_dummy")
+
 
 class AuthService:
     def __init__(self, db: AsyncSession):
@@ -37,11 +40,16 @@ class AuthService:
         result = await self.db.execute(select(User).where(User.email == data.email))
         user = result.scalar_one_or_none()
 
+        # 이메일 없음/비번 오류를 동일한 401·메시지로 통일 (사용자 열거 방지)
+        invalid = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="이메일 또는 비밀번호가 올바르지 않습니다.",
+        )
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
+            verify_password(data.password, _DUMMY_HASH)  # 응답 시간 균일화
+            raise invalid
         if not verify_password(data.password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
+            raise invalid
 
         if not user.is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")

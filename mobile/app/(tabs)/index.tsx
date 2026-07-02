@@ -139,9 +139,10 @@ const progressStyles = StyleSheet.create({
 });
 
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts } from '../../src/hooks/useApi';
+import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts, useInbox } from '../../src/hooks/useApi';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { notificationAPI } from '../../src/services/api';
 
@@ -155,6 +156,8 @@ export default function HomeScreen() {
   const subsQuery = useSubscriptions();
   const overviewQuery = useAnalyticsOverview();
   const exchangeQuery = useExchangeRateAlerts();
+  const inboxQuery = useInbox();
+  const unreadCount = inboxQuery.data?.unread_count ?? 0;
 
   // 환율 알림 mock & 데이터
   const MOCK_EXCHANGE = [
@@ -227,14 +230,17 @@ export default function HomeScreen() {
         {/* ── 헤더 (Clerio 스타일) ── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.logoMark}>
-              <Ionicons name="contract" size={20} color={Colors.textWhite} />
-            </View>
+            <AppLogoMark />
             <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/calendar')}>
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/inbox')}>
               <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>
               <Ionicons name="settings-outline" size={20} color={Colors.textWhite} />
@@ -625,6 +631,26 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: Colors.danger,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    lineHeight: 12,
   },
   headerAvatar: {
     width: 36,

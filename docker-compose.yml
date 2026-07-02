@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     image: postgres:16-alpine
@@ -15,6 +14,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # 컨테이너 내부에서는 DB 호스트가 서비스명 db, 포트 5432 (내부 포트)
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/subscription_db
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-SubFlow <no-reply@subflow.app>}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
 
 volumes:
   pgdata:

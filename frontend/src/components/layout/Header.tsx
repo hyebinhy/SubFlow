@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { Bell, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import NotificationBell from "./NotificationBell";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -48,14 +49,7 @@ export default function Header() {
       >
         {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
       </button>
-      <button
-        type="button"
-        onClick={() => navigate("/timeline")}
-        aria-label="히스토리 보기"
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/50 text-slate-600 transition hover:bg-white/80"
-      >
-        <Bell className="h-5 w-5" />
-      </button>
+      <NotificationBell />
       <button
         type="button"
         onClick={handleLogout}

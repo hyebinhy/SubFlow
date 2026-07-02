@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/* ── OKLCH 디자인 토큰 ──
+   색을 바꿔도 밝기(L)가 일정한 등명도 팔레트 + 검정 대신 인디고 컬러 섀도우 */
+:root {
+  --primary: oklch(0.60 0.20 275);
+  --primary-light: oklch(0.70 0.16 277);
+  --success: oklch(0.72 0.15 150);
+  --warning: oklch(0.80 0.13 75);
+  --danger: oklch(0.66 0.17 25);
+  --info: oklch(0.72 0.13 220);
+
+  /* 컬러 섀도우: 인디고 틴트를 낮은 불투명도로 (고수 그림자) */
+  --shadow-tint: oklch(0.55 0.13 265);
+  --shadow-card: 0 16px 36px color-mix(in oklch, var(--shadow-tint) 14%, transparent);
+  --shadow-card-hover: 0 22px 48px color-mix(in oklch, var(--shadow-tint) 20%, transparent);
+}
+
 @layer base {
   body {
     font-family: 'Inter', system-ui, sans-serif;
@@ -46,12 +62,12 @@
     backdrop-filter: blur(20px);
     border: 0;
     border-radius: 24px;
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--shadow-card);
     transition: all 0.3s;
   }
   .glass:hover {
     background: rgba(255, 255, 255, 0.6);
-    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.12);
+    box-shadow: var(--shadow-card-hover);
     transform: translateY(-2px);
   }
 
@@ -70,7 +86,9 @@
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow:
+      0 8px 32px color-mix(in oklch, var(--shadow-tint) 32%, transparent),
+      0 2px 8px color-mix(in oklch, var(--shadow-tint) 20%, transparent);
   }
 
   .glass-input {
@@ -79,27 +97,27 @@
     backdrop-filter: blur(12px);
   }
   .glass-input:focus {
-    border-color: #6366F1;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 16%, transparent);
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #6366F1, #818CF8);
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .btn-primary-glass {
-    background: linear-gradient(135deg, #6366F1, #818CF8);
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white;
-    box-shadow: 0 4px 16px rgba(99,102,241,0.25);
+    box-shadow: 0 4px 16px color-mix(in oklch, var(--primary) 28%, transparent);
     border-radius: 16px;
     font-weight: 600;
     line-height: 1.25;
     transition: all 0.2s;
   }
   .btn-primary-glass:hover {
-    box-shadow: 0 6px 24px rgba(99,102,241,0.35);
+    box-shadow: 0 6px 24px color-mix(in oklch, var(--primary) 38%, transparent);
     transform: translateY(-1px);
   }
 
@@ -118,50 +136,50 @@
   }
 
   .btn-warning-glass {
-    background: linear-gradient(135deg, rgba(251, 146, 60, 0.92), rgba(253, 186, 116, 0.92));
+    background: linear-gradient(135deg, var(--warning), color-mix(in oklch, var(--warning) 78%, white));
     backdrop-filter: blur(12px);
     border: 0;
     color: white;
     border-radius: 16px;
     font-weight: 600;
     line-height: 1.25;
-    box-shadow: 0 4px 16px rgba(251, 146, 60, 0.25);
+    box-shadow: 0 4px 16px color-mix(in oklch, var(--warning) 28%, transparent);
     transition: all 0.2s;
   }
   .btn-warning-glass:hover {
-    box-shadow: 0 6px 24px rgba(251, 146, 60, 0.35);
+    box-shadow: 0 6px 24px color-mix(in oklch, var(--warning) 38%, transparent);
     transform: translateY(-1px);
   }
 
   .btn-danger-glass {
-    background: linear-gradient(135deg, rgba(251, 113, 133, 0.92), rgba(253, 164, 175, 0.92));
+    background: linear-gradient(135deg, var(--danger), color-mix(in oklch, var(--danger) 78%, white));
     backdrop-filter: blur(12px);
     border: 0;
     color: white;
     border-radius: 16px;
     font-weight: 600;
     line-height: 1.25;
-    box-shadow: 0 4px 16px rgba(244, 63, 94, 0.25);
+    box-shadow: 0 4px 16px color-mix(in oklch, var(--danger) 28%, transparent);
     transition: all 0.2s;
   }
   .btn-danger-glass:hover {
-    box-shadow: 0 6px 24px rgba(244, 63, 94, 0.35);
+    box-shadow: 0 6px 24px color-mix(in oklch, var(--danger) 38%, transparent);
     transform: translateY(-1px);
   }
 
   .btn-edit-glass {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(129, 140, 248, 0.9));
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
     backdrop-filter: blur(12px);
     border: 0;
     color: white;
     border-radius: 16px;
     font-weight: 600;
     line-height: 1.25;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 4px 16px color-mix(in oklch, var(--primary) 24%, transparent);
     transition: all 0.2s;
   }
   .btn-edit-glass:hover {
-    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 6px 24px color-mix(in oklch, var(--primary) 34%, transparent);
     transform: translateY(-1px);
   }
 }
@@ -200,7 +218,7 @@
   .dark .shadow-sm,
   .dark .shadow-lg,
   .dark .shadow-\[0_8px_30px_rgb\(0\2c 0\2c 0\2c 0\.04\)\] {
-    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.26) !important;
+    box-shadow: 0 18px 42px color-mix(in oklch, var(--shadow-tint) 26%, rgba(2, 6, 23, 0.5)) !important;
   }
 
   .dark .glass {
@@ -211,7 +229,7 @@
   .dark .floating-dock {
     background: rgba(12, 18, 32, 0.86);
     border-color: rgba(190, 206, 230, 0.14);
-    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.32);
+    box-shadow: 0 18px 42px color-mix(in oklch, var(--shadow-tint) 30%, rgba(2, 6, 23, 0.55));
   }
 
   .dark .bg-green-50 {

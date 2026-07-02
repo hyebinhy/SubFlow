@@ -71,6 +71,11 @@ export default function NewsWidget({ news, loading, error }: NewsWidgetProps) {
               >
                 {label}
               </span>
+              {item.matched && (
+                <span className="rounded-full bg-emerald-500/90 px-2 py-1 text-[10px] font-semibold text-white">
+                  내 구독
+                </span>
+              )}
             </div>
 
             <div className="relative z-10 mt-auto">

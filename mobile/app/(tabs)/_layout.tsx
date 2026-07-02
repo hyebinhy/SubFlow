@@ -91,10 +91,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xxxxl || 40, // extremely round
     borderTopWidth: 0,
     paddingBottom: 0,
-    shadowColor: '#000',
+    shadowColor: Colors.shadowTint,
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
     elevation: 8,
   },
   blurContainer: {

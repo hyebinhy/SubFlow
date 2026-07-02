@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useCalendarEvents, useTimeline } from '../../src/hooks/useApi';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
@@ -122,9 +123,7 @@ export default function CalendarScreen() {
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.logoMark}>
-              <Ionicons name="contract" size={20} color={Colors.textWhite} />
-            </View>
+            <AppLogoMark />
             <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>

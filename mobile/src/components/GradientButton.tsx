@@ -3,7 +3,7 @@ import {
   Pressable, View, Text, StyleSheet, ActivityIndicator, ViewStyle, StyleProp,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { Colors, FontSize, FontWeight, Spacing } from '../constants/theme';
 
 export type GradientVariant = 'primary' | 'warning' | 'danger' | 'success' | 'neutral' | 'glass';
@@ -21,13 +21,83 @@ const VARIANTS: Record<GradientVariant, { colors: readonly [string, ...string[]]
 
 interface Props {
   label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   variant?: GradientVariant;
   size?: GradientSize;
   loading?: boolean;
   disabled?: boolean;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
+}
+
+function ButtonIcon({ name, size, color }: { name: string; size: number; color: string }) {
+  const common = {
+    stroke: color,
+    strokeWidth: 2.2,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    fill: 'none',
+  };
+
+  const normalized = name.replace(/-outline$/, '');
+
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      {normalized === 'log-in' && (
+        <>
+          <Path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" {...common} />
+          <Path d="M10 17l5-5-5-5" {...common} />
+          <Path d="M15 12H3" {...common} />
+        </>
+      )}
+      {normalized === 'open' && (
+        <>
+          <Path d="M14 3h7v7" {...common} />
+          <Path d="M21 3l-9 9" {...common} />
+          <Path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" {...common} />
+        </>
+      )}
+      {normalized === 'trash' && (
+        <>
+          <Path d="M3 6h18" {...common} />
+          <Path d="M8 6V4h8v2" {...common} />
+          <Path d="M19 6l-1 15H6L5 6" {...common} />
+          <Path d="M10 11v6" {...common} />
+          <Path d="M14 11v6" {...common} />
+        </>
+      )}
+      {normalized === 'checkmark' && <Path d="M20 6L9 17l-5-5" {...common} />}
+      {normalized === 'add-circle' && (
+        <>
+          <Circle cx="12" cy="12" r="9" {...common} />
+          <Path d="M12 8v8" {...common} />
+          <Path d="M8 12h8" {...common} />
+        </>
+      )}
+      {normalized === 'flash' && <Path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" {...common} />}
+      {normalized === 'list' && (
+        <>
+          <Path d="M8 6h13" {...common} />
+          <Path d="M8 12h13" {...common} />
+          <Path d="M8 18h13" {...common} />
+          <Path d="M3 6h.01" {...common} />
+          <Path d="M3 12h.01" {...common} />
+          <Path d="M3 18h.01" {...common} />
+        </>
+      )}
+      {normalized === 'person-add' && (
+        <>
+          <Path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" {...common} />
+          <Path d="M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" {...common} />
+          <Path d="M19 8v6" {...common} />
+          <Path d="M16 11h6" {...common} />
+        </>
+      )}
+      {!['log-in', 'open', 'trash', 'checkmark', 'add-circle', 'flash', 'list', 'person-add'].includes(normalized) && (
+        <Path d="M20 6L9 17l-5-5" {...common} />
+      )}
+    </Svg>
+  );
 }
 
 export function GradientButton({
@@ -50,7 +120,7 @@ export function GradientButton({
   const innerIconSize = isLg ? 14 : 13;
   // 모든 버튼 동일한 글꼴: 작고 통일된 사이즈
   const fontSize = 13;
-  const letterSpacing = 0.3;
+  const letterSpacing = 0;
   const isInactive = disabled || loading;
   // glass 변형은 텍스트/아이콘이 어두운 색으로
   const textColor = isGlass ? Colors.primary : '#FFF';
@@ -121,7 +191,7 @@ export function GradientButton({
                   },
                 ]}
               >
-                <Ionicons name={icon} size={innerIconSize} color={textColor} />
+                <ButtonIcon name={icon} size={innerIconSize} color={textColor} />
               </View>
             )}
             <Text style={[styles.label, { fontSize, letterSpacing, color: textColor }]}>{label}</Text>
@@ -145,6 +215,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    fontWeight: FontWeight.heavy,
+    fontWeight: FontWeight.semibold,
   },
 });

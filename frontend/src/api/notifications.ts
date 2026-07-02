@@ -1,4 +1,5 @@
 import type {
+  InboxResponse,
   NotificationSettings,
   NotificationSettingsUpdate,
 } from "../types/notification";
@@ -20,4 +21,17 @@ export const notificationApi = {
     apiClient
       .get<Subscription[]>("/notifications/upcoming")
       .then((r) => r.data),
+
+  // ── 인박스 ──
+  getInbox: () =>
+    apiClient.get<InboxResponse>("/notifications/inbox").then((r) => r.data),
+
+  markRead: (id: string) =>
+    apiClient.post(`/notifications/inbox/${id}/read`).then((r) => r.data),
+
+  markAllRead: () =>
+    apiClient.post("/notifications/inbox/read-all").then((r) => r.data),
+
+  dismiss: (id: string) =>
+    apiClient.delete(`/notifications/inbox/${id}`).then((r) => r.data),
 };

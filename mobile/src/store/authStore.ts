@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { authAPI } from '../services/api';
+import { registerForPush } from '../services/push';
 
 interface User {
   id: string;
@@ -33,6 +34,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // 토큰으로 유저 정보 가져오기
         const res = await api.get('/auth/me');
         set({ token, user: res.data, isAuthenticated: true, isLoading: false });
+        registerForPush(); // 기기 푸시 토큰 등록 (guard됨, 실패해도 무시)
       } else {
         set({ isLoading: false });
       }
@@ -50,6 +52,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // 유저 정보 가져오기
     const userRes = await api.get('/auth/me');
     set({ token: access_token, user: userRes.data, isAuthenticated: true });
+    registerForPush(); // 기기 푸시 토큰 등록
   },
 
   register: async (email: string, password: string, username: string) => {

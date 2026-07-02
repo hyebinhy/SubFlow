@@ -10,6 +10,7 @@ import * as Linking from 'expo-linking';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAnalyticsOverview, useCategoryBreakdown, useSpendingTrend, useSavingsSuggestions, useBudgetStatus, useOverlaps } from '../../src/hooks/useApi';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { subscriptionAPI } from '../../src/services/api';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
@@ -221,9 +222,7 @@ export default function AnalyticsScreen() {
         {/* 헤더 */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.logoMark}>
-              <Ionicons name="contract" size={20} color={Colors.textWhite} />
-            </View>
+            <AppLogoMark />
             <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
@@ -960,7 +959,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
     borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16,
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12,
+    shadowColor: Colors.shadowTint, shadowOpacity: 0.22, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 10,
   },
   toastError: { backgroundColor: Colors.danger },

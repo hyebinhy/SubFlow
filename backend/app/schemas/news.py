@@ -9,6 +9,7 @@ class NewsItem(BaseModel):
     source: str
     image_url: Optional[str] = None
     category: str
+    matched: bool = False  # 내가 구독한 서비스와 관련된 뉴스인지
 
 class NewsResponse(BaseModel):
     items: List[NewsItem]

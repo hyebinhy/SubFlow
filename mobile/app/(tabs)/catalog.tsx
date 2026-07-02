@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { subscriptionAPI } from '../../src/services/api';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import {
   Colors,
@@ -384,9 +385,7 @@ export default function CatalogScreen() {
         {/* 헤더 */}
         <View style={styles.header}>
             <View style={styles.headerLeft}>
-                <View style={styles.logoMark}>
-                <Ionicons name="contract" size={20} color={Colors.textWhite} />
-                </View>
+                <AppLogoMark />
                 <Text style={styles.headerTitle}>SubFlow</Text>
             </View>
             <View style={styles.headerRight}>

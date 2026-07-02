@@ -26,6 +26,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="inbox" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
     </>
   );
