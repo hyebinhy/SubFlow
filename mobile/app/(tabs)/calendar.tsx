@@ -35,30 +35,9 @@ export default function CalendarScreen() {
   const calendarEvents = useCalendarEvents(year, month + 1);
   const timeline = useTimeline();
 
-  // Mock fallback 결제 이벤트
-  const MOCK_EVENTS = [
-    { service_name: 'Netflix', billing_amount: 17000, billing_date: `${year}-${String(month+1).padStart(2,'0')}-07` },
-    { service_name: 'Spotify', billing_amount: 10900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-12` },
-    { service_name: 'YouTube Premium', billing_amount: 14900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-15` },
-    { service_name: 'iCloud+', billing_amount: 3900, billing_date: `${year}-${String(month+1).padStart(2,'0')}-20` },
-    { service_name: 'ChatGPT Plus', billing_amount: 26000, billing_date: `${year}-${String(month+1).padStart(2,'0')}-22` },
-  ];
-
-  // Mock timeline
-  const MOCK_TIMELINE = [
-    { id: '1', service_name: 'Netflix', action: 'created', description: 'Netflix 구독 시작', created_at: '2024-12-01T09:00:00Z' },
-    { id: '2', service_name: 'Netflix', action: 'plan_changed', description: 'Standard → Premium 플랜 변경', created_at: '2025-02-15T14:30:00Z' },
-    { id: '3', service_name: 'Spotify', action: 'created', description: 'Spotify Premium 구독 시작', created_at: '2025-01-10T11:00:00Z' },
-    { id: '4', service_name: 'YouTube Premium', action: 'cancelled', description: 'YouTube Premium 해지', created_at: '2025-03-20T16:00:00Z' },
-    { id: '5', service_name: 'ChatGPT Plus', action: 'created', description: 'ChatGPT Plus 구독 시작', created_at: '2025-03-01T10:00:00Z' },
-  ];
-
-  const timelineData = ((timeline.data as any)?.timeline ?? (timeline.data as any) ?? []).length > 0
-    ? ((timeline.data as any)?.timeline ?? (timeline.data as any))
-    : (timeline.error ? MOCK_TIMELINE : []);
-
-  const apiEvents = (calendarEvents.data as any)?.events ?? [];
-  const events = apiEvents.length > 0 ? apiEvents : (calendarEvents.error ? MOCK_EVENTS : apiEvents);
+  // 실데이터만 (없으면 빈 배열)
+  const timelineData = (timeline.data as any)?.timeline ?? (timeline.data as any) ?? [];
+  const events = (calendarEvents.data as any)?.events ?? [];
 
   const todayDay = (year === now.getFullYear() && month === now.getMonth()) ? now.getDate() : -1;
   const daysInMonth = getDaysInMonth(year, month);

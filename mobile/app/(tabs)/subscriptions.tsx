@@ -17,58 +17,22 @@ import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constan
 
 type FilterType = 'all' | 'active' | 'paused' | 'cancelled';
 
-const MOCK_SUBSCRIPTIONS = [
-  { id: '1', name: 'Netflix', plan: 'Premium', amount: 17000, cycle: 'monthly', nextDate: '2026-04-07', status: 'active' as const, category: 'Entertainment', cancelUrl: 'https://www.netflix.com/cancelplan' },
-  { id: '2', name: 'Spotify', plan: 'Individual', amount: 10900, cycle: 'monthly', nextDate: '2026-04-12', status: 'active' as const, category: 'Music', cancelUrl: 'https://www.spotify.com/account/subscription/' },
-  { id: '3', name: 'YouTube Premium', plan: 'Family', amount: 14900, cycle: 'monthly', nextDate: '2026-04-15', status: 'active' as const, category: 'Entertainment', cancelUrl: 'https://myaccount.google.com/subscriptions' },
-  { id: '4', name: 'iCloud+', plan: '200GB', amount: 3900, cycle: 'monthly', nextDate: '2026-04-20', status: 'active' as const, category: 'Cloud', cancelUrl: 'https://support.apple.com/ko-kr/118428' },
-  { id: '5', name: 'ChatGPT Plus', plan: 'Plus', amount: 26000, cycle: 'monthly', nextDate: '2026-04-22', status: 'paused' as const, category: 'AI', cancelUrl: 'https://chatgpt.com/settings/subscription' },
-  { id: '6', name: 'Adobe CC', plan: 'Photography', amount: 13200, cycle: 'monthly', nextDate: '—', status: 'cancelled' as const, category: 'Design', cancelUrl: 'https://account.adobe.com/plans' },
-];
-
 const statusKeys: Record<string, { labelKey: 'common.active' | 'common.paused' | 'common.cancelled'; color: string }> = {
   active: { labelKey: 'common.active', color: Colors.success },
   paused: { labelKey: 'common.paused', color: '#FF9500' },
   cancelled: { labelKey: 'common.cancelled', color: Colors.danger },
 };
 
-type Sub = typeof MOCK_SUBSCRIPTIONS[0];
-
-// 서비스별 플랜 목록 (Mock fallback)
-const MOCK_SERVICE_PLANS: Record<string, { name: string; price: number; cycle: string }[]> = {
-  'Netflix': [
-    { name: '광고형 스탠다드', price: 7000, cycle: 'monthly' },
-    { name: '스탠다드', price: 13500, cycle: 'monthly' },
-    { name: '프리미엄', price: 17000, cycle: 'monthly' },
-  ],
-  'Spotify': [
-    { name: 'Individual', price: 10900, cycle: 'monthly' },
-    { name: 'Duo', price: 14900, cycle: 'monthly' },
-    { name: 'Family', price: 16900, cycle: 'monthly' },
-    { name: 'Student', price: 5900, cycle: 'monthly' },
-  ],
-  'YouTube Premium': [
-    { name: 'Lite', price: 8500, cycle: 'monthly' },
-    { name: '개인', price: 14900, cycle: 'monthly' },
-    { name: '가족', price: 23900, cycle: 'monthly' },
-  ],
-  'iCloud+': [
-    { name: '50GB', price: 1300, cycle: 'monthly' },
-    { name: '200GB', price: 3900, cycle: 'monthly' },
-    { name: '2TB', price: 13000, cycle: 'monthly' },
-    { name: '6TB', price: 39000, cycle: 'monthly' },
-    { name: '12TB', price: 78000, cycle: 'monthly' },
-  ],
-  'ChatGPT Plus': [
-    { name: 'Free', price: 0, cycle: 'monthly' },
-    { name: 'Plus', price: 26000, cycle: 'monthly' },
-    { name: 'Pro', price: 260000, cycle: 'monthly' },
-  ],
-  'Adobe CC': [
-    { name: 'Photography', price: 13200, cycle: 'monthly' },
-    { name: 'Single App', price: 30800, cycle: 'monthly' },
-    { name: 'All Apps', price: 75900, cycle: 'monthly' },
-  ],
+type Sub = {
+  id: string;
+  name: string;
+  plan: string;
+  amount: number;
+  cycle: string;
+  nextDate: string;
+  status: 'active' | 'paused' | 'cancelled';
+  category: string;
+  cancelUrl?: string;
 };
 
 // 캘린더 헬퍼
@@ -106,19 +70,17 @@ export default function SubscriptionsScreen() {
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
 
   const apiSubs = (subsQuery.data as any[]) ?? [];
-  const allSubs: Sub[] = apiSubs.length > 0
-    ? apiSubs.map((s: any) => ({
-        id: String(s.id),
-        name: s.service_name ?? s.name ?? 'Unknown',
-        plan: s.plan?.name ?? s.plan_name ?? '-',
-        amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
-        cycle: s.billing_cycle ?? 'monthly',
-        nextDate: s.next_billing_date ?? '—',
-        status: (s.status ?? 'active') as any,
-        category: s.category?.name ?? s.category_name ?? '',
-        cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
-      }))
-    : MOCK_SUBSCRIPTIONS;
+  const allSubs: Sub[] = apiSubs.map((s: any) => ({
+    id: String(s.id),
+    name: s.service_name ?? s.name ?? 'Unknown',
+    plan: s.plan?.name ?? s.plan_name ?? '-',
+    amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
+    cycle: s.billing_cycle ?? 'monthly',
+    nextDate: s.next_billing_date ?? '—',
+    status: (s.status ?? 'active') as any,
+    category: s.category?.name ?? s.category_name ?? '',
+    cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
+  }));
 
   const filtered = filter === 'all' ? allSubs : allSubs.filter(s => s.status === filter);
   const total = allSubs.filter(s => s.status === 'active').reduce((sum, s) => sum + s.amount, 0);
@@ -142,10 +104,8 @@ export default function SubscriptionsScreen() {
       setCalMonth(now.getMonth());
     }
 
-    // 서비스 플랜 로드 (API 시도 → Mock fallback)
-    const mockPlans = MOCK_SERVICE_PLANS[sub.name] ?? [];
-    setServicePlans(mockPlans);
-    // API에서 서비스 플랜 가져오기 시도
+    // 서비스 플랜 로드 (API에서 실제 플랜 조회)
+    setServicePlans([]);
     servicesAPI.search(sub.name).then(res => {
       const services = res.data?.services ?? res.data ?? [];
       const matched = services.find?.((s: any) => s.name === sub.name);

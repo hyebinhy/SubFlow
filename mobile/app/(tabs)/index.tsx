@@ -38,13 +38,6 @@ interface Subscription {
   priceNews?: string;
 }
 
-const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  { id: '1', name: 'Netflix', amount: 17000, currency: 'KRW', startDate: '2023-01-15', priceNews: 'home.priceIncrease' as const },
-  { id: '2', name: 'Spotify', amount: 10900, currency: 'KRW', startDate: '2024-05-10' },
-  { id: '3', name: 'YouTube Premium', amount: 14900, currency: 'KRW', startDate: '2022-11-20' },
-  { id: '4', name: 'iCloud+', amount: 3900, currency: 'KRW', startDate: '2021-08-05' },
-  { id: '5', name: 'ChatGPT Plus', amount: 26000, currency: 'USD', startDate: '2023-07-22' },
-];
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   KRW: '₩', USD: '$', EUR: '€', JPY: '¥', GBP: '£',
@@ -159,30 +152,30 @@ export default function HomeScreen() {
   const inboxQuery = useInbox();
   const unreadCount = inboxQuery.data?.unread_count ?? 0;
 
-  // 환율 알림 mock & 데이터
-  const MOCK_EXCHANGE = [
-    { currency: 'USD', rate: 1380.5, change: +12.3, service_name: 'ChatGPT Plus' },
-    { currency: 'USD', rate: 1380.5, change: -5.1, service_name: 'GitHub Copilot' },
-  ];
+  // 환율 알림 (실데이터만)
   const rawAlerts = (exchangeQuery.data as any)?.alerts ?? [];
-  const exchangeAlerts = rawAlerts.length > 0
-    ? rawAlerts.map((a: any) => ({ ...a, rate: Number(a.current_rate ?? a.rate ?? 0), change: Number(a.change_percentage ?? a.change ?? 0) }))
-    : (exchangeQuery.error ? MOCK_EXCHANGE : []);
+  const exchangeAlerts = rawAlerts.map((a: any) => ({
+    ...a,
+    rate: Number(a.current_rate ?? a.rate ?? 0),
+    change: Number(a.change_percentage ?? a.change ?? 0),
+  }));
 
-  // API 데이터가 있으면 사용, 없으면 mock fallback
+  // 활성 구독 (실데이터만 — 없으면 빈 배열)
   const apiSubs = (subsQuery.data as any[]) ?? [];
-  const subs: Subscription[] = apiSubs.length > 0
-    ? apiSubs.filter((s: any) => s.status === 'active').map((s: any, idx: number) => ({
-        id: String(s.id ?? idx + 1),
-        name: s.service_name ?? s.name ?? 'Unknown',
-        amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
-        currency: s.currency ?? 'KRW',
-        startDate: s.start_date ?? s.started_at ?? s.created_at ?? '2024-01-01',
-      }))
-    : MOCK_SUBSCRIPTIONS;
+  const subs: Subscription[] = apiSubs
+    .filter((s: any) => s.status === 'active')
+    .map((s: any, idx: number) => ({
+      id: String(s.id ?? idx + 1),
+      name: s.service_name ?? s.name ?? 'Unknown',
+      amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
+      currency: s.currency ?? 'KRW',
+      startDate: s.start_date ?? s.started_at ?? s.created_at ?? '2024-01-01',
+    }));
 
+  const hasSubs = subs.length > 0;
+  const EMPTY_SUB: Subscription = { id: '', name: '', amount: 0, currency: 'KRW', startDate: '' };
   const totalMonthlySpend = subs.reduce((sum, s) => sum + s.amount, 0);
-  const activeSub = subs[Math.min(activeIndex, subs.length - 1)] ?? subs[0] ?? MOCK_SUBSCRIPTIONS[0];
+  const activeSub = subs[Math.min(activeIndex, subs.length - 1)] ?? subs[0] ?? EMPTY_SUB;
   const spendPercent = totalMonthlySpend > 0 ? ((activeSub.amount / totalMonthlySpend) * 100).toFixed(1) : '0';
 
   // ── 예산 계산 ──
@@ -280,6 +273,18 @@ export default function HomeScreen() {
 
           {/* ── 중앙 서비스 페이저 (Horizontal Selector) ── */}
           <View style={styles.pagerContainer}>
+            {!hasSubs ? (
+              <TouchableOpacity
+                style={styles.emptyPager}
+                onPress={() => router.push('/(tabs)/catalog')}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add-circle-outline" size={30} color={Colors.primary} />
+                <Text style={styles.emptyPagerText}>
+                  {language === 'ko' ? '아직 구독이 없어요\n첫 구독을 추가해보세요' : 'No subscriptions yet.\nAdd your first one.'}
+                </Text>
+              </TouchableOpacity>
+            ) : (
             <ScrollView
               horizontal
               pagingEnabled={false}
@@ -335,6 +340,7 @@ export default function HomeScreen() {
                 );
               })}
             </ScrollView>
+            )}
           </View>
 
           {/* ── 상세 분석 카드 (Glassmorphism) ── */}
@@ -739,6 +745,25 @@ const styles = StyleSheet.create({
     height: 135,
     zIndex: 20,
     marginHorizontal: -Spacing.lg,
+  },
+  emptyPager: {
+    flex: 1,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.xxl,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+  },
+  emptyPagerText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   pagerScroll: {
     flex: 1,

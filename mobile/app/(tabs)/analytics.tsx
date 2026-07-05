@@ -133,42 +133,7 @@ export default function AnalyticsScreen() {
     }
   };
 
-  // API 데이터 없으면 mock fallback
-  const MOCK_OVERVIEW = {
-    total_monthly_krw: 72700, total_yearly_krw: 872400,
-    active_count: 5, paused_count: 1, trial_count: 0,
-  };
-  const MOCK_CATEGORIES = [
-    { category_name: 'Entertainment', total_krw: 31900, percentage: 43.9, color: '#E50914' },
-    { category_name: 'Music', total_krw: 10900, percentage: 15.0, color: '#1DB954' },
-    { category_name: 'Developer Tools', total_krw: 26000, percentage: 35.8, color: '#10A37F' },
-    { category_name: 'Cloud', total_krw: 3900, percentage: 5.4, color: '#3693F5' },
-  ];
-  const MOCK_TREND = [
-    { month: 'Nov', amount: 62000 }, { month: 'Dec', amount: 58000 },
-    { month: 'Jan', amount: 61000 }, { month: 'Feb', amount: 57900 },
-    { month: 'Mar', amount: 72700 }, { month: 'Apr', amount: 72700 },
-  ];
-  const MOCK_SAVINGS = [
-    {
-      service_name: 'Netflix',
-      current_plan_name: '프리미엄',
-      suggestion_text: '스탠다드 플랜으로 변경 시 월 ₩3,500 절약 가능',
-      max_savings_krw: 3500,
-    },
-    {
-      service_name: 'ChatGPT Plus',
-      current_plan_name: 'Plus',
-      suggestion_text: '연간 결제로 전환 시 약 20% 할인',
-      max_savings_krw: 5200,
-    },
-  ];
-  const MOCK_OVERLAPS = [
-    { category: 'Entertainment', services: ['Netflix', 'YouTube Premium'], message: 'Netflix와 YouTube Premium이 엔터테인먼트 카테고리에서 중복됩니다' },
-    { category: 'Developer Tools', services: ['GitHub Copilot', 'ChatGPT Plus'], message: 'GitHub Copilot과 ChatGPT Plus가 AI 코딩 기능이 겹칩니다' },
-  ];
-
-  // 백엔드 필드명 → 모바일 필드명 매핑
+  // 백엔드 필드명 → 모바일 필드명 매핑 (실데이터만)
   const rawOv = overview.data as any;
   const ov = rawOv ? {
     total_monthly_krw: Number(rawOv.total_monthly_cost ?? rawOv.total_monthly_krw ?? 0),
@@ -176,29 +141,25 @@ export default function AnalyticsScreen() {
     active_count: rawOv.total_active_subscriptions ?? rawOv.active_count ?? 0,
     paused_count: rawOv.paused_count ?? 0,
     trial_count: rawOv.trial_count ?? 0,
-  } : (overview.error ? MOCK_OVERVIEW : null);
+  } : null;
 
   const rawCats = (categories.data as any)?.breakdown ?? (categories.data as any)?.categories ?? [];
-  const cats = rawCats.length > 0
-    ? rawCats.map((c: any) => ({
-        category_name: c.category ?? c.category_name ?? '',
-        total_krw: Number(c.total ?? c.total_krw ?? 0),
-        percentage: c.percentage ?? 0,
-        color: c.color ?? Colors.primary,
-        icon: c.icon ?? null,
-        count: c.count ?? 0,
-      }))
-    : (categories.error ? MOCK_CATEGORIES : []);
+  const cats = rawCats.map((c: any) => ({
+    category_name: c.category ?? c.category_name ?? '',
+    total_krw: Number(c.total ?? c.total_krw ?? 0),
+    percentage: c.percentage ?? 0,
+    color: c.color ?? Colors.primary,
+    icon: c.icon ?? null,
+    count: c.count ?? 0,
+  }));
 
   const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const rawTrend = (trend.data as any)?.data ?? (trend.data as any)?.months ?? [];
-  const trendData = rawTrend.length > 0
-    ? rawTrend.map((t: any) => ({
-        month: t.month_name ?? (typeof t.month === 'number' ? MONTH_ABBR[t.month - 1] : `${t.month ?? ''}`),
-        amount: Number(t.total ?? t.amount ?? 0),
-        isForecast: !!t.is_forecast,
-      }))
-    : (trend.error ? MOCK_TREND : []);
+  const trendData = rawTrend.map((t: any) => ({
+    month: t.month_name ?? (typeof t.month === 'number' ? MONTH_ABBR[t.month - 1] : `${t.month ?? ''}`),
+    amount: Number(t.total ?? t.amount ?? 0),
+    isForecast: !!t.is_forecast,
+  }));
 
   // 지난달 대비 변화량
   const lastMonth = trendData.length >= 2 ? trendData[trendData.length - 2] : null;
@@ -209,12 +170,9 @@ export default function AnalyticsScreen() {
   const momDelta = thisMonth && lastMonth ? thisMonth.amount - lastMonth.amount : 0;
 
   const rawSavings = (savings.data as any)?.suggestions ?? [];
-  const savingsList = rawSavings.length > 0
-    ? rawSavings.map((s: any) => ({ message: s.suggestion_text ?? s.message ?? '' }))
-    : (savings.error ? MOCK_SAVINGS : []);
+  const savingsList = rawSavings.map((s: any) => ({ message: s.suggestion_text ?? s.message ?? '' }));
 
-  const overlapsList = ((overlaps.data as any)?.overlaps ?? []).length > 0
-    ? (overlaps.data as any).overlaps : (overlaps.error ? MOCK_OVERLAPS : []);
+  const overlapsList = (overlaps.data as any)?.overlaps ?? [];
 
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
