@@ -88,8 +88,9 @@ async def test_spending_trend(test_client: httpx.AsyncClient, auth_headers: dict
     data = resp.json()
     assert "data" in data
     assert isinstance(data["data"], list)
-    # Default is 6 months
-    assert len(data["data"]) == 6
+    # 과거+현재 6개월 + 다음 달 예보(is_forecast) 1개 = 7
+    assert len([d for d in data["data"] if not d["is_forecast"]]) == 6
+    assert len(data["data"]) == 7
     for item in data["data"]:
         assert "year" in item
         assert "month" in item

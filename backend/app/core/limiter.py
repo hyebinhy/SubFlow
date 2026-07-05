@@ -1,3 +1,5 @@
+import sys
+
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from starlette.requests import Request
@@ -18,4 +20,5 @@ def _client_ip(request: Request) -> str:
 
 
 # 클라이언트 IP 기준 rate limiter (라우터·앱에서 공용으로 import)
-limiter = Limiter(key_func=_client_ip)
+# 테스트(pytest) 중에는 비활성화해 register/login 반복 호출이 429로 막히지 않게 한다.
+limiter = Limiter(key_func=_client_ip, enabled="pytest" not in sys.modules)

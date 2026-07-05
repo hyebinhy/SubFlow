@@ -81,8 +81,9 @@ class TestLogin:
         }
         resp = await test_client.post("/api/v1/auth/login", json=login_payload)
 
+        # 사용자 열거 방지: 이메일 없음/비번 오류를 동일한 401·메시지로 통일
         assert resp.status_code == 401
-        assert "invalid password" in resp.json()["detail"].lower()
+        assert "올바르지 않" in resp.json()["detail"]
 
     async def test_login_nonexistent_user(self, test_client: httpx.AsyncClient):
         login_payload = {
@@ -91,8 +92,9 @@ class TestLogin:
         }
         resp = await test_client.post("/api/v1/auth/login", json=login_payload)
 
-        assert resp.status_code == 404
-        assert "not found" in resp.json()["detail"].lower()
+        # 존재하지 않는 이메일도 비번 오류와 구분 불가능해야 함 (401 통일)
+        assert resp.status_code == 401
+        assert "올바르지 않" in resp.json()["detail"]
 
 
 class TestMe:
