@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: subscription_db
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -22,8 +22,10 @@ services:
         condition: service_healthy
     environment:
       # 컨테이너 내부에서는 DB 호스트가 서비스명 db, 포트 5432 (내부 포트)
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/subscription_db
+      DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/subscription_db
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      # 여러 도메인은 콤마로 구분 (예: https://app.subflow.app,https://subflow.app)
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -34,6 +36,15 @@ services:
       DEBUG: "false"
     ports:
       - "8000:8000"
+    restart: unless-stopped
+
+  # 운영용 웹: 정적 빌드 + nginx (SPA 서빙 + /api → backend 프록시, same-origin)
+  web:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "${WEB_PORT:-3000}:80"
     restart: unless-stopped
 
 volumes:

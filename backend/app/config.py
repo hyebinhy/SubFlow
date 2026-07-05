@@ -16,21 +16,21 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    ALLOWED_ORIGINS: list[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8081",
-        "http://127.0.0.1:8081",
-        "http://localhost:8082",
-        "http://127.0.0.1:8082",
-        "http://172.30.1.44:8081",
-    ]
+    # 콤마 구분 문자열 (pydantic-settings의 list-env JSON 파싱 함정을 피하기 위해 str로 둠)
+    ALLOWED_ORIGINS: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:8081,http://127.0.0.1:8081,"
+        "http://localhost:8082,http://127.0.0.1:8082"
+    )
     APP_NAME: str = "Subscription Manager"
     DEBUG: bool = False
     # 리버스 프록시 뒤에 배포할 때만 True. rate limit이 X-Forwarded-For의 실제 클라이언트 IP를 사용.
     TRUST_PROXY: bool = False
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
