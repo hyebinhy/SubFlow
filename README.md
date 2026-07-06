@@ -13,7 +13,8 @@
 - **환율 추적** - 외화 구독의 환율 변동 알림 (KRW 자동 변환)
 - **중복 감지** - 같은 카테고리 내 겹치는 서비스 탐지
 - **절약 제안** - 비용 절감 추천
-- **알림 설정** - 결제 N일 전 알림, 이메일/푸시 알림 토글
+- **알림 설정** - 결제 N일 전 알림, 이메일/푸시 알림 토글 (실제 발송)
+- **뉴스 위젯 + AI 요약** - 구독 서비스 관련 뉴스 제공, OpenAI 기반 기사 요약 모달
 
 ## 모바일 앱 (React Native)
 
@@ -124,6 +125,7 @@ erDiagram
     USERS ||--|| NOTIFICATION_SETTINGS : configures
     USERS ||--o{ PAYMENT_HISTORY : records
     USERS ||--o{ SUBSCRIPTION_HISTORY : records
+    USERS ||--o{ NOTIFICATIONS : receives
     CATEGORIES ||--o{ SUBSCRIPTIONS : groups
     CATEGORIES ||--o{ SERVICES : classifies
     SERVICES ||--o{ SERVICE_PLANS : offers
@@ -213,6 +215,24 @@ erDiagram
         string currency
         date effective_date
     }
+
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        string type
+        string title
+        string body
+        string link
+    }
+
+    NEWS_CACHE {
+        int id PK
+        string title
+        string link UK
+        string source
+        string category
+        datetime fetched_at
+    }
 ```
 
 ## 기술 스택
@@ -238,18 +258,60 @@ erDiagram
 | PostgreSQL 16 | 데이터베이스 |
 | JWT + bcrypt | 인증/보안 |
 | Pydantic | 데이터 검증 |
+| OpenAI API | 뉴스 기사 AI 요약 |
+| aiosmtplib (SMTP) | 이메일 알림 발송 |
+| slowapi | 로그인/회원가입 Rate limiting |
+| APScheduler | 알림/갱신 스케줄링 |
+| httpx | 외부 API 호출 (환율·뉴스) |
 
 ### 인프라
 | 기술 | 용도 |
 |------|------|
-| Docker Compose | PostgreSQL 컨테이너 |
+| Docker Compose | 전체 스택 오케스트레이션 (DB + 백엔드 + 웹) |
+| nginx | 프론트엔드 정적 빌드 서빙 + `/api` → 백엔드 프록시 (same-origin) |
+| PostgreSQL 16 (Docker) | 데이터베이스 |
+
+## 보안
+
+- **인증**: JWT (access + refresh) + bcrypt 비밀번호 해싱
+- **비밀번호 강도 검증**: 최소 8자 + 영문 + 숫자
+- **Rate limiting**: 로그인 10회/분, 회원가입 5회/분 (slowapi)
+- **사용자 열거 방지**: 로그인 실패 응답 401 통일 + 타이밍 완화
+- **시크릿 분리**: `SECRET_KEY`·DB 비밀번호 등 환경변수화 (기본값 사용 시 기동 경고)
+- **프록시 스푸핑 대비**: `X-Forwarded-For` 신뢰를 `TRUST_PROXY` 플래그로 제어 (기본 off)
+
+## 환경 변수
+
+`docker compose`는 프로젝트 루트의 `.env` 또는 셸 환경변수를 읽습니다. 주요 항목:
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `SECRET_KEY` | (개발용 기본값) | JWT 서명 키 — **운영 시 반드시 변경** |
+| `POSTGRES_PASSWORD` | `postgres` | DB 비밀번호 |
+| `ALLOWED_ORIGINS` | `localhost:5173,localhost:3000` | CORS 허용 도메인 (콤마 구분) |
+| `OPENAI_API_KEY` | (빈값) | 설정 시 뉴스 AI 요약 활성화 (미설정 시 원문 폴백) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` | — | 이메일 알림 발송 SMTP 설정 |
+| `TRUST_PROXY` | `false` | 리버스 프록시 뒤 배포 시 `X-Forwarded-For` 신뢰 여부 |
+| `WEB_PORT` | `3000` | 운영 웹(nginx) 노출 포트 |
 
 ## 시작하기
 
 ### 사전 요구사항
 - Python 3.11+
 - Node.js 18+
-- Docker Desktop (PostgreSQL용)
+- Docker Desktop (DB / 전체 스택용)
+
+### 전체 스택 한 번에 실행 (운영/도커)
+
+```bash
+# 루트에 .env 작성 (SECRET_KEY, OPENAI_API_KEY, SMTP 등) 후
+docker compose up -d --build
+```
+
+- 웹: http://localhost:3000 (nginx가 SPA 서빙 + `/api` → 백엔드 프록시)
+- DB · 백엔드 · 웹 컨테이너가 함께 기동됩니다.
+
+아래는 개발용 로컬 실행 방법입니다.
 
 ### 1. PostgreSQL 데이터베이스 실행
 
@@ -338,6 +400,7 @@ SubFlow/
 │   │   ├── hooks/               # 커스텀 훅
 │   │   └── types/               # TypeScript 타입 정의
 │   └── package.json
+├── app_icons/                  # 앱 아이콘 세트 (iOS AppIcon.appiconset / Android mipmap) + 원본 소스
 └── docker-compose.yml
 ```
 
@@ -353,17 +416,21 @@ SubFlow/
 | **Categories** | `GET /categories` | 카테고리 목록 |
 | **Analytics** | `GET /analytics/overview`, `GET /analytics/spending-trend` | 지출 분석 |
 | **Notifications** | `GET /notifications/settings` | 알림 설정 |
+| **News** | `GET /news`, `POST /news/summary` | 뉴스 위젯 + AI 요약 |
 
 ## 데이터베이스 스키마
 
-주요 테이블 7개:
+테이블 11개:
 
 - **users** - 사용자 계정 (UUID, email, password)
 - **categories** - 서비스 카테고리 (영상, 음악, 클라우드 등)
 - **services** - 서비스 카탈로그 (Netflix, Spotify 등 30+)
 - **service_plans** - 서비스별 요금제 (Basic, Standard, Premium 등)
+- **plan_price_history** - 요금제 가격 변동 이력 (인상/인하 추적)
 - **subscriptions** - 사용자의 활성 구독 (상태: active/paused/cancelled/trial)
 - **payment_history** - 결제 이력
 - **subscription_history** - 구독 변경 이력 (생성, 플랜변경, 해지 등)
 - **notification_settings** - 알림 설정 (결제 N일 전 알림, 월 예산)
+- **notifications** - 생성/발송된 알림 레코드 (중복·요금변경·AI뉴스·체험만료·예산·결제임박·환율)
+- **news_cache** - 뉴스 위젯 캐시 (AI 소식 / 요금 인상 뉴스, link 기준 dedup)
 
