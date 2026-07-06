@@ -13,3 +13,15 @@ class NewsItem(BaseModel):
 
 class NewsResponse(BaseModel):
     items: List[NewsItem]
+
+
+class NewsSummaryRequest(BaseModel):
+    title: str
+    link: str
+    source: str = ""
+    category: str = ""
+
+
+class NewsSummaryResponse(BaseModel):
+    summary: Optional[str] = None
+    mode: str  # "ai" | "unavailable"

@@ -36,6 +36,11 @@ export default function RegisterForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mesh">
       <div className="glass w-full max-w-md p-8">
+        <img
+          src="/subflow-logo.png"
+          alt="SubFlow"
+          className="mx-auto mb-5 h-11 w-auto"
+        />
         <h1 className="mb-6 text-center text-2xl font-bold text-slate-900">
           회원가입
         </h1>
@@ -46,6 +51,8 @@ export default function RegisterForm() {
             </label>
             <input
               type="text"
+              name="name"
+              autoComplete="name"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -60,6 +67,8 @@ export default function RegisterForm() {
             </label>
             <input
               type="email"
+              name="email"
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -73,6 +82,8 @@ export default function RegisterForm() {
             </label>
             <input
               type="password"
+              name="new-password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -87,6 +98,8 @@ export default function RegisterForm() {
             </label>
             <input
               type="password"
+              name="confirm-password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required

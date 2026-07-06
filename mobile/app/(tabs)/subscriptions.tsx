@@ -197,7 +197,6 @@ export default function SubscriptionsScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <AppLogoMark />
-            <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/(tabs)/catalog')}>

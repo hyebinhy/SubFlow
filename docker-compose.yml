@@ -26,7 +26,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
       # 여러 도메인은 콤마로 구분 (예: https://app.subflow.app,https://subflow.app)
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

@@ -103,7 +103,6 @@ export default function CalendarScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <AppLogoMark />
-            <Text style={styles.headerTitle}>SubFlow</Text>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/settings')}>

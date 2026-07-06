@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -60,7 +61,11 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>구독 관리 서비스</Text>
+            <Image
+              source={require('../../assets/subflow-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
 
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>이메일</Text>
@@ -137,11 +142,10 @@ const styles = StyleSheet.create({
     ...Shadow.md,
     marginVertical: 40,
   },
-  formTitle: { 
-    fontSize: FontSize.xl, 
-    fontWeight: FontWeight.bold, 
-    color: Colors.textPrimary, 
-    textAlign: 'center',
+  logo: {
+    width: 200,
+    height: 73,
+    alignSelf: 'center',
     marginBottom: Spacing.md,
   },
   fieldContainer: {

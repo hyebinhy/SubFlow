@@ -154,7 +154,7 @@ export default function DashboardPage() {
 
       <section className="flex flex-col rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">대시보드</h1>
+          <img src="/subflow-logo.png" alt="SubFlow" className="h-9 w-auto sm:h-11" />
           <Header />
         </div>
 

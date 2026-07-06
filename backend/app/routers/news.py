@@ -5,8 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user_optional, get_db
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.user import User
-from app.schemas.news import NewsItem, NewsResponse
-from app.services.news_service import get_cached_news, personalize_news, refresh_news_cache
+from app.schemas.news import NewsItem, NewsResponse, NewsSummaryRequest, NewsSummaryResponse
+from app.services.news_service import (
+    build_news_summary,
+    get_cached_news,
+    personalize_news,
+    refresh_news_cache,
+)
 
 router = APIRouter()
 
@@ -35,6 +40,15 @@ async def get_news(
         if names:
             items = personalize_news(items, names, only_matched=only_matched)
     return NewsResponse(items=[NewsItem(**item) for item in items[:6]])
+
+
+@router.post("/summary", response_model=NewsSummaryResponse)
+async def news_summary(payload: NewsSummaryRequest):
+    """카드 모달용 AI 요약. 헤드라인 기반(원문 직접 연결 불가). 키 미설정 시 mode=unavailable."""
+    result = await build_news_summary(
+        payload.title, payload.link, payload.source, payload.category
+    )
+    return NewsSummaryResponse(**result)
 
 
 @router.post("/refresh", response_model=NewsResponse)

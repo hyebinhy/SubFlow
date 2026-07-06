@@ -1,13 +1,24 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
-// 웹: localhost OK / 모바일: PC의 실제 IP 필요
+// 개발 중 백엔드 호스트를 Expo 개발 서버(Metro) 호스트에서 자동 추론한다.
+// → 폰이 이미 붙어 있는 PC의 IP를 그대로 사용하므로, IP가 바뀌어도 하드코딩 수정 불필요.
+//   웹/모바일이 항상 같은 백엔드(같은 DB)를 바라봐 계정이 공유된다.
+const hostUri =
+  Constants.expoConfig?.hostUri ??
+  (Constants as any).expoGoConfig?.debuggerHost ??
+  (Constants as any).manifest?.debuggerHost ??
+  '';
+const devHost = hostUri.split(':')[0] || 'localhost';
+
+// 웹: localhost / 모바일(네이티브): Metro 호스트 IP
 const API_BASE_URL = __DEV__
   ? Platform.OS === 'web'
     ? 'http://localhost:8000/api/v1'
-    : 'http://172.30.1.48:8000/api/v1'
+    : `http://${devHost}:8000/api/v1`
   : 'https://api.subflow.app/api/v1';
 
 const api = axios.create({

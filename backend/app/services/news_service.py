@@ -1,3 +1,4 @@
+import time
 import xml.etree.ElementTree as ET
 from urllib.parse import quote
 
@@ -7,7 +8,25 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.news_cache import NewsCache
-from app.services.ai_summary import summarize_titles
+from app.services.ai_summary import summarize_article, summarize_titles
+
+# 링크별 AI 요약 인메모리 캐시 (동일 기사 재요청 시 API 호출 절약)
+_SUMMARY_CACHE: dict[str, tuple[float, str]] = {}
+_SUMMARY_TTL = 24 * 3600  # 24시간
+
+
+async def build_news_summary(title: str, link: str, source: str = "", category: str = "") -> dict:
+    """카드 모달용 요약을 반환. mode: 'ai'(생성됨) | 'unavailable'(키 미설정·실패)."""
+    now = time.time()
+    cached = _SUMMARY_CACHE.get(link)
+    if cached and now - cached[0] < _SUMMARY_TTL:
+        return {"summary": cached[1], "mode": "ai"}
+
+    summary = await summarize_article(title, source, category)
+    if summary:
+        _SUMMARY_CACHE[link] = (now, summary)
+        return {"summary": summary, "mode": "ai"}
+    return {"summary": None, "mode": "unavailable"}
 
 # 수집 대상: (검색어, 카테고리, 최대 개수)
 NEWS_QUERIES: list[tuple[str, str, int]] = [

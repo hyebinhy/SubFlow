@@ -38,9 +38,11 @@ export default function LoginForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mesh">
       <div className="glass w-full max-w-md p-8">
-        <h1 className="mb-6 text-center text-2xl font-bold text-slate-900">
-          구독 관리 서비스
-        </h1>
+        <img
+          src="/subflow-logo.png"
+          alt="SubFlow"
+          className="mx-auto mb-8 h-14 w-auto"
+        />
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-500">
@@ -48,6 +50,8 @@ export default function LoginForm() {
             </label>
             <input
               type="email"
+              name="email"
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -61,6 +65,8 @@ export default function LoginForm() {
             </label>
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

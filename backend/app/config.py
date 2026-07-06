@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/subscription_db"
     SECRET_KEY: str = "your-secret-key-change-in-production"
-    ANTHROPIC_API_KEY: str = ""  # 설정 시 AI 뉴스 제목을 Claude로 요약 (미설정이면 원문 유지)
+    ANTHROPIC_API_KEY: str = ""  # (미사용) 과거 Claude 요약용 슬롯
+    OPENAI_API_KEY: str = ""  # 설정 시 AI 뉴스 제목·기사 요약을 OpenAI로 생성 (미설정이면 원문/폴백 유지)
 
     # 이메일 발송 (SMTP) — 미설정 시 이메일 발송은 no-op
     SMTP_HOST: str = ""

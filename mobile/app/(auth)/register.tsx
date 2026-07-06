@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  View, Text, Image, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,6 +52,11 @@ export default function RegisterScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.formCard}>
+              <Image
+                source={require('../../assets/subflow-logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
               <Text style={styles.formTitle}>회원가입</Text>
               
               <View style={styles.fieldContainer}>
@@ -159,10 +164,16 @@ const styles = StyleSheet.create({
     ...Shadow.md,
     marginVertical: 40,
   },
-  formTitle: { 
-    fontSize: FontSize.xl, 
-    fontWeight: FontWeight.bold, 
-    color: Colors.textPrimary, 
+  logo: {
+    width: 168,
+    height: 61,
+    alignSelf: 'center',
+    marginBottom: Spacing.sm,
+  },
+  formTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.md,
   },
