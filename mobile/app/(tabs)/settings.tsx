@@ -146,6 +146,13 @@ export default function SettingsScreen() {
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={{ flex: 1 }}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            hitSlop={8}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          >
+            <Ionicons name="chevron-back" size={24} color={Colors.textWhite} />
+          </TouchableOpacity>
           <Text style={styles.pageTitle}>{t('settings.title')}</Text>
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -354,7 +361,8 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md },
+  backBtn: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center', marginLeft: -6 },
   pageTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy, color: Colors.textWhite },
   scroll: { flex: 1 },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.md },

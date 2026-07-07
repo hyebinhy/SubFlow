@@ -72,7 +72,7 @@ export default function LoginScreen() {
               <View style={styles.inputWrap}>
                 <TextInput
                   style={styles.input}
-                  placeholder="ykgstar37@gmail.com"
+                  placeholder="email@example.com"
                   placeholderTextColor={Colors.textTertiary}
                   value={email}
                   onChangeText={setEmail}

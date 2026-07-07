@@ -174,7 +174,8 @@ export default function HomeScreen() {
 
   const hasSubs = subs.length > 0;
   const EMPTY_SUB: Subscription = { id: '', name: '', amount: 0, currency: 'KRW', startDate: '' };
-  const totalMonthlySpend = subs.reduce((sum, s) => sum + s.amount, 0);
+  // 통화가 섞이면 단순 합산이 부정확하므로 백엔드가 KRW로 환산한 월 총액을 사용 (예산도 KRW라 비교 일관)
+  const totalMonthlySpend = Number((overviewQuery.data as any)?.total_monthly_cost ?? subs.reduce((sum, s) => sum + s.amount, 0));
   const activeSub = subs[Math.min(activeIndex, subs.length - 1)] ?? subs[0] ?? EMPTY_SUB;
   const spendPercent = totalMonthlySpend > 0 ? ((activeSub.amount / totalMonthlySpend) * 100).toFixed(1) : '0';
 

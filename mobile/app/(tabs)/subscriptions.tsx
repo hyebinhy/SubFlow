@@ -11,7 +11,7 @@ import { useTranslation } from '../../src/hooks/useTranslation';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
-import { useSubscriptions } from '../../src/hooks/useApi';
+import { useSubscriptions, useAnalyticsOverview } from '../../src/hooks/useApi';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
 import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
 
@@ -28,12 +28,21 @@ type Sub = {
   name: string;
   plan: string;
   amount: number;
+  currency: string;
   cycle: string;
   nextDate: string;
   status: 'active' | 'paused' | 'cancelled';
   category: string;
   cancelUrl?: string;
 };
+
+// 통화별 기호 표시 (홈 화면과 동일 규칙) — 외화 구독은 ₩가 아니라 실제 통화로 표기
+const CURRENCY_SYMBOLS: Record<string, string> = { KRW: '₩', USD: '$', EUR: '€', JPY: '¥', GBP: '£' };
+function formatPrice(amount: number, currency: string = 'KRW') {
+  const symbol = CURRENCY_SYMBOLS[currency] ?? currency + ' ';
+  if (currency === 'KRW' || currency === 'JPY') return `${symbol}${Math.round(amount).toLocaleString()}`;
+  return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 // 캘린더 헬퍼
 function getDaysInMonth(year: number, month: number) {
@@ -51,6 +60,7 @@ export default function SubscriptionsScreen() {
   const [filter, setFilter] = useState<FilterType>('all');
   const { t, language } = useTranslation();
   const subsQuery = useSubscriptions();
+  const overviewQuery = useAnalyticsOverview();
 
   // 모달 상태
   const [selectedSub, setSelectedSub] = useState<Sub | null>(null);
@@ -80,10 +90,13 @@ export default function SubscriptionsScreen() {
     status: (s.status ?? 'active') as any,
     category: s.category?.name ?? s.category_name ?? '',
     cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
+    currency: s.currency ?? 'KRW',
   }));
 
   const filtered = filter === 'all' ? allSubs : allSubs.filter(s => s.status === filter);
-  const total = allSubs.filter(s => s.status === 'active').reduce((sum, s) => sum + s.amount, 0);
+  // 월 총액: 통화가 섞여 있으면 단순 합산이 불가하므로, 백엔드가 KRW로 환산해 준 값을 사용
+  const naiveTotal = allSubs.filter(s => s.status === 'active').reduce((sum, s) => sum + s.amount, 0);
+  const monthlyTotalKRW = Number((overviewQuery.data as any)?.total_monthly_cost ?? naiveTotal);
 
   const openModal = (sub: Sub) => {
     setSelectedSub(sub);
@@ -165,19 +178,6 @@ export default function SubscriptionsScreen() {
     setDatePickerVisible(false);
   };
 
-  const handleCancel = () => {
-    if (!selectedSub) return;
-    const msg = language === 'ko' ? `${selectedSub.name} 구독을 해지할까요?` : `Cancel ${selectedSub.name} subscription?`;
-    Alert.alert(language === 'ko' ? '구독 해지' : 'Cancel Subscription', msg, [
-      { text: language === 'ko' ? '취소' : 'No', style: 'cancel' },
-      { text: language === 'ko' ? '해지' : 'Yes', style: 'destructive', onPress: async () => {
-        try { await subscriptionAPI.cancel(selectedSub.id); } catch {}
-        closeModal();
-        subsQuery.refetch();
-      }},
-    ]);
-  };
-
   const handleDelete = () => {
     if (!selectedSub) return;
     const msg = language === 'ko' ? `${selectedSub.name}을(를) 삭제할까요?` : `Delete ${selectedSub.name}?`;
@@ -219,7 +219,7 @@ export default function SubscriptionsScreen() {
               </View>
               <View style={[styles.pill, { backgroundColor: 'rgba(255,255,255,0.7)' }]}>
                 <Text style={styles.pillLabel}>Monthly Total:</Text>
-                <Text style={styles.pillValue}>₩{total.toLocaleString()}</Text>
+                <Text style={styles.pillValue}>₩{monthlyTotalKRW.toLocaleString()}</Text>
               </View>
             </View>
           </View>
@@ -251,7 +251,7 @@ export default function SubscriptionsScreen() {
                     <Text style={styles.subDetail}>{sub.plan} · {sub.category}</Text>
                   </View>
                   <View style={styles.subRight}>
-                    <Text style={styles.subAmount}>₩{sub.amount.toLocaleString()}</Text>
+                    <Text style={styles.subAmount}>{formatPrice(sub.amount, sub.currency)}</Text>
                     <Text style={styles.subDate}>{sub.nextDate}</Text>
                   </View>
                 </TouchableOpacity>
@@ -304,7 +304,7 @@ export default function SubscriptionsScreen() {
                   )}
                 </View>
                 <Text style={styles.modalInfoValue}>
-                  ₩{(selectedPlan ? selectedPlan.price : selectedSub.amount).toLocaleString()}
+                  {formatPrice(selectedPlan ? selectedPlan.price : selectedSub.amount, selectedSub.currency)}
                 </Text>
                 {selectedPlan && (
                   <Text style={{ fontSize: FontSize.xs, color: Colors.primary, marginTop: 2 }}>{selectedPlan.name}</Text>
@@ -340,7 +340,7 @@ export default function SubscriptionsScreen() {
                         <Text style={styles.planCycle}>{plan.cycle}</Text>
                       </View>
                       <Text style={[styles.planPrice, isCurrentPlan && { color: Colors.primary }]}>
-                        ₩{plan.price.toLocaleString()}
+                        {formatPrice(plan.price, selectedSub?.currency ?? 'KRW')}
                       </Text>
                       {isCurrentPlan && <Ionicons name="checkmark-circle" size={20} color={Colors.primary} style={{ marginLeft: 8 }} />}
                     </TouchableOpacity>
@@ -417,8 +417,16 @@ export default function SubscriptionsScreen() {
                     variant="warning"
                     size="md"
                     onPress={() => {
-                      if (selectedSub.cancelUrl) Linking.openURL(selectedSub.cancelUrl);
-                      else handleCancel();
+                      if (selectedSub.cancelUrl) {
+                        Linking.openURL(selectedSub.cancelUrl);
+                      } else {
+                        Alert.alert(
+                          language === 'ko' ? '해지 안내' : 'Cancel',
+                          language === 'ko'
+                            ? '이 서비스는 해지 페이지 정보가 없어요. 서비스 앱/웹에서 직접 해지해 주세요.'
+                            : 'No cancel page is available. Please cancel from the service directly.'
+                        );
+                      }
                     }}
                   />
                 </View>
