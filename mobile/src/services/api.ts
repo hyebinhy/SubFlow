@@ -79,13 +79,15 @@ export const subscriptionAPI = {
     api.get(`/subscriptions/calendar-events?year=${year}&month=${month}`),
   getTimeline: () => api.get('/subscriptions/timeline'),
   getHistory: (id: string) => api.get(`/subscriptions/${id}/history`),
+  // CSV 내보내기 — 텍스트 본문 그대로 받아 공유 시트로 전달
+  exportCsv: () => api.get('/subscriptions/export', { responseType: 'text' }),
 };
 
 // ── Analytics ──
 export const analyticsAPI = {
   getOverview: () => api.get('/analytics/overview'),
   getCategoryBreakdown: () => api.get('/analytics/category-breakdown'),
-  getSpendingTrend: () => api.get('/analytics/spending-trend'),
+  getSpendingTrend: (months = 6) => api.get(`/analytics/spending-trend?months=${months}`),
   getOverlaps: () => api.get('/analytics/overlaps'),
   getExchangeRateAlerts: () => api.get('/analytics/exchange-rate-alerts'),
   getTrials: () => api.get('/analytics/trials'),

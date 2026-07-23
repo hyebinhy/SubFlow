@@ -18,6 +18,7 @@ export interface Subscription {
   color: string | null;
   started_at: string;
   is_custom: boolean;
+  member_count: number;
 }
 
 export interface AnalyticsOverview {

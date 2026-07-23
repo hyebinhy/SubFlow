@@ -16,7 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
+import { OnboardingModal } from '../../src/components/OnboardingModal';
 
 const { width } = Dimensions.get('window');
 // 부모 ScrollView에 Spacing.lg 패딩이 있으나, 카드가 잘리지 않도록 (화면 끝까지 보이도록)
@@ -144,7 +146,20 @@ export default function HomeScreen() {
   const [budgetModalVisible, setBudgetModalVisible] = React.useState(false);
   const [budgetInput, setBudgetInput] = React.useState('');
   const [showStatusInfo, setShowStatusInfo] = React.useState(false);
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
   const { t, language } = useTranslation();
+
+  // 첫 실행 시 온보딩 1회 노출
+  React.useEffect(() => {
+    AsyncStorage.getItem('subflow-onboarded').then((v) => {
+      if (!v) setShowOnboarding(true);
+    });
+  }, []);
+
+  const dismissOnboarding = () => {
+    AsyncStorage.setItem('subflow-onboarded', '1').catch(() => {});
+    setShowOnboarding(false);
+  };
   const { monthlyBudget, setMonthlyBudget } = useSettingsStore();
   const subsQuery = useSubscriptions();
   const overviewQuery = useAnalyticsOverview();
@@ -221,6 +236,11 @@ export default function HomeScreen() {
       style={styles.container}
     >
       <SafeAreaView edges={['top']} style={styles.safe}>
+        <OnboardingModal
+          visible={showOnboarding}
+          onClose={dismissOnboarding}
+          onFinish={() => router.push('/(tabs)/catalog')}
+        />
         {/* ── 헤더 (Clerio 스타일) ── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>

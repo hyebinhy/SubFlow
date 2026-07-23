@@ -63,4 +63,9 @@ export const subscriptionApi = {
     apiClient
       .get<{ events: SubscriptionHistoryItem[] }>(`/subscriptions/${id}/history`)
       .then((r) => r.data),
+
+  exportCsv: (params?: { status?: string }): Promise<Blob> =>
+    apiClient
+      .get("/subscriptions/export", { params, responseType: "blob" })
+      .then((r) => r.data as Blob),
 };

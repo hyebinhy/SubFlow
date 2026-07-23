@@ -18,6 +18,7 @@ export interface Subscription {
   auto_renew: boolean;
   is_recurring: boolean;
   cancel_reminder: boolean;
+  member_count: number;
   category_id?: number;
   category?: Category;
   service_id?: number;
@@ -43,6 +44,7 @@ export interface SubscriptionCreateRequest {
   auto_renew?: boolean;
   is_recurring?: boolean;
   cancel_reminder?: boolean;
+  member_count?: number;
   notes?: string;
 }
 

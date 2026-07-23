@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SubFlow — 구독료, 어디서 새는지 아세요?</title>
+<meta name="description" content="넷플릭스부터 ChatGPT까지, 흩어진 구독을 한곳에서. 환율 인상·중복 구독·요금 인상까지 알아서 잡아주는 구독 관리 서비스." />
+<meta property="og:title" content="SubFlow — 구독 관리의 흐름을 바꾸다" />
+<meta property="og:description" content="환율로 오른 구독료, 겹치는 구독, 슬쩍 오른 요금. SubFlow가 대신 감시합니다." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="./subflow-logo.png" />
+<style>
+  :root {
+    /* --- 뉴트럴(인디고 편향) --- */
+    --ground: #f7f8fe;
+    --surface: #ffffff;
+    --surface-2: #eef0fb;
+    --ink: #1b1a2e;
+    --ink-soft: #4a4a63;
+    --ink-faint: #8887a0;
+    --line: #e5e6f5;
+    /* --- 브랜드 --- */
+    --indigo: #6366f1;
+    --indigo-deep: #4f46e5;
+    --violet: #818cf8;
+    --peri: #a5b4fc;
+    /* --- 시맨틱(앱 차트에서 차용) --- */
+    --mint: #37b893;   /* 절약 */
+    --coral: #e86a6a;  /* 요금 인상 경고 */
+    --gold: #e0a53a;   /* 환율/주의 */
+    /* --- 그림자 --- */
+    --shadow-soft: 0 18px 50px -20px rgba(99, 102, 241, .35);
+    --shadow-card: 0 12px 40px -24px rgba(27, 26, 46, .28);
+    --radius: 22px;
+    --maxw: 1080px;
+    --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+            "Segoe UI", "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0e0e1a;
+      --surface: #17172a;
+      --surface-2: #1e1e36;
+      --ink: #f2f2fb;
+      --ink-soft: #c2c2da;
+      --ink-faint: #8a8aac;
+      --line: #2a2a45;
+      --indigo: #818cf8;
+      --indigo-deep: #6366f1;
+      --shadow-soft: 0 18px 55px -18px rgba(99, 102, 241, .5);
+      --shadow-card: 0 16px 44px -24px rgba(0, 0, 0, .6);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #f7f8fe; --surface: #ffffff; --surface-2: #eef0fb;
+    --ink: #1b1a2e; --ink-soft: #4a4a63; --ink-faint: #8887a0; --line: #e5e6f5;
+    --indigo: #6366f1; --indigo-deep: #4f46e5;
+    --shadow-soft: 0 18px 50px -20px rgba(99,102,241,.35);
+    --shadow-card: 0 12px 40px -24px rgba(27,26,46,.28);
+  }
+  :root[data-theme="dark"] {
+    --ground: #0e0e1a; --surface: #17172a; --surface-2: #1e1e36;
+    --ink: #f2f2fb; --ink-soft: #c2c2da; --ink-faint: #8a8aac; --line: #2a2a45;
+    --indigo: #818cf8; --indigo-deep: #6366f1;
+    --shadow-soft: 0 18px 55px -18px rgba(99,102,241,.5);
+    --shadow-card: 0 16px 44px -24px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; font-family: var(--font); color: var(--ink);
+    background: var(--ground);
+    -webkit-font-smoothing: antialiased; line-height: 1.6;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .eyebrow {
+    font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--indigo);
+  }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.15; margin: 0; letter-spacing: -.02em; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(1.4) blur(14px);
+    background: color-mix(in srgb, var(--ground) 78%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .nav-logo { height: 26px; width: auto; }
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--indigo); color: #fff; font-weight: 700; font-size: 14px;
+    padding: 10px 18px; border-radius: 999px; box-shadow: var(--shadow-soft);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .nav-cta:hover { transform: translateY(-1px); }
+  .nav-links { display: flex; align-items: center; gap: 22px; }
+  .nav-links a.text { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  .nav-links a.text:hover { color: var(--ink); }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; padding: clamp(56px, 9vw, 108px) 0 40px; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; z-index: 0; pointer-events: none; }
+  .orb.a { width: 420px; height: 420px; background: var(--peri); top: -120px; right: -80px; }
+  .orb.b { width: 360px; height: 360px; background: #c7d2fe; bottom: -140px; left: -120px; opacity: .4; }
+  @media (prefers-color-scheme: dark) { .orb { opacity: .3; } }
+
+  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(32px, 5.4vw, 56px); font-weight: 800; }
+  .hero h1 .hl {
+    background: linear-gradient(120deg, var(--indigo), var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lead { font-size: clamp(16px, 2.1vw, 19px); color: var(--ink-soft); margin: 22px 0 32px; max-width: 30em; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px;
+    padding: 14px 24px; border-radius: 14px; transition: transform .15s ease, box-shadow .15s ease;
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .btn-primary { background: var(--indigo); color: #fff; box-shadow: var(--shadow-soft); }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: var(--shadow-card); }
+  .btn-ghost:hover { transform: translateY(-2px); }
+  .btn small { display: block; font-size: 10px; font-weight: 600; opacity: .7; letter-spacing: .04em; }
+  .store-note { font-size: 13px; color: var(--ink-faint); margin-top: 14px; }
+
+  /* ---------- Phone mockup ---------- */
+  .device-stage { position: relative; display: flex; justify-content: center; }
+  .phone {
+    width: min(300px, 78vw); background: var(--surface); border-radius: 40px;
+    border: 1px solid var(--line); box-shadow: var(--shadow-soft), var(--shadow-card);
+    padding: 18px 16px 22px; position: relative;
+  }
+  .phone::before { content: ""; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 90px; height: 6px; border-radius: 999px; background: var(--line); }
+  .app-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 4px 16px; }
+  .app-title { font-weight: 800; font-size: 17px; letter-spacing: -.01em; }
+  .app-sub { font-size: 11px; color: var(--ink-faint); }
+  .stat-card {
+    background: linear-gradient(135deg, var(--indigo), var(--indigo-deep)); color: #fff;
+    border-radius: 18px; padding: 16px; margin-bottom: 12px;
+  }
+  .stat-card .label { font-size: 11px; opacity: .85; }
+  .stat-card .val { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .stat-card .row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .stat-card .chip { background: rgba(255,255,255,.22); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 999px; }
+
+  .alert {
+    display: flex; gap: 10px; align-items: flex-start; background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px;
+  }
+  .alert .dot { width: 30px; height: 30px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 15px; }
+  .alert.gold .dot { background: color-mix(in srgb, var(--gold) 22%, transparent); }
+  .alert.coral .dot { background: color-mix(in srgb, var(--coral) 20%, transparent); }
+  .alert.mint .dot { background: color-mix(in srgb, var(--mint) 20%, transparent); }
+  .alert .t { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+  .alert .s { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+  .alert .amt { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .alert.gold .amt { color: var(--gold); }
+  .alert.coral .amt { color: var(--coral); }
+  .alert.mint .amt { color: var(--mint); }
+
+  .float { animation: float 6s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @media (prefers-reduced-motion: reduce) { .float { animation: none; } }
+
+  /* ---------- Logo marquee ---------- */
+  .marquee-sec { padding: 30px 0 8px; }
+  .marquee-label { text-align: center; font-size: 12.5px; color: var(--ink-faint); margin-bottom: 18px; letter-spacing: .02em; }
+  .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+  .marquee-track { display: flex; gap: 40px; width: max-content; animation: slide 34s linear infinite; align-items: center; }
+  @keyframes slide { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+  .marquee-track img { height: 30px; width: auto; opacity: .8; filter: grayscale(.15); }
+
+  /* ---------- Sections ---------- */
+  section.block { padding: clamp(56px, 8vw, 96px) 0; }
+  .sec-head { text-align: center; max-width: 40rem; margin: 0 auto clamp(36px, 5vw, 56px); }
+  .sec-head h2 { font-size: clamp(26px, 4vw, 40px); font-weight: 800; margin-top: 12px; }
+  .sec-head p { color: var(--ink-soft); font-size: 16px; margin: 16px auto 0; }
+
+  /* Differentiators */
+  .diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .diff {
+    position: relative; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow-card); overflow: hidden;
+  }
+  .diff::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--indigo)); opacity: .9; }
+  .diff .ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; font-size: 22px; margin-bottom: 16px; background: color-mix(in srgb, var(--accent, var(--indigo)) 14%, transparent); }
+  .diff h3 { font-size: 19px; font-weight: 800; }
+  .diff p { color: var(--ink-soft); font-size: 14.5px; margin: 10px 0 0; }
+  .diff .demo { margin-top: 16px; font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); color: var(--ink-soft); line-height: 1.45; }
+  .diff .demo b { color: var(--accent, var(--indigo)); font-variant-numeric: tabular-nums; }
+
+  /* Features */
+  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow-card); }
+  .feat .fi { font-size: 24px; margin-bottom: 12px; }
+  .feat h3 { font-size: 16px; font-weight: 800; }
+  .feat p { color: var(--ink-soft); font-size: 13.5px; margin: 8px 0 0; }
+
+  /* Cross-platform band */
+  .band { background: linear-gradient(135deg, var(--indigo-deep), var(--indigo)); color: #fff; border-radius: 28px; padding: clamp(36px, 6vw, 60px); text-align: center; box-shadow: var(--shadow-soft); }
+  .band h2 { color: #fff; font-size: clamp(24px, 3.6vw, 36px); font-weight: 800; }
+  .band p { color: rgba(255,255,255,.86); font-size: 16px; max-width: 34rem; margin: 16px auto 0; }
+  .band .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px; }
+  .band .pill { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.24); padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+
+  /* Trust */
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .trust { text-align: center; padding: 26px 18px; }
+  .trust .ti { font-size: 26px; margin-bottom: 10px; }
+  .trust h3 { font-size: 15.5px; font-weight: 800; }
+  .trust p { color: var(--ink-soft); font-size: 13px; margin: 8px 0 0; }
+
+  /* Final CTA */
+  .final { text-align: center; }
+  .final h2 { font-size: clamp(28px, 4.4vw, 44px); font-weight: 800; }
+  .final p { color: var(--ink-soft); font-size: 17px; margin: 18px auto 30px; max-width: 30rem; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; margin-top: 20px; }
+  .foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: center; }
+  .foot-logo { height: 22px; opacity: .9; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 14px; }
+  .foot-links a { color: var(--ink-soft); font-weight: 600; }
+  .foot-links a:hover { color: var(--indigo); }
+  .copyright { font-size: 12.5px; color: var(--ink-faint); margin-top: 18px; }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+  /* Responsive */
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .device-stage { order: -1; }
+    .diff-grid { grid-template-columns: 1fr; }
+    .feat-grid { grid-template-columns: repeat(2, 1fr); }
+    .trust-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .feat-grid { grid-template-columns: 1fr; }
+    .nav-links a.text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <img class="nav-logo" src="./subflow-logo.png" alt="SubFlow" />
+    <div class="nav-links">
+      <a class="text" href="#features">기능</a>
+      <a class="text" href="#trust">개인정보</a>
+      <!-- TODO: 실제 웹앱 주소로 교체 (예: https://app.도메인.com 또는 /app) -->
+      <a class="nav-cta" href="#start">웹으로 시작 →</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="orb a float"></div>
+  <div class="orb b"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">구독 관리 · 지출 분석 · 알림</span>
+      <h1 style="margin-top:16px;">구독료, <span class="hl">어디서 새는지</span><br />알고 계세요?</h1>
+      <p class="lead">넷플릭스부터 ChatGPT까지 — 흩어진 구독을 한곳에. <b>환율로 오른 요금</b>, <b>겹치는 구독</b>, <b>슬쩍 인상된 가격</b>까지 SubFlow가 대신 감시합니다.</p>
+      <div class="cta-row">
+        <!-- TODO: 실제 웹앱 주소로 교체 -->
+        <a class="btn btn-primary" href="#start">웹으로 바로 시작하기 →</a>
+        <a class="btn btn-ghost" href="#features">기능 둘러보기</a>
+      </div>
+      <p class="store-note">📱 iOS · Android 앱 <b>출시 준비 중</b> — 웹에서 먼저 만나보세요</p>
+    </div>
+
+    <div class="device-stage">
+      <div class="phone float">
+        <div class="app-head">
+          <div>
+            <div class="app-title">이번 달 구독</div>
+            <div class="app-sub">활성 6건 · 다음 결제 3일 후</div>
+          </div>
+          <div style="font-size:20px;">🔔</div>
+        </div>
+        <div class="stat-card">
+          <div class="row">
+            <div>
+              <div class="label">이번 달 총 지출</div>
+              <div class="val">₩62,739</div>
+            </div>
+            <div class="chip">예산 78%</div>
+          </div>
+        </div>
+        <div class="alert gold">
+          <div class="dot">💱</div>
+          <div>
+            <div class="t">ChatGPT 구독료가 <span class="amt">₩1,800</span> 올랐어요</div>
+            <div class="s">요금 인상 아님 — 환율 변동 때문</div>
+          </div>
+        </div>
+        <div class="alert coral">
+          <div class="dot">⚠️</div>
+          <div>
+            <div class="t">비슷한 구독이 겹쳐요</div>
+            <div class="s">YouTube Music + Spotify 동시 구독 중</div>
+          </div>
+        </div>
+        <div class="alert mint">
+          <div class="dot">💡</div>
+          <div>
+            <div class="t">광고형으로 바꾸면 <span class="amt">월 6,500원</span> 절약</div>
+            <div class="s">Netflix · 원클릭 적용</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="marquee-sec">
+  <div class="wrap">
+    <p class="marquee-label">80여 개 서비스를 기본 지원 — 카탈로그에서 골라 추가</p>
+  </div>
+  <div class="marquee">
+    <div class="marquee-track">
+      <img src="./logos/netflix.png" alt="Netflix" /><img src="./logos/spotify.png" alt="Spotify" />
+      <img src="./logos/youtubemusic.png" alt="YouTube Music" /><img src="./logos/chatgpt.png" alt="ChatGPT" />
+      <img src="./logos/claude.png" alt="Claude" /><img src="./logos/disneyplus.png" alt="Disney+" />
+      <img src="./logos/notion.png" alt="Notion" /><img src="./logos/figma.png" alt="Figma" />
+      <img src="./logos/tving.png" alt="Tving" /><img src="./logos/coupangplay.png" alt="Coupang Play" />
+      <img src="./logos/melon.png" alt="Melon" /><img src="./logos/watcha.png" alt="Watcha" />
+      <img src="./logos/midjourney.png" alt="Midjourney" /><img src="./logos/playstation.png" alt="PlayStation" />
+      <img src="./logos/adobe.png" alt="Adobe" /><img src="./logos/github.png" alt="GitHub" />
+      <!-- 무한 루프용 복제 -->
+      <img src="./logos/netflix.png" alt="" /><img src="./logos/spotify.png" alt="" />
+      <img src="./logos/youtubemusic.png" alt="" /><img src="./logos/chatgpt.png" alt="" />
+      <img src="./logos/claude.png" alt="" /><img src="./logos/disneyplus.png" alt="" />
+      <img src="./logos/notion.png" alt="" /><img src="./logos/figma.png" alt="" />
+      <img src="./logos/tving.png" alt="" /><img src="./logos/coupangplay.png" alt="" />
+      <img src="./logos/melon.png" alt="" /><img src="./logos/watcha.png" alt="" />
+      <img src="./logos/midjourney.png" alt="" /><img src="./logos/playstation.png" alt="" />
+      <img src="./logos/adobe.png" alt="" /><img src="./logos/github.png" alt="" />
+    </div>
+  </div>
+</section>
+
+<section class="block" id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">다른 구독 앱과 뭐가 다른가요</span>
+      <h2>단순 목록이 아니라, 돈을 지켜주는 4가지</h2>
+      <p>구독을 나열하는 앱은 많습니다. SubFlow는 <b>새는 곳을 먼저 찾아 알려줍니다.</b></p>
+    </div>
+    <div class="diff-grid">
+      <div class="diff reveal" style="--accent: var(--gold);">
+        <div class="ic">💱</div>
+        <h3>환율 인상 감지</h3>
+        <p>달러로 결제하는 구독은 요금이 그대로여도 환율 때문에 매달 청구액이 달라집니다. SubFlow는 가입 시점 환율을 기억해 실제 인상분을 원화로 알려줍니다.</p>
+        <div class="demo">“당신의 ChatGPT 구독료, 지난달보다 <b>₩1,800</b> 올랐어요 — 요금 인상이 아니라 환율 때문입니다.”</div>
+      </div>
+      <div class="diff reveal" style="--accent: var(--coral);">
+        <div class="ic">🔀</div>
+        <h3>중복 구독 감지</h3>
+        <p>같은 카테고리에서 겹치는 서비스를 자동으로 찾아냅니다. 음악·영상·클라우드 — 나도 모르게 두 번 내고 있진 않은지.</p>
+        <div class="demo">“YouTube Music과 Spotify를 <b>동시 구독</b> 중이에요. 하나만 유지하면 월 <b>10,900원</b> 절약.”</div>
+      </div>
+      <div class="diff reveal" style="--accent: var(--indigo);">
+        <div class="ic">📈</div>
+        <h3>요금 인상 이력 추적</h3>
+        <p>서비스가 요금을 올리면 조용히 지나가기 쉽습니다. SubFlow는 요금제 변동 이력을 기록해 인상 시점과 폭을 보여줍니다.</p>
+        <div class="demo">“이 서비스는 최근 <b>3년간 4번</b> 인상됐어요. 마지막 인상: 2개월 전.”</div>
+      </div>
+      <div class="diff reveal" style="--accent: var(--mint);">
+        <div class="ic">📰</div>
+        <h3>내 구독 뉴스 AI 요약</h3>
+        <p>내가 구독한 서비스 관련 소식만 골라 상단에 정렬하고, 긴 기사는 한 줄 AI 요약으로. 요금 인상·신기능을 남보다 먼저.</p>
+        <div class="demo">“<b>내 구독 서비스</b> 소식만 골라서 — 카드 한 번 탭하면 핵심만 요약.”</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" style="padding-top:0;">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">기본기도 탄탄하게</span>
+      <h2>구독 관리에 필요한 모든 것</h2>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal"><div class="fi">📊</div><h3>대시보드</h3><p>월·연 총 지출, 활성 구독 수, 다음 결제일을 한 화면에.</p></div>
+      <div class="feat reveal"><div class="fi">🍩</div><h3>지출 분석</h3><p>카테고리별 비중 도넛 차트와 월별 지출 추이를 시각화.</p></div>
+      <div class="feat reveal"><div class="fi">📅</div><h3>캘린더 · 타임라인</h3><p>결제일을 달력으로, 가입·변경·해지 이력을 타임라인으로.</p></div>
+      <div class="feat reveal"><div class="fi">🎯</div><h3>예산 · 알림</h3><p>월 예산을 정하고, 결제 N일 전 이메일·푸시로 미리 알림.</p></div>
+      <div class="feat reveal"><div class="fi">🧾</div><h3>상태 추적</h3><p>활성·일시정지·해지·무료체험 상태를 이력과 함께 관리.</p></div>
+      <div class="feat reveal"><div class="fi">🔗</div><h3>해지 가이드</h3><p>서비스별 공식 해지 페이지로 바로 이동. 헤매지 않게.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" style="padding-top:0;">
+  <div class="wrap reveal">
+    <div class="band">
+      <span class="eyebrow" style="color:rgba(255,255,255,.85);">하나의 계정, 모든 기기</span>
+      <h2 style="margin-top:12px;">웹에서 정리하고, 앱에서 알림 받고</h2>
+      <p>같은 계정·같은 데이터를 웹과 모바일이 함께 씁니다. PC에서 구독을 정리하면, 결제일 알림은 휴대폰으로 도착합니다.</p>
+      <div class="pills">
+        <span class="pill">🌐 반응형 웹</span>
+        <span class="pill">🍎 iOS (준비 중)</span>
+        <span class="pill">🤖 Android (준비 중)</span>
+        <span class="pill">🇰🇷 한국어 · 🇺🇸 English</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="trust" style="padding-top:0;">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">믿고 맡기셔도 됩니다</span>
+      <h2>당신의 돈 이야기, 안전하게</h2>
+    </div>
+    <div class="trust-grid">
+      <div class="trust reveal"><div class="ti">🔒</div><h3>카드·계좌 정보 미수집</h3><p>실제 금융 정보는 받지 않습니다. 구독 금액은 관리용으로 직접 입력하는 값일 뿐이에요.</p></div>
+      <div class="trust reveal"><div class="ti">🔑</div><h3>비밀번호 단방향 암호화</h3><p>bcrypt로 암호화해 저장하며, 운영자도 원문 비밀번호를 알 수 없습니다.</p></div>
+      <div class="trust reveal"><div class="ti">🙈</div><h3>구독 데이터는 밖으로 안 나가요</h3><p>뉴스 요약 시에도 기사 제목만 사용 — 당신의 구독 내역은 외부로 전송되지 않습니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block final" id="start">
+  <div class="wrap reveal">
+    <h2>이번 달, 얼마나 새고 있을까요?</h2>
+    <p>1분이면 시작합니다. 구독을 추가하고, 새는 곳을 바로 확인하세요.</p>
+    <!-- TODO: 실제 웹앱 회원가입/시작 주소로 교체 -->
+    <a class="btn btn-primary" href="#" style="font-size:16px; padding:16px 30px;">무료로 시작하기 →</a>
+    <p class="store-note" style="margin-top:16px;">신용카드 필요 없음 · 이메일만 있으면 됩니다</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <img class="foot-logo" src="./subflow-logo.png" alt="SubFlow" />
+      <div class="foot-links">
+        <a href="./privacy.html">개인정보처리방침</a>
+        <a href="./terms.html">이용약관</a>
+        <!-- TODO: 실제 문의 이메일로 교체 -->
+        <a href="mailto:ykgstar37@gmail.com">문의</a>
+      </div>
+    </div>
+    <p class="copyright">© 2026 SubFlow. 개인 프로젝트로 만들어졌습니다. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+  // 스크롤 리빌
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.14 });
+  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>

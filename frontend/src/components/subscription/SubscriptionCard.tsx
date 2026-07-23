@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { CreditCard, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { CreditCard, ExternalLink, Pencil, Trash2, Users } from "lucide-react";
 import type { Subscription } from "../../types/subscription";
 
 interface Props {
@@ -70,6 +70,16 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
         <p className="mt-1 text-xs text-slate-400">
           다음 결제: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
         </p>
+        {subscription.member_count > 1 && (
+          <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-700">
+            <Users className="h-3 w-3" />
+            {subscription.member_count}명 분담 · 내 몫{" "}
+            {new Intl.NumberFormat("ko-KR").format(
+              Math.round(subscription.cost / subscription.member_count)
+            )}{" "}
+            {subscription.currency}/{cycleLabels[subscription.billing_cycle]}
+          </p>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap justify-end gap-2">

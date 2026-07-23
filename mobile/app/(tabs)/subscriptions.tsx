@@ -1,12 +1,14 @@
 import React, { useState, useRef, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Animated, Pressable, Alert, Linking,
+  Animated, Pressable, Alert, Linking, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
@@ -34,6 +36,7 @@ type Sub = {
   status: 'active' | 'paused' | 'cancelled';
   category: string;
   cancelUrl?: string;
+  memberCount: number;
 };
 
 // 통화별 기호 표시 (홈 화면과 동일 규칙) — 외화 구독은 ₩가 아니라 실제 통화로 표기
@@ -66,6 +69,7 @@ export default function SubscriptionsScreen() {
   const [selectedSub, setSelectedSub] = useState<Sub | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editDate, setEditDate] = useState('');
+  const [editMembers, setEditMembers] = useState(1);
   const slideAnim = useRef(new Animated.Value(600)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -91,6 +95,7 @@ export default function SubscriptionsScreen() {
     category: s.category?.name ?? s.category_name ?? '',
     cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
     currency: s.currency ?? 'KRW',
+    memberCount: Math.max(1, Number(s.member_count ?? 1)),
   }));
 
   const filtered = filter === 'all' ? allSubs : allSubs.filter(s => s.status === filter);
@@ -101,6 +106,7 @@ export default function SubscriptionsScreen() {
   const openModal = (sub: Sub) => {
     setSelectedSub(sub);
     setEditDate(sub.nextDate);
+    setEditMembers(sub.memberCount);
     setSelectedPlan(null);
     setPlanPickerVisible(false);
     setDatePickerVisible(false);
@@ -178,6 +184,45 @@ export default function SubscriptionsScreen() {
     setDatePickerVisible(false);
   };
 
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const res = await subscriptionAPI.exportCsv();
+      const raw = typeof res.data === 'string' ? res.data : String(res.data ?? '');
+      if (!raw.trim()) {
+        Alert.alert(language === 'ko' ? '내보내기' : 'Export', language === 'ko' ? '내보낼 구독이 없어요.' : 'No subscriptions to export.');
+        return;
+      }
+
+      // 백엔드가 BOM을 붙여 보내지만 전송 계층에 따라 남아 있기도, 떨어져 나가기도 한다.
+      // 한 번 벗기고 다시 붙여 항상 정확히 하나만 유지 — BOM이 없으면 엑셀에서 한글이 깨진다.
+      const csv = '﻿' + raw.replace(/^﻿/, '');
+
+      // 파일명은 백엔드 Content-Disposition과 동일한 규칙
+      const today = new Date().toISOString().slice(0, 10);
+      const file = new File(Paths.cache, `subflow_subscriptions_${today}.csv`);
+      file.create({ overwrite: true });
+      file.write(csv);
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, {
+          mimeType: 'text/csv',
+          UTI: 'public.comma-separated-values-text', // iOS에서 엑셀·번호 앱이 잡히도록
+          dialogTitle: language === 'ko' ? '구독 목록 내보내기' : 'Export subscriptions',
+        });
+      } else {
+        // 공유 시트를 못 쓰는 환경(웹 등) — 기존처럼 텍스트로라도 넘긴다
+        await Share.share({ title: 'SubFlow 구독 내역', message: raw });
+      }
+    } catch {
+      Alert.alert(language === 'ko' ? '내보내기 실패' : 'Export failed', language === 'ko' ? '잠시 후 다시 시도해 주세요.' : 'Please try again later.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleDelete = () => {
     if (!selectedSub) return;
     const msg = language === 'ko' ? `${selectedSub.name}을(를) 삭제할까요?` : `Delete ${selectedSub.name}?`;
@@ -199,6 +244,9 @@ export default function SubscriptionsScreen() {
             <AppLogoMark />
           </View>
           <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.addBtn} onPress={handleExport} disabled={exporting}>
+              <Ionicons name={exporting ? 'hourglass-outline' : 'share-outline'} size={20} color={Colors.textWhite} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/(tabs)/catalog')}>
               <Ionicons name="add" size={24} color={Colors.textWhite} />
             </TouchableOpacity>
@@ -249,6 +297,15 @@ export default function SubscriptionsScreen() {
                   <View style={styles.subInfo}>
                     <Text style={styles.subName}>{sub.name}</Text>
                     <Text style={styles.subDetail}>{sub.plan} · {sub.category}</Text>
+                    {sub.memberCount > 1 && (
+                      <View style={styles.splitBadge}>
+                        <Ionicons name="people" size={11} color={Colors.primary} />
+                        <Text style={styles.splitBadgeText}>
+                          {sub.memberCount}{language === 'ko' ? '명 · 내 몫 ' : ' · mine '}
+                          {formatPrice(sub.amount / sub.memberCount, sub.currency)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                   <View style={styles.subRight}>
                     <Text style={styles.subAmount}>{formatPrice(sub.amount, sub.currency)}</Text>
@@ -407,6 +464,36 @@ export default function SubscriptionsScreen() {
               </View>
             )}
 
+            {/* 함께 쓰는 인원 (비용 분담) */}
+            <View style={styles.modalEditRow}>
+              <Text style={styles.modalEditLabel}>{language === 'ko' ? '함께 쓰는 인원 (비용 분담)' : 'Sharing with (split)'}</Text>
+              <View style={styles.memberStepper}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => setEditMembers((n) => Math.max(1, n - 1))}
+                >
+                  <Ionicons name="remove" size={20} color={Colors.primary} />
+                </TouchableOpacity>
+                <View style={styles.stepperValueWrap}>
+                  <Text style={styles.stepperValue}>{editMembers}</Text>
+                  <Text style={styles.stepperUnit}>{language === 'ko' ? '명' : 'ppl'}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => setEditMembers((n) => Math.min(50, n + 1))}
+                >
+                  <Ionicons name="add" size={20} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+              {editMembers > 1 && (
+                <Text style={styles.memberSplitHint}>
+                  {language === 'ko' ? '내 몫 ' : 'My share '}
+                  {formatPrice((selectedPlan ? selectedPlan.price : selectedSub.amount) / editMembers, selectedSub.currency)}
+                  {language === 'ko' ? ' · 대시보드·분석엔 내 몫만 반영돼요' : ' · dashboards use your share'}
+                </Text>
+              )}
+            </View>
+
             {/* 액션 버튼들 */}
             <View style={styles.modalActions}>
               {selectedSub.status === 'active' && (
@@ -459,6 +546,9 @@ export default function SubscriptionsScreen() {
                     updateData.billing_cycle = selectedPlan.cycle;
                     updateData.plan_name = selectedPlan.name;
                   }
+                  if (editMembers !== selectedSub.memberCount) {
+                    updateData.member_count = editMembers;
+                  }
                   if (Object.keys(updateData).length > 0) {
                     await subscriptionAPI.update(selectedSub.id, updateData);
                   }
@@ -510,6 +600,21 @@ const styles = StyleSheet.create({
   subName: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   subDetail: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4 },
   subRight: { alignItems: 'flex-end' },
+  splitBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start',
+    marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
+    backgroundColor: Colors.primaryLight,
+  },
+  splitBadgeText: { fontSize: 11, fontWeight: FontWeight.bold, color: Colors.primary },
+  memberStepper: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  stepperBtn: {
+    width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.surfaceLight,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: Colors.border,
+  },
+  stepperValueWrap: { flexDirection: 'row', alignItems: 'baseline', gap: 4, minWidth: 56, justifyContent: 'center' },
+  stepperValue: { fontSize: FontSize.xl, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
+  stepperUnit: { fontSize: FontSize.sm, color: Colors.textTertiary },
+  memberSplitHint: { fontSize: FontSize.xs, color: Colors.primary, marginTop: 8 },
   subAmount: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   subDate: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4 },
   emptyText: { textAlign: 'center', marginTop: 40, color: Colors.textTertiary, fontSize: FontSize.sm },

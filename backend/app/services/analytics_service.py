@@ -79,7 +79,7 @@ class AnalyticsService:
                 total_yearly_cost=Decimal("0"),
             )
 
-        monthly_krw_list = [await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency) for s in subs]
+        monthly_krw_list = [await to_monthly_cost_krw(s.personal_cost, s.billing_cycle, s.currency) for s in subs]
         total_monthly = sum(monthly_krw_list, Decimal("0"))
         total_yearly = total_monthly * 12
 
@@ -123,7 +123,7 @@ class AnalyticsService:
             cat_name = s.category.name if s.category else "미분류"
             cat_color = s.category.color if s.category else None
             cat_icon = s.category.icon if s.category else None
-            monthly = await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency)
+            monthly = await to_monthly_cost_krw(s.personal_cost, s.billing_cycle, s.currency)
             by_category[cat_name]["total"] += monthly
             by_category[cat_name]["count"] += 1
             # 첫 번째로 발견된 카테고리 메타 보존
@@ -178,7 +178,7 @@ class AnalyticsService:
                 if s.status == SubscriptionStatus.CANCELLED:
                     continue
                 month_total += await to_monthly_cost_krw(
-                    Decimal(str(s.cost)), s.billing_cycle, s.currency
+                    s.personal_cost, s.billing_cycle, s.currency
                 )
 
             data.append(MonthlyTotal(year=y, month=m, total=month_total.quantize(Decimal("1"))))
@@ -197,7 +197,7 @@ class AnalyticsService:
             if s.start_date.year > next_y or (s.start_date.year == next_y and s.start_date.month > next_m):
                 continue
             forecast_total += await to_monthly_cost_krw(
-                Decimal(str(s.cost)), s.billing_cycle, s.currency
+                s.personal_cost, s.billing_cycle, s.currency
             )
 
         data.append(MonthlyTotal(year=next_y, month=next_m, total=forecast_total.quantize(Decimal("1")), is_forecast=True))
@@ -223,7 +223,7 @@ class AnalyticsService:
 
             total_monthly = Decimal("0")
             for s in cat_subs:
-                monthly_krw = await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency)
+                monthly_krw = await to_monthly_cost_krw(s.personal_cost, s.billing_cycle, s.currency)
                 total_monthly += monthly_krw
 
             overlaps.append(OverlapItem(
@@ -489,7 +489,7 @@ class AnalyticsService:
         # Get current monthly spending (reuse logic from get_overview)
         subs = await self._get_active_subscriptions(user_id)
         monthly_krw_list = [
-            await to_monthly_cost_krw(Decimal(str(s.cost)), s.billing_cycle, s.currency)
+            await to_monthly_cost_krw(s.personal_cost, s.billing_cycle, s.currency)
             for s in subs
         ]
         current_spending = sum(monthly_krw_list, Decimal("0")).quantize(Decimal("1"))

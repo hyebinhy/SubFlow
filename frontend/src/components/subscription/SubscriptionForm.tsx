@@ -70,6 +70,7 @@ export default function SubscriptionForm({
     auto_renew: initial?.auto_renew ?? true,
     is_recurring: initial?.is_recurring ?? true,
     cancel_reminder: initial?.cancel_reminder ?? false,
+    member_count: initial?.member_count ?? 1,
     notes: initial?.notes ?? "",
   });
 
@@ -149,6 +150,7 @@ export default function SubscriptionForm({
       category_id: form.category_id || undefined,
       is_recurring: form.is_recurring,
       cancel_reminder: form.cancel_reminder,
+      member_count: form.member_count,
       notes: form.notes || undefined,
     });
   };
@@ -400,6 +402,39 @@ export default function SubscriptionForm({
             className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
+      </div>
+
+      {/* 공유/가족 분담 */}
+      <div>
+        <label className="block text-sm font-medium text-slate-500">
+          함께 쓰는 인원 (비용 분담)
+        </label>
+        <div className="mt-1 flex items-center gap-3">
+          <input
+            type="number"
+            value={form.member_count}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                member_count: Math.max(1, Math.min(50, Number(e.target.value) || 1)),
+              })
+            }
+            min="1"
+            max="50"
+            step="1"
+            className="glass-input block w-24 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <span className="text-sm text-slate-400">명이 나눠서 사용</span>
+        </div>
+        {form.member_count > 1 && Number(form.cost) > 0 && (
+          <p className="mt-2 text-xs text-indigo-500 bg-indigo-50/50 rounded-lg px-3 py-2">
+            내 몫: {form.currency === "KRW"
+              ? `${new Intl.NumberFormat("ko-KR").format(Math.round(Number(form.cost) / form.member_count))}원`
+              : `${(Number(form.cost) / form.member_count).toFixed(2)} ${form.currency}`}
+            {" "}/ {form.billing_cycle === "monthly" ? "월" : form.billing_cycle === "yearly" ? "년" : form.billing_cycle === "weekly" ? "주" : "분기"}
+            {" "}· 대시보드·분석에는 내 몫만 반영됩니다
+          </p>
+        )}
       </div>
 
       {/* 결제 유형 */}

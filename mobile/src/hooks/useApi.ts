@@ -50,8 +50,8 @@ export function useCategoryBreakdown() {
   return useFetch(() => analyticsAPI.getCategoryBreakdown());
 }
 
-export function useSpendingTrend() {
-  return useFetch(() => analyticsAPI.getSpendingTrend());
+export function useSpendingTrend(months = 6) {
+  return useFetch(() => analyticsAPI.getSpendingTrend(months), [months]);
 }
 
 export function useSavingsSuggestions() {

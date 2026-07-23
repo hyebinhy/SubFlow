@@ -1,9 +1,11 @@
+import csv
+import io
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -137,6 +139,64 @@ async def get_calendar_events(
     # Sort events by date
     events.sort(key=lambda e: e.date)
     return CalendarEventsResponse(events=events)
+
+
+_CYCLE_LABELS_KO = {
+    BillingCycle.MONTHLY: "월간",
+    BillingCycle.YEARLY: "연간",
+    BillingCycle.WEEKLY: "주간",
+    BillingCycle.QUARTERLY: "분기",
+}
+_STATUS_LABELS_KO = {
+    SubscriptionStatus.ACTIVE: "활성",
+    SubscriptionStatus.PAUSED: "일시정지",
+    SubscriptionStatus.CANCELLED: "취소됨",
+    SubscriptionStatus.TRIAL: "체험판",
+}
+
+
+@router.get("/export")
+async def export_subscriptions(
+    status_filter: SubscriptionStatus | None = Query(None, alias="status"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """현재 사용자의 구독 목록을 CSV로 내보낸다 (Excel 호환, UTF-8 BOM)."""
+    service = SubscriptionService(db)
+    subs = await service.get_all(current_user.id, status_filter)
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "서비스명", "카테고리", "비용", "통화", "결제주기",
+        "분담인원", "1인당(내 몫)", "시작일", "다음결제일", "상태", "자동갱신", "메모",
+    ])
+    for s in subs:
+        members = s.member_count or 1
+        per_person = (Decimal(str(s.cost)) / members).quantize(Decimal("1"))
+        writer.writerow([
+            s.service_name,
+            s.category.name if s.category else "미분류",
+            f"{Decimal(str(s.cost)):.0f}",
+            s.currency,
+            _CYCLE_LABELS_KO.get(s.billing_cycle, s.billing_cycle.value),
+            members,
+            f"{per_person:.0f}",
+            s.start_date.isoformat(),
+            s.next_billing_date.isoformat(),
+            _STATUS_LABELS_KO.get(s.status, s.status.value),
+            "예" if s.auto_renew else "아니오",
+            (s.notes or "").replace("\n", " "),
+        ])
+
+    # Excel에서 한글이 깨지지 않도록 UTF-8 BOM 포함
+    csv_bytes = ("﻿" + buffer.getvalue()).encode("utf-8")
+    filename = f"subflow_subscriptions_{date.today().isoformat()}.csv"
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/timeline", response_model=SubscriptionTimelineResponse)

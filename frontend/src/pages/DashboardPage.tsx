@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import {
@@ -21,6 +22,7 @@ import PriceChangeAlert from "../components/dashboard/PriceChangeAlert";
 import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
 import TrialTracker from "../components/dashboard/TrialTracker";
 import Header from "../components/layout/Header";
+import OnboardingModal from "../components/onboarding/OnboardingModal";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useNews } from "../hooks/useNews";
 import { useSubscriptions } from "../hooks/useSubscriptions";
@@ -48,6 +50,14 @@ export default function DashboardPage() {
   const { subscriptions, error: subscriptionsError } = useSubscriptions();
   const { news, loading: newsLoading, error: newsError } = useNews();
   const { user } = useAuthStore();
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !localStorage.getItem("subflow-onboarded")
+  );
+
+  const dismissOnboarding = () => {
+    localStorage.setItem("subflow-onboarded", "1");
+    setShowOnboarding(false);
+  };
 
   if (loading) {
     return (
@@ -102,6 +112,7 @@ export default function DashboardPage() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
+      {showOnboarding && <OnboardingModal onClose={dismissOnboarding} />}
       <aside className="flex flex-col gap-5">
         <div className="flex gap-1.5">
           <div className="h-3 w-3 rounded-full bg-rose-400" />

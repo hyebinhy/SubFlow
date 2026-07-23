@@ -28,20 +28,19 @@ export function useAnalytics() {
   const [priceChanges, setPriceChanges] =
     useState<PriceChangeAlertResponse | null>(null);
   const [budgetStatus, setBudgetStatus] = useState<BudgetStatus | null>(null);
+  const [trendMonths, setTrendMonths] = useState(6);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [ov, cb, st] = await Promise.all([
+      const [ov, cb] = await Promise.all([
         analyticsApi.getOverview(),
         analyticsApi.getCategoryBreakdown(),
-        analyticsApi.getSpendingTrend(6),
       ]);
       setOverview(ov);
       setCategoryBreakdown(cb);
-      setSpendingTrend(st);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch analytics");
@@ -67,9 +66,22 @@ export function useAnalytics() {
     if (results[5].status === "fulfilled") setBudgetStatus(results[5].value);
   }, []);
 
+  const fetchTrend = useCallback(async () => {
+    try {
+      const st = await analyticsApi.getSpendingTrend(trendMonths);
+      setSpendingTrend(st);
+    } catch {
+      // 추이 로드 실패는 전체 화면 오류로 처리하지 않는다
+    }
+  }, [trendMonths]);
+
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  useEffect(() => {
+    fetchTrend();
+  }, [fetchTrend]);
 
   return {
     overview,
@@ -81,6 +93,8 @@ export function useAnalytics() {
     savingsSuggestions,
     priceChanges,
     budgetStatus,
+    trendMonths,
+    setTrendMonths,
     loading,
     error,
     refetch: fetchAll,

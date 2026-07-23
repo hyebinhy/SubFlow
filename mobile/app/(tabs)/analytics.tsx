@@ -57,10 +57,11 @@ const chartStyles = StyleSheet.create({
 });
 
 export default function AnalyticsScreen() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const [trendMonths, setTrendMonths] = useState(6);
   const overview = useAnalyticsOverview();
   const categories = useCategoryBreakdown();
-  const trend = useSpendingTrend();
+  const trend = useSpendingTrend(trendMonths);
   const savings = useSavingsSuggestions();
   const budget = useBudgetStatus();
   const overlaps = useOverlaps();
@@ -237,6 +238,21 @@ export default function AnalyticsScreen() {
                       </Text>
                     </View>
                   )}
+                </View>
+
+                {/* 기간 선택 토글 */}
+                <View style={styles.periodRow}>
+                  {[3, 6, 12, 24].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.periodChip, trendMonths === m && styles.periodChipActive]}
+                      onPress={() => setTrendMonths(m)}
+                    >
+                      <Text style={[styles.periodChipText, trendMonths === m && styles.periodChipTextActive]}>
+                        {m < 12 ? `${m}${language === 'ko' ? '개월' : 'M'}` : `${m / 12}${language === 'ko' ? '년' : 'Y'}`}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
 
                 {/* 월별 추이 차트 */}
@@ -756,6 +772,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   subText: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: Spacing.lg },
+  periodRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.lg },
+  periodChip: {
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16,
+    backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border,
+  },
+  periodChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  periodChipText: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  periodChipTextActive: { color: '#FFF' },
   largePercent: { fontSize: 48, fontWeight: FontWeight.heavy, color: Colors.textPrimary, letterSpacing: -1.5, marginTop: -4 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.xl },
   statItem: { alignItems: 'flex-start' },

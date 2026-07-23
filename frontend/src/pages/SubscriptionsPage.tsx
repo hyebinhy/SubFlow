@@ -1,6 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { subscriptionApi } from "../api/subscriptions";
 import SubscriptionCard from "../components/subscription/SubscriptionCard";
@@ -16,6 +16,27 @@ export default function SubscriptionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await subscriptionApi.exportCsv();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `subflow_subscriptions_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("CSV 파일을 내보냈습니다.");
+    } catch {
+      toast.error("내보내기에 실패했습니다.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleCreate = async (data: SubscriptionCreateRequest) => {
     setSaving(true);
@@ -81,13 +102,23 @@ export default function SubscriptionsPage() {
             {new Intl.NumberFormat("ko-KR").format(Math.round(totalMonthly))}원
           </p>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn-primary-glass inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium"
-        >
-          <Plus className="h-4 w-4" />
-          구독 추가
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={exporting || subscriptions.length === 0}
+            className="btn-secondary-glass inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? "내보내는 중..." : "CSV 내보내기"}
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn-primary-glass inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium"
+          >
+            <Plus className="h-4 w-4" />
+            구독 추가
+          </button>
+        </div>
       </div>
 
       {loading ? (

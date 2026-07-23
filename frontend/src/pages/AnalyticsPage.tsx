@@ -6,7 +6,9 @@ import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
 import ExchangeRateAlert from "../components/dashboard/ExchangeRateAlert";
 
 export default function AnalyticsPage() {
-  const { overview, categoryBreakdown, spendingTrend, savingsSuggestions, exchangeRateAlerts, loading, error } = useAnalytics();
+  const { overview, categoryBreakdown, spendingTrend, savingsSuggestions, exchangeRateAlerts, trendMonths, setTrendMonths, loading, error } = useAnalytics();
+
+  const periodOptions = [3, 6, 12, 24];
 
   if (loading) {
     return (
@@ -26,7 +28,25 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">지출 분석</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold text-slate-900">지출 분석</h2>
+        <div className="glass-input inline-flex rounded-full p-1">
+          {periodOptions.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setTrendMonths(m)}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                trendMonths === m
+                  ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {m < 12 ? `${m}개월` : `${m / 12}년`}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {overview ? (
         <div className="grid gap-4 sm:grid-cols-3">

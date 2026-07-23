@@ -55,10 +55,19 @@ class Subscription(Base):
     is_recurring: Mapped[bool] = mapped_column(Boolean, default=True)
     cancel_reminder: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # 공유/가족 구독: 비용을 나눠 내는 인원 수 (1 = 단독). 내 몫 = cost / member_count
+    member_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False, server_default="1")
+
     initial_exchange_rate: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
 
     service_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("services.id"), nullable=True)
     plan_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("service_plans.id"), nullable=True)
+
+    @property
+    def personal_cost(self) -> Decimal:
+        """분담 인원을 반영한 1인당(내) 비용."""
+        count = self.member_count or 1
+        return Decimal(str(self.cost)) / count
 
     user = relationship("User", back_populates="subscriptions")
     category = relationship("Category", back_populates="subscriptions")

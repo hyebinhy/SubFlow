@@ -37,6 +37,7 @@ class SubscriptionFromCatalogRequest(BaseModel):
     notes: str | None = None
     is_recurring: bool = True
     cancel_reminder: bool = False
+    member_count: int = Field(default=1, ge=1, le=50)
 
 
 class SubscriptionCreateRequest(BaseModel):
@@ -56,6 +57,7 @@ class SubscriptionCreateRequest(BaseModel):
     notes: str | None = None
     is_recurring: bool = True
     cancel_reminder: bool = False
+    member_count: int = Field(default=1, ge=1, le=50)
 
 
 class SubscriptionUpdateRequest(BaseModel):
@@ -75,6 +77,7 @@ class SubscriptionUpdateRequest(BaseModel):
     plan_id: int | None = None
     is_recurring: bool | None = None
     cancel_reminder: bool | None = None
+    member_count: int | None = Field(default=None, ge=1, le=50)
 
 
 class SubscriptionResponse(BaseModel):
@@ -92,6 +95,7 @@ class SubscriptionResponse(BaseModel):
     auto_renew: bool
     is_recurring: bool
     cancel_reminder: bool
+    member_count: int
     category_id: int | None
     category: CategoryResponse | None = None
     service_id: int | None = None
