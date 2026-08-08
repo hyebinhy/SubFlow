@@ -37,3 +37,6 @@ docker-compose.override.yml
 
 # Claude
 .claude/
+
+# Cloudflare Wrangler 로컬 상태
+.wrangler/
