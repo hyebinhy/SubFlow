@@ -99,6 +99,20 @@ const translations = {
   // ── Home extras ──
   'home.exchangeAlert': { en: 'Exchange Rate Alert', ko: '환율 변동 알림' },
 
+  // ── News (카드뉴스) ──
+  'news.section': { en: 'Subscription Briefing', ko: '구독 브리핑' },
+  'news.aiLabel': { en: 'AI News', ko: 'AI 소식' },
+  'news.priceLabel': { en: 'Subscription Alert', ko: '구독 알림' },
+  'news.mine': { en: 'My Sub', ko: '내 구독' },
+  'news.summarizing': { en: 'Generating AI summary…', ko: 'AI 요약 생성 중…' },
+  'news.aiSummary': { en: 'AI Summary · Headline-based', ko: 'AI 요약 · 헤드라인 기반' },
+  'news.unavailableAi': { en: 'This is an AI-summarized headline. Read the full story at the source.', ko: 'AI가 핵심을 요약한 제목이에요. 전체 기사는 원문에서 확인하세요.' },
+  'news.unavailablePrice': { en: 'Subscription-related news. See the source for details.', ko: '구독 서비스 관련 소식이에요. 자세한 내용은 원문에서 확인하세요.' },
+  'news.source': { en: 'Source', ko: '출처' },
+  'news.readOriginal': { en: 'Read original', ko: '원문 보기' },
+  'news.empty': { en: 'No news yet', ko: '최신 소식이 없습니다' },
+  'news.error': { en: 'Failed to load news', ko: '소식을 불러오지 못했습니다' },
+
   // ── Settings ──
   'settings.title': { en: 'Settings', ko: '설정' },
   'settings.profile': { en: 'Profile', ko: '프로필' },

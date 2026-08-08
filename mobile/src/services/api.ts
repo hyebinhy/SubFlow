@@ -104,6 +104,19 @@ export const servicesAPI = {
   getById: (id: number) => api.get(`/services/${id}`),
 };
 
+// ── News (카드뉴스: AI 소식 + 구독료 알림) ──
+export const newsAPI = {
+  getNews: () => api.get('/news/'),
+  // 개별 카드 열 때 헤드라인 기반 AI 요약을 온디맨드로 요청
+  getSummary: (item: { title: string; link: string; source?: string; category?: string }) =>
+    api.post('/news/summary', {
+      title: item.title,
+      link: item.link,
+      source: item.source ?? '',
+      category: item.category ?? '',
+    }),
+};
+
 // ── Notifications ──
 export const notificationAPI = {
   getSettings: () => api.get('/notifications/settings'),

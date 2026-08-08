@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { subscriptionAPI, analyticsAPI, servicesAPI, notificationAPI } from '../services/api';
+import { subscriptionAPI, analyticsAPI, servicesAPI, notificationAPI, newsAPI } from '../services/api';
 
 function useFetch<T>(fetcher: () => Promise<{ data: T }>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
@@ -77,6 +77,25 @@ export function useExchangeRateAlerts() {
 // ── Services ──
 export function useServices() {
   return useFetch(() => servicesAPI.getAll());
+}
+
+// ── News (카드뉴스) ──
+export interface NewsItem {
+  title: string;
+  link: string;
+  pub_date: string;
+  source: string;
+  image_url: string | null;
+  category: string;      // "AI Updates" | "Price Alerts"
+  matched?: boolean;     // 내 구독과 관련된 소식인지
+}
+
+export interface NewsResponse {
+  items: NewsItem[];
+}
+
+export function useNews() {
+  return useFetch<NewsResponse>(() => newsAPI.getNews());
 }
 
 // ── Notifications ──

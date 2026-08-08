@@ -136,6 +136,7 @@ const progressStyles = StyleSheet.create({
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
+import { NewsModal } from '../../src/components/NewsModal';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts, useInbox } from '../../src/hooks/useApi';
 import { useSettingsStore } from '../../src/store/settingsStore';
@@ -147,6 +148,7 @@ export default function HomeScreen() {
   const [budgetInput, setBudgetInput] = React.useState('');
   const [showStatusInfo, setShowStatusInfo] = React.useState(false);
   const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [showNews, setShowNews] = React.useState(false);
   const { t, language } = useTranslation();
 
   // 첫 실행 시 온보딩 1회 노출
@@ -241,6 +243,7 @@ export default function HomeScreen() {
           onClose={dismissOnboarding}
           onFinish={() => router.push('/(tabs)/catalog')}
         />
+        <NewsModal visible={showNews} onClose={() => setShowNews(false)} />
         {/* ── 헤더 (Clerio 스타일) ── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -272,7 +275,28 @@ export default function HomeScreen() {
           {/* 타이틀 영역 */}
           <View style={styles.titleArea}>
             <Text style={styles.subTitle}>{t('home.subtitle')}</Text>
-            <Text style={styles.mainTitle}>{t('home.title')}</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.mainTitle}>{t('home.title')}</Text>
+              <TouchableOpacity
+                style={styles.newsBtn}
+                onPress={() => setShowNews(true)}
+                activeOpacity={0.85}
+                accessibilityLabel={t('news.section')}
+              >
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.12)']}
+                  start={{ x: 0.15, y: 0 }}
+                  end={{ x: 0.85, y: 1 }}
+                  style={styles.newsBtnGlass}
+                >
+                  {/* 상단 유리알 하이라이트 */}
+                  <View style={styles.newsBtnHighlight} />
+                  <Ionicons name="newspaper" size={20} color={Colors.textWhite} />
+                </LinearGradient>
+                {/* 새 소식 표시 점 */}
+                <View style={styles.newsBtnDot} />
+              </TouchableOpacity>
+            </View>
 
             {/* 상태 뱃지 영역 (Glass) — 예산 탭 가능 */}
             <View style={styles.statusPills}>
@@ -699,6 +723,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     marginBottom: Spacing.xxl,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  newsBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginTop: 4,
+    // 유리알 부양감: 아래로 떨어지는 컬러 섀도우 + 하단 어두운 테두리 느낌
+    shadowColor: Colors.shadowTint,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  newsBtnGlass: {
+    flex: 1,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    overflow: 'hidden',
+  },
+  // 상단 좌측에 몰린 밝은 반사 → 볼록한 유리알 착시
+  newsBtnHighlight: {
+    position: 'absolute',
+    top: -10,
+    left: -6,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    opacity: 0.9,
+  },
+  newsBtnDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: Colors.accent,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
   subTitle: {
     fontSize: FontSize.sm,
     color: 'rgba(255,255,255,0.7)',
@@ -706,6 +779,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
   mainTitle: {
+    flexShrink: 1,
     fontSize: 42,
     fontWeight: FontWeight.heavy,
     color: Colors.textWhite,
