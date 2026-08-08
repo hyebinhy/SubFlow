@@ -1,8 +1,25 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/subscription_db"
+
+    # Railway/Heroku 등은 DATABASE_URL을 'postgresql://' 또는 'postgres://'(psycopg2 형식)로 준다.
+    # 이 앱은 asyncpg 드라이버를 쓰므로 드라이버를 명시하고, asyncpg가 못 읽는 sslmode 쿼리는 제거한다.
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _normalize_db_url(cls, v: str) -> str:
+        if v.startswith("postgres://"):
+            v = "postgresql+asyncpg://" + v[len("postgres://"):]
+        elif v.startswith("postgresql://"):
+            v = "postgresql+asyncpg://" + v[len("postgresql://"):]
+        # asyncpg는 URL의 sslmode 쿼리 파라미터를 인식하지 못한다 → 제거
+        if "?" in v:
+            base, query = v.split("?", 1)
+            kept = [p for p in query.split("&") if p and not p.startswith("sslmode=")]
+            v = base + ("?" + "&".join(kept) if kept else "")
+        return v
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ANTHROPIC_API_KEY: str = ""  # (미사용) 과거 Claude 요약용 슬롯
     OPENAI_API_KEY: str = ""  # 설정 시 AI 뉴스 제목·기사 요약을 OpenAI로 생성 (미설정이면 원문/폴백 유지)

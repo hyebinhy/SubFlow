@@ -14,5 +14,5 @@ COPY . .
 
 EXPOSE 8000
 
-# DB가 healthy 된 뒤(compose depends_on) 마이그레이션 → 서버 기동
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# 마이그레이션 → 서버 기동. 포트는 배포 플랫폼이 주입하는 $PORT 우선(없으면 8000).
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
