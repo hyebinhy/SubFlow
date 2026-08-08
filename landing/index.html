@@ -11,60 +11,62 @@
 <link rel="icon" href="./subflow-logo.png" />
 <style>
   :root {
-    /* --- 뉴트럴(인디고 편향) --- */
-    --ground: #f7f8fe;
+    /* --- 뉴트럴 (쿨 블루-그레이) --- */
+    --ground: #f4f7fc;
+    --ground-2: #eaf1fa;
     --surface: #ffffff;
-    --surface-2: #eef0fb;
-    --ink: #1b1a2e;
-    --ink-soft: #4a4a63;
-    --ink-faint: #8887a0;
-    --line: #e5e6f5;
-    /* --- 브랜드 --- */
-    --indigo: #6366f1;
-    --indigo-deep: #4f46e5;
-    --violet: #818cf8;
-    --peri: #a5b4fc;
-    /* --- 시맨틱(앱 차트에서 차용) --- */
-    --mint: #37b893;   /* 절약 */
-    --coral: #e86a6a;  /* 요금 인상 경고 */
-    --gold: #e0a53a;   /* 환율/주의 */
+    --surface-2: #eef4fb;
+    --ink: #14213a;
+    --ink-soft: #47566f;
+    --ink-faint: #8593ab;
+    --line: #e3eaf4;
+    /* --- 브랜드 (실제 앱 파랑 #4A90D9 계열) --- */
+    --brand: #3a86d4;
+    --brand-2: #4a90d9;
+    --brand-deep: #2b6bad;
+    --brand-glow: #bcd9f5;
+    --sky: #e7f1fb;
+    /* --- 시맨틱 (앱 차트에서 차용) --- */
+    --mint: #21a97f;
+    --coral: #e2685f;
+    --gold: #dc9a2e;
     /* --- 그림자 --- */
-    --shadow-soft: 0 18px 50px -20px rgba(99, 102, 241, .35);
-    --shadow-card: 0 12px 40px -24px rgba(27, 26, 46, .28);
-    --radius: 22px;
-    --maxw: 1080px;
+    --shadow-soft: 0 22px 60px -22px rgba(58, 134, 212, .45);
+    --shadow-card: 0 14px 44px -26px rgba(20, 33, 58, .3);
+    --shadow-float: 0 40px 90px -35px rgba(29, 78, 132, .5);
+    --radius: 24px;
+    --maxw: 1120px;
     --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
             "Segoe UI", "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --ground: #0e0e1a;
-      --surface: #17172a;
-      --surface-2: #1e1e36;
-      --ink: #f2f2fb;
-      --ink-soft: #c2c2da;
-      --ink-faint: #8a8aac;
-      --line: #2a2a45;
-      --indigo: #818cf8;
-      --indigo-deep: #6366f1;
-      --shadow-soft: 0 18px 55px -18px rgba(99, 102, 241, .5);
-      --shadow-card: 0 16px 44px -24px rgba(0, 0, 0, .6);
+      --ground: #0b1120; --ground-2: #0e1526;
+      --surface: #141c2e; --surface-2: #1a2439;
+      --ink: #eef3fb; --ink-soft: #b7c3d6; --ink-faint: #7d8aa2; --line: #253148;
+      --brand: #5aa0e6; --brand-2: #4a90d9; --brand-deep: #3a86d4;
+      --brand-glow: #244468; --sky: #16233a;
+      --shadow-soft: 0 22px 60px -20px rgba(58, 134, 212, .55);
+      --shadow-card: 0 16px 48px -26px rgba(0, 0, 0, .65);
+      --shadow-float: 0 44px 100px -35px rgba(0, 0, 0, .75);
     }
   }
   :root[data-theme="light"] {
-    --ground: #f7f8fe; --surface: #ffffff; --surface-2: #eef0fb;
-    --ink: #1b1a2e; --ink-soft: #4a4a63; --ink-faint: #8887a0; --line: #e5e6f5;
-    --indigo: #6366f1; --indigo-deep: #4f46e5;
-    --shadow-soft: 0 18px 50px -20px rgba(99,102,241,.35);
-    --shadow-card: 0 12px 40px -24px rgba(27,26,46,.28);
+    --ground: #f4f7fc; --ground-2: #eaf1fa; --surface: #fff; --surface-2: #eef4fb;
+    --ink: #14213a; --ink-soft: #47566f; --ink-faint: #8593ab; --line: #e3eaf4;
+    --brand: #3a86d4; --brand-2: #4a90d9; --brand-deep: #2b6bad; --brand-glow: #bcd9f5; --sky: #e7f1fb;
+    --shadow-soft: 0 22px 60px -22px rgba(58,134,212,.45);
+    --shadow-card: 0 14px 44px -26px rgba(20,33,58,.3);
+    --shadow-float: 0 40px 90px -35px rgba(29,78,132,.5);
   }
   :root[data-theme="dark"] {
-    --ground: #0e0e1a; --surface: #17172a; --surface-2: #1e1e36;
-    --ink: #f2f2fb; --ink-soft: #c2c2da; --ink-faint: #8a8aac; --line: #2a2a45;
-    --indigo: #818cf8; --indigo-deep: #6366f1;
-    --shadow-soft: 0 18px 55px -18px rgba(99,102,241,.5);
-    --shadow-card: 0 16px 44px -24px rgba(0,0,0,.6);
+    --ground: #0b1120; --ground-2: #0e1526; --surface: #141c2e; --surface-2: #1a2439;
+    --ink: #eef3fb; --ink-soft: #b7c3d6; --ink-faint: #7d8aa2; --line: #253148;
+    --brand: #5aa0e6; --brand-2: #4a90d9; --brand-deep: #3a86d4; --brand-glow: #244468; --sky: #16233a;
+    --shadow-soft: 0 22px 60px -20px rgba(58,134,212,.55);
+    --shadow-card: 0 16px 48px -26px rgba(0,0,0,.65);
+    --shadow-float: 0 44px 100px -35px rgba(0,0,0,.75);
   }
 
   * { box-sizing: border-box; }
@@ -73,184 +75,215 @@
   body {
     margin: 0; font-family: var(--font); color: var(--ink);
     background: var(--ground);
-    -webkit-font-smoothing: antialiased; line-height: 1.6;
-    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased; line-height: 1.6; overflow-x: hidden;
   }
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; display: block; }
-
   .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
-  .eyebrow {
-    font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--indigo);
-  }
-  h1, h2, h3 { text-wrap: balance; line-height: 1.15; margin: 0; letter-spacing: -.02em; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--brand); }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.12; margin: 0; letter-spacing: -.025em; }
 
   /* ---------- Nav ---------- */
   nav {
     position: sticky; top: 0; z-index: 50;
-    backdrop-filter: saturate(1.4) blur(14px);
-    background: color-mix(in srgb, var(--ground) 78%, transparent);
-    border-bottom: 1px solid var(--line);
+    backdrop-filter: saturate(1.5) blur(16px);
+    background: color-mix(in srgb, var(--ground) 72%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   }
-  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 66px; }
   .nav-logo { height: 26px; width: auto; }
+  .nav-links { display: flex; align-items: center; gap: 26px; }
+  .nav-links a.text { font-size: 14.5px; font-weight: 600; color: var(--ink-soft); }
+  .nav-links a.text:hover { color: var(--ink); }
   .nav-cta {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--indigo); color: #fff; font-weight: 700; font-size: 14px;
-    padding: 10px 18px; border-radius: 999px; box-shadow: var(--shadow-soft);
-    transition: transform .15s ease, box-shadow .15s ease;
+    background: var(--brand); color: #fff; font-weight: 700; font-size: 14px;
+    padding: 10px 20px; border-radius: 999px; box-shadow: var(--shadow-soft);
+    transition: transform .16s ease, box-shadow .16s ease;
   }
-  .nav-cta:hover { transform: translateY(-1px); }
-  .nav-links { display: flex; align-items: center; gap: 22px; }
-  .nav-links a.text { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
-  .nav-links a.text:hover { color: var(--ink); }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 26px 60px -20px rgba(58,134,212,.6); }
 
   /* ---------- Hero ---------- */
-  .hero { position: relative; padding: clamp(56px, 9vw, 108px) 0 40px; }
-  .orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; z-index: 0; pointer-events: none; }
-  .orb.a { width: 420px; height: 420px; background: var(--peri); top: -120px; right: -80px; }
-  .orb.b { width: 360px; height: 360px; background: #c7d2fe; bottom: -140px; left: -120px; opacity: .4; }
-  @media (prefers-color-scheme: dark) { .orb { opacity: .3; } }
+  .hero { position: relative; padding: clamp(48px, 7vw, 88px) 0 clamp(40px,6vw,72px); overflow: hidden; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(70px); z-index: 0; pointer-events: none; }
+  .glow.a { width: 620px; height: 620px; background: radial-gradient(circle, var(--brand-glow), transparent 68%); top: -160px; right: -140px; opacity: .8; }
+  .glow.b { width: 460px; height: 460px; background: radial-gradient(circle, #d3e6fa, transparent 70%); bottom: -220px; left: -160px; opacity: .55; }
+  @media (prefers-color-scheme: dark) { .glow { opacity: .4 !important; } }
 
-  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
-  .hero h1 { font-size: clamp(32px, 5.4vw, 56px); font-weight: 800; }
+  .hero-in { position: relative; z-index: 1; text-align: center; }
+  .hero h1 { font-size: clamp(34px, 6vw, 64px); font-weight: 800; margin-top: 20px; }
   .hero h1 .hl {
-    background: linear-gradient(120deg, var(--indigo), var(--violet));
+    background: linear-gradient(115deg, var(--brand-2), var(--brand-deep));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .hero p.lead { font-size: clamp(16px, 2.1vw, 19px); color: var(--ink-soft); margin: 22px 0 32px; max-width: 30em; }
-  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .hero p.lead { font-size: clamp(16px, 2.1vw, 20px); color: var(--ink-soft); margin: 22px auto 0; max-width: 33em; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin-top: 34px; }
   .btn {
-    display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px;
-    padding: 14px 24px; border-radius: 14px; transition: transform .15s ease, box-shadow .15s ease;
+    display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15.5px;
+    padding: 15px 28px; border-radius: 14px; transition: transform .16s ease, box-shadow .16s ease;
     border: 1px solid transparent; cursor: pointer;
   }
-  .btn-primary { background: var(--indigo); color: #fff; box-shadow: var(--shadow-soft); }
+  .btn-primary { background: var(--brand); color: #fff; box-shadow: var(--shadow-soft); }
   .btn-primary:hover { transform: translateY(-2px); }
   .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: var(--shadow-card); }
   .btn-ghost:hover { transform: translateY(-2px); }
-  .btn small { display: block; font-size: 10px; font-weight: 600; opacity: .7; letter-spacing: .04em; }
-  .store-note { font-size: 13px; color: var(--ink-faint); margin-top: 14px; }
+  .store-note { font-size: 13.5px; color: var(--ink-faint); margin-top: 18px; }
+  .store-note b { color: var(--ink-soft); }
 
-  /* ---------- Phone mockup ---------- */
-  .device-stage { position: relative; display: flex; justify-content: center; }
-  .phone {
-    width: min(300px, 78vw); background: var(--surface); border-radius: 40px;
-    border: 1px solid var(--line); box-shadow: var(--shadow-soft), var(--shadow-card);
-    padding: 18px 16px 22px; position: relative;
-  }
-  .phone::before { content: ""; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 90px; height: 6px; border-radius: 999px; background: var(--line); }
-  .app-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 4px 16px; }
-  .app-title { font-weight: 800; font-size: 17px; letter-spacing: -.01em; }
-  .app-sub { font-size: 11px; color: var(--ink-faint); }
-  .stat-card {
-    background: linear-gradient(135deg, var(--indigo), var(--indigo-deep)); color: #fff;
-    border-radius: 18px; padding: 16px; margin-bottom: 12px;
-  }
-  .stat-card .label { font-size: 11px; opacity: .85; }
-  .stat-card .val { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .stat-card .row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .stat-card .chip { background: rgba(255,255,255,.22); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 999px; }
-
-  .alert {
-    display: flex; gap: 10px; align-items: flex-start; background: var(--surface-2);
-    border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px;
-  }
-  .alert .dot { width: 30px; height: 30px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 15px; }
-  .alert.gold .dot { background: color-mix(in srgb, var(--gold) 22%, transparent); }
-  .alert.coral .dot { background: color-mix(in srgb, var(--coral) 20%, transparent); }
-  .alert.mint .dot { background: color-mix(in srgb, var(--mint) 20%, transparent); }
-  .alert .t { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
-  .alert .s { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
-  .alert .amt { font-weight: 800; font-variant-numeric: tabular-nums; }
-  .alert.gold .amt { color: var(--gold); }
-  .alert.coral .amt { color: var(--coral); }
-  .alert.mint .amt { color: var(--mint); }
-
-  .float { animation: float 6s ease-in-out infinite; }
-  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  /* ---------- Device stage (laptop + phone with real UI) ---------- */
+  .stage { position: relative; z-index: 1; margin: clamp(44px,6vw,72px) auto 0; width: min(940px, 100%); }
+  .stage-inner { position: relative; }
+  .float { animation: float 7s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
   @media (prefers-reduced-motion: reduce) { .float { animation: none; } }
 
+  /* Laptop */
+  .laptop { width: min(760px, 92%); margin: 0 auto; }
+  .laptop-screen {
+    background: #0f1728; border-radius: 16px 16px 4px 4px; padding: 12px 12px 0;
+    box-shadow: var(--shadow-float); border: 1px solid rgba(255,255,255,.06);
+  }
+  .laptop-bezel { border-radius: 8px; overflow: hidden; background: var(--surface); aspect-ratio: 16 / 10.2; }
+  .laptop-base { position: relative; height: 16px; background: linear-gradient(#c4ccd8, #9aa5b6); border-radius: 0 0 12px 12px; width: calc(min(760px,92%) + 34px); margin: 0 auto; max-width: 100%; box-shadow: 0 12px 26px -12px rgba(20,33,58,.5); }
+  .laptop-base::after { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 90px; height: 6px; background: #7f8ba0; border-radius: 0 0 7px 7px; }
+  @media (prefers-color-scheme: dark) { .laptop-base { background: linear-gradient(#3a475f, #222c40); } }
+
+  /* Phone overlapping */
+  .phone {
+    position: absolute; right: clamp(-6px, 1vw, 8px); bottom: -34px; width: clamp(150px, 21vw, 208px);
+    background: #0f1728; border-radius: 30px; padding: 7px;
+    box-shadow: var(--shadow-float); border: 1px solid rgba(255,255,255,.08);
+  }
+  .phone-screen { background: var(--surface); border-radius: 24px; overflow: hidden; aspect-ratio: 9 / 18.6; }
+  .phone::before { content: ""; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 42px; height: 5px; background: #333c50; border-radius: 999px; z-index: 3; }
+
+  /* --- Web dashboard UI (inside laptop) --- */
+  .web { height: 100%; display: flex; flex-direction: column; background: var(--ground); font-size: 10px; }
+  .web-top { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .web-brand { font-weight: 800; font-size: 13px; letter-spacing: -.02em; color: var(--brand); }
+  .web-nav { display: flex; gap: 12px; margin-left: 6px; color: var(--ink-faint); font-weight: 600; font-size: 10px; }
+  .web-nav .on { color: var(--ink); }
+  .web-ava { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-2), var(--brand-deep)); }
+  .web-body { display: grid; grid-template-columns: 1.35fr 1fr; gap: 11px; padding: 13px; flex: 1; min-height: 0; }
+  .web-hello { font-size: 11px; font-weight: 800; color: var(--ink); margin-bottom: 9px; letter-spacing: -.02em; }
+  .web-total { background: linear-gradient(135deg, var(--brand-2), var(--brand-deep)); color: #fff; border-radius: 14px; padding: 13px 14px; box-shadow: var(--shadow-soft); }
+  .web-total .lab { font-size: 9.5px; opacity: .9; }
+  .web-total .big { font-size: 26px; font-weight: 800; letter-spacing: -.03em; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .web-total .bud { height: 5px; border-radius: 999px; background: rgba(255,255,255,.28); margin-top: 11px; overflow: hidden; }
+  .web-total .bud i { display: block; height: 100%; width: 78%; background: #fff; border-radius: 999px; }
+  .web-total .cap { font-size: 9px; opacity: .85; margin-top: 6px; }
+  .web-trend { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px 12px; margin-top: 11px; }
+  .web-trend .th { font-size: 10px; font-weight: 700; color: var(--ink-soft); display:flex; justify-content:space-between; }
+  .web-trend .th b { color: var(--mint); }
+  .bars { display: flex; align-items: flex-end; gap: 7px; height: 46px; margin-top: 10px; }
+  .bars i { flex: 1; border-radius: 4px 4px 2px 2px; background: var(--sky); position: relative; }
+  .bars i.on { background: linear-gradient(var(--brand-2), var(--brand-deep)); }
+  .web-side { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; display: flex; flex-direction: column; }
+  .side-head { font-size: 10px; font-weight: 800; color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+  .side-head span { font-size: 8.5px; font-weight: 700; color: var(--brand); background: var(--sky); padding: 2px 7px; border-radius: 999px; }
+  .sub-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .sub-row:last-child { border-bottom: 0; }
+  .sub-row img { width: 19px; height: 19px; border-radius: 6px; object-fit: cover; background: var(--surface-2); }
+  .sub-row .nm { font-size: 10px; font-weight: 700; color: var(--ink); }
+  .sub-row .dt { font-size: 8.5px; color: var(--ink-faint); }
+  .sub-row .amt { margin-left: auto; font-size: 10.5px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* --- Mobile UI (inside phone) --- */
+  .m { height: 100%; background: linear-gradient(180deg, var(--sky), var(--surface) 34%); display: flex; flex-direction: column; padding: 20px 12px 12px; font-size: 9px; }
+  .m-head { display: flex; align-items: center; justify-content: space-between; padding: 0 3px; }
+  .m-head .t { font-weight: 800; font-size: 12px; letter-spacing: -.02em; color: var(--ink); }
+  .m-head .t small { display: block; font-size: 8px; font-weight: 600; color: var(--ink-faint); margin-top: 1px; }
+  .m-card { background: linear-gradient(135deg, var(--brand-2), var(--brand-deep)); color: #fff; border-radius: 16px; padding: 12px; margin: 12px 2px; box-shadow: var(--shadow-soft); }
+  .m-card .l { font-size: 8.5px; opacity: .9; }
+  .m-card .v { font-size: 21px; font-weight: 800; letter-spacing: -.03em; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .m-card .chip { display: inline-block; margin-top: 8px; background: rgba(255,255,255,.24); font-size: 8px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+  .m-alert { display: flex; gap: 8px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px; margin: 0 2px 7px; }
+  .m-alert .d { width: 24px; height: 24px; border-radius: 8px; flex: none; display: grid; place-items: center; font-size: 12px; }
+  .m-alert.gold .d { background: color-mix(in srgb, var(--gold) 20%, transparent); }
+  .m-alert.coral .d { background: color-mix(in srgb, var(--coral) 18%, transparent); }
+  .m-alert.mint .d { background: color-mix(in srgb, var(--mint) 18%, transparent); }
+  .m-alert .tt { font-size: 9px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  .m-alert .ss { font-size: 8px; color: var(--ink-faint); margin-top: 1px; }
+  .m-alert .a { font-weight: 800; }
+  .m-alert.gold .a { color: var(--gold); } .m-alert.coral .a { color: var(--coral); } .m-alert.mint .a { color: var(--mint); }
+  .m-tab { margin-top: auto; display: flex; justify-content: space-around; padding: 9px 0 3px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 13px; }
+  .m-tab .on { color: var(--brand); }
+
   /* ---------- Logo marquee ---------- */
-  .marquee-sec { padding: 30px 0 8px; }
-  .marquee-label { text-align: center; font-size: 12.5px; color: var(--ink-faint); margin-bottom: 18px; letter-spacing: .02em; }
+  .marquee-sec { padding: clamp(60px,8vw,90px) 0 14px; }
+  .marquee-label { text-align: center; font-size: 13px; color: var(--ink-faint); margin-bottom: 22px; }
   .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
-  .marquee-track { display: flex; gap: 40px; width: max-content; animation: slide 34s linear infinite; align-items: center; }
+  .marquee-track { display: flex; gap: 44px; width: max-content; animation: slide 36s linear infinite; align-items: center; }
   @keyframes slide { to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
-  .marquee-track img { height: 30px; width: auto; opacity: .8; filter: grayscale(.15); }
+  .marquee-track img { height: 30px; width: auto; opacity: .82; filter: grayscale(.12); }
 
   /* ---------- Sections ---------- */
-  section.block { padding: clamp(56px, 8vw, 96px) 0; }
-  .sec-head { text-align: center; max-width: 40rem; margin: 0 auto clamp(36px, 5vw, 56px); }
-  .sec-head h2 { font-size: clamp(26px, 4vw, 40px); font-weight: 800; margin-top: 12px; }
-  .sec-head p { color: var(--ink-soft); font-size: 16px; margin: 16px auto 0; }
+  section.block { padding: clamp(60px, 8vw, 104px) 0; }
+  .sec-head { text-align: center; max-width: 42rem; margin: 0 auto clamp(40px, 5vw, 60px); }
+  .sec-head h2 { font-size: clamp(27px, 4.2vw, 42px); font-weight: 800; margin-top: 14px; }
+  .sec-head p { color: var(--ink-soft); font-size: 16.5px; margin: 16px auto 0; }
 
-  /* Differentiators */
-  .diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-  .diff {
-    position: relative; background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow-card); overflow: hidden;
-  }
-  .diff::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--indigo)); opacity: .9; }
-  .diff .ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; font-size: 22px; margin-bottom: 16px; background: color-mix(in srgb, var(--accent, var(--indigo)) 14%, transparent); }
-  .diff h3 { font-size: 19px; font-weight: 800; }
-  .diff p { color: var(--ink-soft); font-size: 14.5px; margin: 10px 0 0; }
-  .diff .demo { margin-top: 16px; font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); color: var(--ink-soft); line-height: 1.45; }
-  .diff .demo b { color: var(--accent, var(--indigo)); font-variant-numeric: tabular-nums; }
+  .diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  .diff { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow-card); overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
+  .diff:hover { transform: translateY(-4px); box-shadow: 0 26px 60px -30px rgba(20,33,58,.4); }
+  .diff::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--brand)); }
+  .diff .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 23px; margin-bottom: 18px; background: color-mix(in srgb, var(--accent, var(--brand)) 13%, transparent); }
+  .diff h3 { font-size: 20px; font-weight: 800; }
+  .diff p { color: var(--ink-soft); font-size: 15px; margin: 11px 0 0; }
+  .diff .demo { margin-top: 18px; font-size: 13px; font-weight: 600; padding: 12px 14px; border-radius: 13px; background: var(--surface-2); color: var(--ink-soft); line-height: 1.5; }
+  .diff .demo b { color: var(--accent, var(--brand)); font-weight: 800; font-variant-numeric: tabular-nums; }
 
-  /* Features */
-  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .feat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow-card); }
-  .feat .fi { font-size: 24px; margin-bottom: 12px; }
-  .feat h3 { font-size: 16px; font-weight: 800; }
-  .feat p { color: var(--ink-soft); font-size: 13.5px; margin: 8px 0 0; }
+  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px; box-shadow: var(--shadow-card); transition: transform .2s ease; }
+  .feat:hover { transform: translateY(-3px); }
+  .feat .fi { font-size: 25px; margin-bottom: 13px; }
+  .feat h3 { font-size: 16.5px; font-weight: 800; }
+  .feat p { color: var(--ink-soft); font-size: 14px; margin: 9px 0 0; }
 
-  /* Cross-platform band */
-  .band { background: linear-gradient(135deg, var(--indigo-deep), var(--indigo)); color: #fff; border-radius: 28px; padding: clamp(36px, 6vw, 60px); text-align: center; box-shadow: var(--shadow-soft); }
-  .band h2 { color: #fff; font-size: clamp(24px, 3.6vw, 36px); font-weight: 800; }
-  .band p { color: rgba(255,255,255,.86); font-size: 16px; max-width: 34rem; margin: 16px auto 0; }
-  .band .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px; }
-  .band .pill { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.24); padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .band { background: linear-gradient(135deg, var(--brand-deep), var(--brand-2)); color: #fff; border-radius: 30px; padding: clamp(40px, 6vw, 66px); text-align: center; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
+  .band::before { content: ""; position: absolute; width: 380px; height: 380px; background: radial-gradient(circle, rgba(255,255,255,.16), transparent 70%); top: -160px; right: -120px; }
+  .band h2 { color: #fff; font-size: clamp(25px, 3.8vw, 38px); font-weight: 800; position: relative; }
+  .band p { color: rgba(255,255,255,.9); font-size: 16.5px; max-width: 36rem; margin: 16px auto 0; position: relative; }
+  .band .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 28px; position: relative; }
+  .band .pill { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.26); padding: 10px 17px; border-radius: 999px; font-size: 13.5px; font-weight: 700; }
 
-  /* Trust */
-  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .trust { text-align: center; padding: 26px 18px; }
-  .trust .ti { font-size: 26px; margin-bottom: 10px; }
-  .trust h3 { font-size: 15.5px; font-weight: 800; }
-  .trust p { color: var(--ink-soft); font-size: 13px; margin: 8px 0 0; }
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .trust { text-align: center; padding: 28px 20px; }
+  .trust .ti { font-size: 28px; margin-bottom: 12px; }
+  .trust h3 { font-size: 16px; font-weight: 800; }
+  .trust p { color: var(--ink-soft); font-size: 13.5px; margin: 9px 0 0; }
 
-  /* Final CTA */
   .final { text-align: center; }
-  .final h2 { font-size: clamp(28px, 4.4vw, 44px); font-weight: 800; }
-  .final p { color: var(--ink-soft); font-size: 17px; margin: 18px auto 30px; max-width: 30rem; }
+  .final h2 { font-size: clamp(29px, 4.6vw, 46px); font-weight: 800; }
+  .final p { color: var(--ink-soft); font-size: 17.5px; margin: 18px auto 32px; max-width: 31rem; }
 
-  /* Footer */
-  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; margin-top: 20px; }
+  footer { border-top: 1px solid var(--line); padding: 44px 0 60px; margin-top: 20px; }
   .foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: center; }
   .foot-logo { height: 22px; opacity: .9; }
-  .foot-links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 14px; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 24px; font-size: 14px; }
   .foot-links a { color: var(--ink-soft); font-weight: 600; }
-  .foot-links a:hover { color: var(--indigo); }
-  .copyright { font-size: 12.5px; color: var(--ink-faint); margin-top: 18px; }
+  .foot-links a:hover { color: var(--brand); }
+  .copyright { font-size: 12.5px; color: var(--ink-faint); margin-top: 20px; }
 
-  /* Reveal */
-  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
   .reveal.in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
 
   /* Responsive */
-  @media (max-width: 860px) {
-    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
-    .device-stage { order: -1; }
+  @media (max-width: 820px) {
     .diff-grid { grid-template-columns: 1fr; }
     .feat-grid { grid-template-columns: repeat(2, 1fr); }
     .trust-grid { grid-template-columns: 1fr; }
+    .web-nav { display: none; }
   }
-  @media (max-width: 520px) {
+  @media (max-width: 560px) {
     .feat-grid { grid-template-columns: 1fr; }
     .nav-links a.text { display: none; }
+    .phone { bottom: -22px; right: -2px; }
+    .web-body { grid-template-columns: 1fr; }
+    .web-side { display: none; }
+    .laptop { width: 96%; }
   }
 </style>
 </head>
@@ -262,65 +295,84 @@
     <div class="nav-links">
       <a class="text" href="#features">기능</a>
       <a class="text" href="#trust">개인정보</a>
-      <!-- TODO: 실제 웹앱 주소로 교체 (예: https://app.도메인.com 또는 /app) -->
-      <a class="nav-cta" href="#start">웹으로 시작 →</a>
+      <a class="nav-cta" href="#start">시작하기 →</a>
     </div>
   </div>
 </nav>
 
 <header class="hero">
-  <div class="orb a float"></div>
-  <div class="orb b"></div>
-  <div class="wrap hero-grid">
-    <div>
-      <span class="eyebrow">구독 관리 · 지출 분석 · 알림</span>
-      <h1 style="margin-top:16px;">구독료, <span class="hl">어디서 새는지</span><br />알고 계세요?</h1>
-      <p class="lead">넷플릭스부터 ChatGPT까지 — 흩어진 구독을 한곳에. <b>환율로 오른 요금</b>, <b>겹치는 구독</b>, <b>슬쩍 인상된 가격</b>까지 SubFlow가 대신 감시합니다.</p>
-      <div class="cta-row">
-        <!-- TODO: 실제 웹앱 주소로 교체 -->
-        <a class="btn btn-primary" href="#start">웹으로 바로 시작하기 →</a>
-        <a class="btn btn-ghost" href="#features">기능 둘러보기</a>
-      </div>
-      <p class="store-note">📱 iOS · Android 앱 <b>출시 준비 중</b> — 웹에서 먼저 만나보세요</p>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <div class="wrap hero-in">
+    <span class="eyebrow">구독 관리 · 지출 분석 · 알림</span>
+    <h1>구독료, <span class="hl">어디서 새는지</span><br />알고 계세요?</h1>
+    <p class="lead">넷플릭스부터 ChatGPT까지 — 흩어진 구독을 한곳에. <b>환율로 오른 요금</b>, <b>겹치는 구독</b>, <b>슬쩍 인상된 가격</b>까지 SubFlow가 대신 감시합니다.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#start">무료로 시작하기 →</a>
+      <a class="btn btn-ghost" href="#features">기능 둘러보기</a>
     </div>
+    <p class="store-note">📱 <b>Android 앱 출시 준비 중</b> · 웹에서 먼저 만나보세요</p>
 
-    <div class="device-stage">
-      <div class="phone float">
-        <div class="app-head">
-          <div>
-            <div class="app-title">이번 달 구독</div>
-            <div class="app-sub">활성 6건 · 다음 결제 3일 후</div>
-          </div>
-          <div style="font-size:20px;">🔔</div>
-        </div>
-        <div class="stat-card">
-          <div class="row">
-            <div>
-              <div class="label">이번 달 총 지출</div>
-              <div class="val">₩62,739</div>
+    <!-- Device stage: laptop(web) + phone(mobile), 실제 SubFlow UI -->
+    <div class="stage">
+      <div class="stage-inner float">
+        <div class="laptop">
+          <div class="laptop-screen">
+            <div class="laptop-bezel">
+              <div class="web">
+                <div class="web-top">
+                  <div class="web-brand">SubFlow</div>
+                  <div class="web-nav"><span class="on">대시보드</span><span>분석</span><span>캘린더</span><span>카탈로그</span></div>
+                  <div class="web-ava"></div>
+                </div>
+                <div class="web-body">
+                  <div class="web-main">
+                    <div class="web-hello">안녕하세요, 경은님 👋</div>
+                    <div class="web-total">
+                      <div class="lab">이번 달 총 지출</div>
+                      <div class="big">₩62,739</div>
+                      <div class="bud"><i></i></div>
+                      <div class="cap">월 예산 ₩80,000 중 78% 사용</div>
+                    </div>
+                    <div class="web-trend">
+                      <div class="th"><span>최근 6개월 지출 추이</span><b>▼ 4.2%</b></div>
+                      <div class="bars">
+                        <i style="height:52%"></i><i style="height:70%"></i><i style="height:61%"></i>
+                        <i style="height:83%"></i><i style="height:74%"></i><i class="on" style="height:66%"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="web-side">
+                    <div class="side-head">활성 구독 <span>6건</span></div>
+                    <div class="sub-row"><img src="./logos/netflix.png" alt="" /><div><div class="nm">Netflix</div><div class="dt">매월 15일</div></div><div class="amt">₩17,000</div></div>
+                    <div class="sub-row"><img src="./logos/chatgpt.png" alt="" /><div><div class="nm">ChatGPT Plus</div><div class="dt">매월 3일</div></div><div class="amt">₩29,900</div></div>
+                    <div class="sub-row"><img src="./logos/spotify.png" alt="" /><div><div class="nm">Spotify</div><div class="dt">매월 21일</div></div><div class="amt">₩10,900</div></div>
+                    <div class="sub-row"><img src="./logos/notion.png" alt="" /><div><div class="nm">Notion Plus</div><div class="dt">매월 9일</div></div><div class="amt">₩12,000</div></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="chip">예산 78%</div>
           </div>
+          <div class="laptop-base"></div>
         </div>
-        <div class="alert gold">
-          <div class="dot">💱</div>
-          <div>
-            <div class="t">ChatGPT 구독료가 <span class="amt">₩1,800</span> 올랐어요</div>
-            <div class="s">요금 인상 아님 — 환율 변동 때문</div>
-          </div>
-        </div>
-        <div class="alert coral">
-          <div class="dot">⚠️</div>
-          <div>
-            <div class="t">비슷한 구독이 겹쳐요</div>
-            <div class="s">YouTube Music + Spotify 동시 구독 중</div>
-          </div>
-        </div>
-        <div class="alert mint">
-          <div class="dot">💡</div>
-          <div>
-            <div class="t">광고형으로 바꾸면 <span class="amt">월 6,500원</span> 절약</div>
-            <div class="s">Netflix · 원클릭 적용</div>
+
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="m">
+              <div class="m-head">
+                <div class="t">이번 달 구독<small>활성 6건 · 다음 결제 3일 후</small></div>
+                <div style="font-size:15px;">🔔</div>
+              </div>
+              <div class="m-card">
+                <div class="l">이번 달 총 지출</div>
+                <div class="v">₩62,739</div>
+                <span class="chip">예산 78%</span>
+              </div>
+              <div class="m-alert gold"><div class="d">💱</div><div><div class="tt">ChatGPT가 <span class="a">₩1,800</span> 올랐어요</div><div class="ss">요금 인상 아님 · 환율 때문</div></div></div>
+              <div class="m-alert coral"><div class="d">🔀</div><div><div class="tt">비슷한 구독이 겹쳐요</div><div class="ss">YouTube Music + Spotify</div></div></div>
+              <div class="m-alert mint"><div class="d">💡</div><div><div class="tt">광고형 전환 시 <span class="a">월 6,500원</span> 절약</div><div class="ss">Netflix · 원클릭 적용</div></div></div>
+              <div class="m-tab"><span class="on">⌂</span><span>▤</span><span>⌕</span><span>▥</span><span>▦</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -342,7 +394,6 @@
       <img src="./logos/melon.png" alt="Melon" /><img src="./logos/watcha.png" alt="Watcha" />
       <img src="./logos/midjourney.png" alt="Midjourney" /><img src="./logos/playstation.png" alt="PlayStation" />
       <img src="./logos/adobe.png" alt="Adobe" /><img src="./logos/github.png" alt="GitHub" />
-      <!-- 무한 루프용 복제 -->
       <img src="./logos/netflix.png" alt="" /><img src="./logos/spotify.png" alt="" />
       <img src="./logos/youtubemusic.png" alt="" /><img src="./logos/chatgpt.png" alt="" />
       <img src="./logos/claude.png" alt="" /><img src="./logos/disneyplus.png" alt="" />
@@ -375,7 +426,7 @@
         <p>같은 카테고리에서 겹치는 서비스를 자동으로 찾아냅니다. 음악·영상·클라우드 — 나도 모르게 두 번 내고 있진 않은지.</p>
         <div class="demo">“YouTube Music과 Spotify를 <b>동시 구독</b> 중이에요. 하나만 유지하면 월 <b>10,900원</b> 절약.”</div>
       </div>
-      <div class="diff reveal" style="--accent: var(--indigo);">
+      <div class="diff reveal" style="--accent: var(--brand);">
         <div class="ic">📈</div>
         <h3>요금 인상 이력 추적</h3>
         <p>서비스가 요금을 올리면 조용히 지나가기 쉽습니다. SubFlow는 요금제 변동 이력을 기록해 인상 시점과 폭을 보여줍니다.</p>
@@ -411,13 +462,13 @@
 <section class="block" style="padding-top:0;">
   <div class="wrap reveal">
     <div class="band">
-      <span class="eyebrow" style="color:rgba(255,255,255,.85);">하나의 계정, 모든 기기</span>
+      <span class="eyebrow" style="color:rgba(255,255,255,.88);">하나의 계정, 모든 기기</span>
       <h2 style="margin-top:12px;">웹에서 정리하고, 앱에서 알림 받고</h2>
       <p>같은 계정·같은 데이터를 웹과 모바일이 함께 씁니다. PC에서 구독을 정리하면, 결제일 알림은 휴대폰으로 도착합니다.</p>
       <div class="pills">
         <span class="pill">🌐 반응형 웹</span>
-        <span class="pill">🍎 iOS (준비 중)</span>
         <span class="pill">🤖 Android (준비 중)</span>
+        <span class="pill">🍎 iOS (예정)</span>
         <span class="pill">🇰🇷 한국어 · 🇺🇸 English</span>
       </div>
     </div>
@@ -442,8 +493,7 @@
   <div class="wrap reveal">
     <h2>이번 달, 얼마나 새고 있을까요?</h2>
     <p>1분이면 시작합니다. 구독을 추가하고, 새는 곳을 바로 확인하세요.</p>
-    <!-- TODO: 실제 웹앱 회원가입/시작 주소로 교체 -->
-    <a class="btn btn-primary" href="#" style="font-size:16px; padding:16px 30px;">무료로 시작하기 →</a>
+    <a class="btn btn-primary" href="#" style="font-size:16px; padding:16px 32px;">무료로 시작하기 →</a>
     <p class="store-note" style="margin-top:16px;">신용카드 필요 없음 · 이메일만 있으면 됩니다</p>
   </div>
 </section>
@@ -455,7 +505,6 @@
       <div class="foot-links">
         <a href="./privacy.html">개인정보처리방침</a>
         <a href="./terms.html">이용약관</a>
-        <!-- TODO: 실제 문의 이메일로 교체 -->
         <a href="mailto:ykgstar37@gmail.com">문의</a>
       </div>
     </div>
@@ -464,7 +513,6 @@
 </footer>
 
 <script>
-  // 스크롤 리빌
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
   }, { threshold: 0.14 });
