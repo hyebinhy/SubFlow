@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.subflow.app"
+      "bundleIdentifier": "com.subflow.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,14 +27,31 @@
         "backgroundColor": "#E7E9FB"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.subflow.app"
+      "package": "com.subflow.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-font"
-    ]
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#4A90D9"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ee9a4e67-7a1e-4ad7-9cd6-6c33613b6426"
+      },
+      "router": {}
+    },
+    "owner": "yoongyeongeun"
   }
 }
