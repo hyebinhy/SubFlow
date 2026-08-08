@@ -270,13 +270,13 @@ export default function SettingsScreen() {
             <SettingRow
               icon="shield-checkmark" iconColor="#5AC8FA"
               title={t('settings.privacy')}
-              onPress={() => Linking.openURL('https://subflow.app/privacy').catch(() => {})}
+              onPress={() => Linking.openURL('https://mysubflow.app/privacy').catch(() => {})}
             />
             <View style={styles.divider} />
             <SettingRow
               icon="document-text" iconColor="#6B7D8E"
               title={t('settings.terms')}
-              onPress={() => Linking.openURL('https://subflow.app/terms').catch(() => {})}
+              onPress={() => Linking.openURL('https://mysubflow.app/terms').catch(() => {})}
             />
           </Card>
 

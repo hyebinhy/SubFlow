@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM: str = "SubFlow <no-reply@subflow.app>"
+    SMTP_FROM: str = "SubFlow <no-reply@mysubflow.app>"
     SMTP_TLS: bool = True
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30

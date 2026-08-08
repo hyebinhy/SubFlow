@@ -19,7 +19,7 @@ const API_BASE_URL = __DEV__
   ? Platform.OS === 'web'
     ? 'http://localhost:8000/api/v1'
     : `http://${devHost}:8000/api/v1`
-  : 'https://api.subflow.app/api/v1';
+  : 'https://api.mysubflow.app/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
