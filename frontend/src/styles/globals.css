@@ -261,4 +261,17 @@
   .dark .text-amber-900 {
     color: #F6D28B !important;
   }
+
+  /* 로고는 배경 테마에 맞춰 검정/흰색 버전을 바꿔 끼운다 */
+  .brand-logo-dark {
+    display: none;
+  }
+
+  .dark .brand-logo-light {
+    display: none;
+  }
+
+  .dark .brand-logo-dark {
+    display: block;
+  }
 }

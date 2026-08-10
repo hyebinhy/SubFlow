@@ -9,6 +9,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface NavItem {
   to: string;
@@ -29,6 +30,8 @@ const navItems: NavItem[] = [
 const groups: number[][] = [[0, 1, 2], [3, 4, 5], [6]];
 
 export default function FloatingDock() {
+  const { t } = useTranslation();
+
   return (
     <nav className="floating-dock">
       {groups.map((group, groupIndex) => (
@@ -54,7 +57,7 @@ export default function FloatingDock() {
                 {({ isActive }) => (
                   <>
                     <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:-top-10 group-hover:opacity-100">
-                      {item.label}
+                      {t(item.label)}
                     </span>
                     <span className="transition-transform duration-200 group-hover:-translate-y-1 group-hover:scale-110">
                       <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />

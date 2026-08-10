@@ -21,6 +21,7 @@ import OverlapWarning from "../components/dashboard/OverlapWarning";
 import PriceChangeAlert from "../components/dashboard/PriceChangeAlert";
 import SavingsSuggestions from "../components/dashboard/SavingsSuggestions";
 import TrialTracker from "../components/dashboard/TrialTracker";
+import BrandLogo from "../components/BrandLogo";
 import Header from "../components/layout/Header";
 import OnboardingModal from "../components/onboarding/OnboardingModal";
 import { useAnalytics } from "../hooks/useAnalytics";
@@ -165,7 +166,7 @@ export default function DashboardPage() {
 
       <section className="flex flex-col rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
         <div className="mb-8 flex items-center justify-between">
-          <img src="/subflow-logo.png" alt="SubFlow" className="h-9 w-auto sm:h-11" />
+          <BrandLogo className="h-5 w-auto sm:h-6" />
           <Header />
         </div>
 
