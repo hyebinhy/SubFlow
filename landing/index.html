@@ -8,382 +8,378 @@
 <meta property="og:title" content="SubFlow — 구독 관리의 흐름을 바꾸다" />
 <meta property="og:description" content="환율로 오른 구독료, 겹치는 구독, 슬쩍 오른 요금. SubFlow가 대신 감시합니다." />
 <meta property="og:type" content="website" />
-<link rel="icon" href="./subflow-logo.png" />
+<meta name="theme-color" content="#08090d" />
+<link rel="icon" href="./brand/favicon.png" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root {
-    /* --- 뉴트럴 (쿨 블루-그레이) --- */
-    --ground: #f4f7fc;
-    --ground-2: #eaf1fa;
+    /* 라이트가 기본(상단) — JS가 아래로 갈수록 다크로 전환 */
+    --bg: #ffffff;
+    --bg-2: #f5f8fc;
     --surface: #ffffff;
     --surface-2: #eef4fb;
-    --ink: #14213a;
-    --ink-soft: #47566f;
+    --ink: #0d1526;
+    --ink-soft: #55617a;
     --ink-faint: #8593ab;
-    --line: #e3eaf4;
-    /* --- 브랜드 (실제 앱 파랑 #4A90D9 계열) --- */
-    --brand: #3a86d4;
-    --brand-2: #4a90d9;
-    --brand-deep: #2b6bad;
-    --brand-glow: #bcd9f5;
-    --sky: #e7f1fb;
-    /* --- 시맨틱 (앱 차트에서 차용) --- */
-    --mint: #21a97f;
-    --coral: #e2685f;
-    --gold: #dc9a2e;
-    /* --- 그림자 --- */
-    --shadow-soft: 0 22px 60px -22px rgba(58, 134, 212, .45);
-    --shadow-card: 0 14px 44px -26px rgba(20, 33, 58, .3);
-    --shadow-float: 0 40px 90px -35px rgba(29, 78, 132, .5);
-    --radius: 24px;
-    --maxw: 1120px;
-    --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
-            "Segoe UI", "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ground: #0b1120; --ground-2: #0e1526;
-      --surface: #141c2e; --surface-2: #1a2439;
-      --ink: #eef3fb; --ink-soft: #b7c3d6; --ink-faint: #7d8aa2; --line: #253148;
-      --brand: #5aa0e6; --brand-2: #4a90d9; --brand-deep: #3a86d4;
-      --brand-glow: #244468; --sky: #16233a;
-      --shadow-soft: 0 22px 60px -20px rgba(58, 134, 212, .55);
-      --shadow-card: 0 16px 48px -26px rgba(0, 0, 0, .65);
-      --shadow-float: 0 44px 100px -35px rgba(0, 0, 0, .75);
-    }
-  }
-  :root[data-theme="light"] {
-    --ground: #f4f7fc; --ground-2: #eaf1fa; --surface: #fff; --surface-2: #eef4fb;
-    --ink: #14213a; --ink-soft: #47566f; --ink-faint: #8593ab; --line: #e3eaf4;
-    --brand: #3a86d4; --brand-2: #4a90d9; --brand-deep: #2b6bad; --brand-glow: #bcd9f5; --sky: #e7f1fb;
-    --shadow-soft: 0 22px 60px -22px rgba(58,134,212,.45);
-    --shadow-card: 0 14px 44px -26px rgba(20,33,58,.3);
-    --shadow-float: 0 40px 90px -35px rgba(29,78,132,.5);
-  }
-  :root[data-theme="dark"] {
-    --ground: #0b1120; --ground-2: #0e1526; --surface: #141c2e; --surface-2: #1a2439;
-    --ink: #eef3fb; --ink-soft: #b7c3d6; --ink-faint: #7d8aa2; --line: #253148;
-    --brand: #5aa0e6; --brand-2: #4a90d9; --brand-deep: #3a86d4; --brand-glow: #244468; --sky: #16233a;
-    --shadow-soft: 0 22px 60px -20px rgba(58,134,212,.55);
-    --shadow-card: 0 16px 48px -26px rgba(0,0,0,.65);
-    --shadow-float: 0 44px 100px -35px rgba(0,0,0,.75);
+    --line: rgba(0,0,0,.10);
+    --line-strong: rgba(0,0,0,.18);
+    --brand: #4a90d9; --brand-2: #4a90d9; --brand-deep: #3a86d4;
+    --brand-glow: rgba(74,144,217,.35);
+    --mint: #21a97f; --coral: #e2685f; --gold: #dc9a2e;
+    --shadow-float: 0 60px 130px -40px rgba(20,33,58,.35);
+    --shadow-soft: 0 26px 70px -26px rgba(74,144,217,.45);
+    --maxw: 1320px;
+    --pad: clamp(24px, 4vw, 72px);
+    --font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+            "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Pretendard Variable", "Pretendard", -apple-system, "Apple SD Gothic Neo", sans-serif;
   }
 
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  body {
-    margin: 0; font-family: var(--font); color: var(--ink);
-    background: var(--ground);
-    -webkit-font-smoothing: antialiased; line-height: 1.6; overflow-x: hidden;
-  }
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-stopped { overflow: clip; }
+  body { margin: 0; font-family: var(--font); color: var(--ink); background: var(--bg);
+    -webkit-font-smoothing: antialiased; line-height: 1.6; overflow-x: hidden; }
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; display: block; }
-  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
-  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--brand); }
-  h1, h2, h3 { text-wrap: balance; line-height: 1.12; margin: 0; letter-spacing: -.025em; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+  .eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--ink-faint); }
+  .serif { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em; }
+  h1, h2, h3 { margin: 0; }
+  .split .ch { display: inline-block; will-change: transform; }
 
-  /* ---------- Nav ---------- */
-  nav {
-    position: sticky; top: 0; z-index: 50;
-    backdrop-filter: saturate(1.5) blur(16px);
-    background: color-mix(in srgb, var(--ground) 72%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  }
-  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 66px; }
-  .nav-logo { height: 26px; width: auto; }
-  .nav-links { display: flex; align-items: center; gap: 26px; }
-  .nav-links a.text { font-size: 14.5px; font-weight: 600; color: var(--ink-soft); }
-  .nav-links a.text:hover { color: var(--ink); }
-  .nav-cta {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: var(--brand); color: #fff; font-weight: 700; font-size: 14px;
-    padding: 10px 20px; border-radius: 999px; box-shadow: var(--shadow-soft);
-    transition: transform .16s ease, box-shadow .16s ease;
-  }
-  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 26px 60px -20px rgba(58,134,212,.6); }
+  /* Nav — 왼쪽에 로고+링크 그룹, 오른쪽 흰 알약. 평소 숨김 → 마우스 상단 근접 시 표시 */
+  nav { position: fixed; inset: 0 0 auto 0; z-index: 60; opacity: 0; transform: translateY(-12px); transition: opacity .32s ease, transform .32s ease; pointer-events: none; }
+  nav.show { opacity: 1; transform: none; pointer-events: auto; }
+  .nav-in { display: flex; align-items: center; gap: 40px; height: 88px; padding: 0 var(--pad); }
+  .nav-left { display: flex; align-items: center; gap: 44px; }
+  .nav-logo { display: flex; align-items: center; }
+  .nav-logo img { height: 26px; width: auto; display: block; }
+  .nav-links { display: flex; align-items: center; gap: 34px; }
+  .nav-links a { font-size: 14.5px; font-weight: 500; color: var(--ink-soft); }
+  .nav-links a:hover { color: var(--ink); }
+  .lang-toggle { font-family: inherit; font-size: 12.5px; font-weight: 600; letter-spacing: .04em;
+    color: var(--ink-soft); background: transparent; border: 1px solid var(--line-strong);
+    border-radius: 999px; padding: 6px 13px; cursor: pointer; white-space: nowrap;
+    transition: color .18s ease, border-color .18s ease; }
+  .lang-toggle:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .nav-pill { margin-left: auto; transform: translateY(46px); display: flex; align-items: center; justify-content: space-between; gap: 28px; width: min(480px, 42vw); background: #fff; border: 1px solid rgba(0,0,0,.07); border-radius: 3px; padding: 16px 16px 16px 50px; box-shadow: 0 30px 72px -20px rgba(0,0,0,.44); }
+  .nav-pill .mark { display: grid; place-items: center; flex: none; }
+  .nav-pill .mark img { height: 36px; width: auto; display: block; }
+  .nav-pill .go { background: #0a0b10; color: #fff; font-weight: 700; font-size: 19px; padding: 22px 46px; border-radius: 2px; transition: background .18s ease, transform .18s ease; white-space: nowrap; flex: none; }
+  .nav-pill .go:hover { background: #6db3f2; }
+  @media (max-width: 760px) { .nav-links { display: none; } .nav-pill { width: auto; gap: 16px; padding: 12px 12px 12px 22px; } .nav-pill .mark img { height: 26px; } .nav-pill .go { font-size: 15px; padding: 14px 26px; } }
 
-  /* ---------- Hero ---------- */
-  .hero { position: relative; padding: clamp(48px, 7vw, 88px) 0 clamp(40px,6vw,72px); overflow: hidden; }
-  .glow { position: absolute; border-radius: 50%; filter: blur(70px); z-index: 0; pointer-events: none; }
-  .glow.a { width: 620px; height: 620px; background: radial-gradient(circle, var(--brand-glow), transparent 68%); top: -160px; right: -140px; opacity: .8; }
-  .glow.b { width: 460px; height: 460px; background: radial-gradient(circle, #d3e6fa, transparent 70%); bottom: -220px; left: -160px; opacity: .55; }
-  @media (prefers-color-scheme: dark) { .glow { opacity: .4 !important; } }
-
-  .hero-in { position: relative; z-index: 1; text-align: center; }
-  .hero h1 { font-size: clamp(34px, 6vw, 64px); font-weight: 800; margin-top: 20px; }
-  .hero h1 .hl {
-    background: linear-gradient(115deg, var(--brand-2), var(--brand-deep));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero p.lead { font-size: clamp(16px, 2.1vw, 20px); color: var(--ink-soft); margin: 22px auto 0; max-width: 33em; }
-  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin-top: 34px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15.5px;
-    padding: 15px 28px; border-radius: 14px; transition: transform .16s ease, box-shadow .16s ease;
-    border: 1px solid transparent; cursor: pointer;
-  }
+  /* Hero — 전체화면, 디바이스가 중앙 주인공, 카피는 좌하단 */
+  .hero { position: relative; min-height: 100vh; overflow: hidden; background: transparent; }
+  .hero-glow { position: absolute; z-index: 0; border-radius: 50%; filter: blur(100px); pointer-events: none;
+    width: 1100px; height: 900px; left: 62%; top: 0; transform: translateX(-50%);
+    background: radial-gradient(circle, var(--brand-glow), transparent 60%); opacity: .3; }
+  .hero-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; z-index: 1; padding: 11vh clamp(60px, 8vw, 200px) 9vh var(--pad); }
+  .hero-copy { position: absolute; left: var(--pad); bottom: clamp(30px, 5vh, 60px); z-index: 5; max-width: 560px; }
+  .hero-copy .eyebrow { opacity: 0; }
+  .hero-copy h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(38px, 5.4vw, 76px); margin-top: 18px; letter-spacing: -.035em; line-height: 1.04; }
+  .hero-copy h1 .accent { color: var(--brand-2); }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; opacity: 0; }
+  .btn { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; padding: 15px 30px; border-radius: 999px; transition: transform .18s ease, box-shadow .18s ease; cursor: pointer; border: 1px solid transparent; }
   .btn-primary { background: var(--brand); color: #fff; box-shadow: var(--shadow-soft); }
   .btn-primary:hover { transform: translateY(-2px); }
-  .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: var(--shadow-card); }
-  .btn-ghost:hover { transform: translateY(-2px); }
-  .store-note { font-size: 13.5px; color: var(--ink-faint); margin-top: 18px; }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+  .btn-ghost:hover { transform: translateY(-2px); background: var(--surface); }
+  .store-note { font-size: 13.5px; color: var(--ink-faint); margin-top: 22px; opacity: 0; }
   .store-note b { color: var(--ink-soft); }
 
-  /* ---------- Device stage (laptop + phone with real UI) ---------- */
-  .stage { position: relative; z-index: 1; margin: clamp(44px,6vw,72px) auto 0; width: min(940px, 100%); }
+  /* Device stage (히어로 주인공) */
+  .stage { position: relative; z-index: 1; width: min(900px, 66vw); opacity: 0; }
   .stage-inner { position: relative; }
-  .float { animation: float 7s ease-in-out infinite; }
-  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-  @media (prefers-reduced-motion: reduce) { .float { animation: none; } }
-
-  /* Laptop */
-  .laptop { width: min(760px, 92%); margin: 0 auto; }
-  .laptop-screen {
-    background: #0f1728; border-radius: 16px 16px 4px 4px; padding: 12px 12px 0;
-    box-shadow: var(--shadow-float); border: 1px solid rgba(255,255,255,.06);
+  @media (max-width: 900px) {
+    .hero { min-height: auto; display: flex; flex-direction: column; padding: 116px 0 66px; }
+    .hero-glow { top: 50px; }
+    .hero-stage { position: static; order: 2; padding: 44px var(--pad) 0; }
+    .hero-copy { position: static; order: 1; padding: 0 var(--pad); max-width: none; left: auto; bottom: auto; }
+    .stage { width: 100%; }
   }
-  .laptop-bezel { border-radius: 8px; overflow: hidden; background: var(--surface); aspect-ratio: 16 / 10.2; }
-  .laptop-base { position: relative; height: 16px; background: linear-gradient(#c4ccd8, #9aa5b6); border-radius: 0 0 12px 12px; width: calc(min(760px,92%) + 34px); margin: 0 auto; max-width: 100%; box-shadow: 0 12px 26px -12px rgba(20,33,58,.5); }
-  .laptop-base::after { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 90px; height: 6px; background: #7f8ba0; border-radius: 0 0 7px 7px; }
-  @media (prefers-color-scheme: dark) { .laptop-base { background: linear-gradient(#3a475f, #222c40); } }
+  .laptop { position: relative; width: min(880px, 95%); margin: 0 auto; perspective: 2300px; }
 
-  /* Phone overlapping */
-  .phone {
-    position: absolute; right: clamp(-6px, 1vw, 8px); bottom: -34px; width: clamp(150px, 21vw, 208px);
-    background: #0f1728; border-radius: 30px; padding: 7px;
-    box-shadow: var(--shadow-float); border: 1px solid rgba(255,255,255,.08);
-  }
-  .phone-screen { background: var(--surface); border-radius: 24px; overflow: hidden; aspect-ratio: 9 / 18.6; }
-  .phone::before { content: ""; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 42px; height: 5px; background: #333c50; border-radius: 999px; z-index: 3; }
+  /* ── 맥북 ────────────────────────────────────────────────
+     리드(알루미늄 테두리) → 검은 베젤 → 화면.
+     리드 아래에 힌지 라인, 그 아래 앞쪽으로 얇아지는 베이스 슬랩. */
+  .laptop-screen { position: relative; z-index: 3;
+    background:
+      linear-gradient(180deg, #55585f 0%, #3b3e44 4%, #2c2f34 26%, #24272b 60%, #1c1e22 88%, #141619 100%);
+    border-radius: 20px 20px 5px 5px; padding: 9px 9px 10px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.34),
+      inset 0 -1px 0 rgba(255,255,255,.1),
+      inset 1px 0 0 rgba(255,255,255,.16),
+      inset -1px 0 0 rgba(255,255,255,.16),
+      0 0 0 1px rgba(6,8,11,.7),
+      0 28px 48px -30px rgba(9,14,24,.62);
+    transform-origin: 50% 100%; will-change: transform; }
+  /* 페이스타임 카메라 */
+  .laptop-screen::before { content: ""; position: absolute; top: 3.2px; left: 50%; transform: translateX(-50%);
+    width: 3.5px; height: 3.5px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #4b5262, #05060a 70%); z-index: 6; }
 
-  /* --- Web dashboard UI (inside laptop) --- */
-  .web { height: 100%; display: flex; flex-direction: column; background: var(--ground); font-size: 10px; }
-  .web-top { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
-  .web-brand { font-weight: 800; font-size: 13px; letter-spacing: -.02em; color: var(--brand); }
-  .web-nav { display: flex; gap: 12px; margin-left: 6px; color: var(--ink-faint); font-weight: 600; font-size: 10px; }
-  .web-nav .on { color: var(--ink); }
-  .web-ava { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-2), var(--brand-deep)); }
-  .web-body { display: grid; grid-template-columns: 1.35fr 1fr; gap: 11px; padding: 13px; flex: 1; min-height: 0; }
-  .web-hello { font-size: 11px; font-weight: 800; color: var(--ink); margin-bottom: 9px; letter-spacing: -.02em; }
-  .web-total { background: linear-gradient(135deg, var(--brand-2), var(--brand-deep)); color: #fff; border-radius: 14px; padding: 13px 14px; box-shadow: var(--shadow-soft); }
-  .web-total .lab { font-size: 9.5px; opacity: .9; }
-  .web-total .big { font-size: 26px; font-weight: 800; letter-spacing: -.03em; margin-top: 1px; font-variant-numeric: tabular-nums; }
-  .web-total .bud { height: 5px; border-radius: 999px; background: rgba(255,255,255,.28); margin-top: 11px; overflow: hidden; }
-  .web-total .bud i { display: block; height: 100%; width: 78%; background: #fff; border-radius: 999px; }
-  .web-total .cap { font-size: 9px; opacity: .85; margin-top: 6px; }
-  .web-trend { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px 12px; margin-top: 11px; }
-  .web-trend .th { font-size: 10px; font-weight: 700; color: var(--ink-soft); display:flex; justify-content:space-between; }
-  .web-trend .th b { color: var(--mint); }
-  .bars { display: flex; align-items: flex-end; gap: 7px; height: 46px; margin-top: 10px; }
-  .bars i { flex: 1; border-radius: 4px 4px 2px 2px; background: var(--sky); position: relative; }
-  .bars i.on { background: linear-gradient(var(--brand-2), var(--brand-deep)); }
-  .web-side { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; display: flex; flex-direction: column; }
-  .side-head { font-size: 10px; font-weight: 800; color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
-  .side-head span { font-size: 8.5px; font-weight: 700; color: var(--brand); background: var(--sky); padding: 2px 7px; border-radius: 999px; }
-  .sub-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
-  .sub-row:last-child { border-bottom: 0; }
-  .sub-row img { width: 19px; height: 19px; border-radius: 6px; object-fit: cover; background: var(--surface-2); }
-  .sub-row .nm { font-size: 10px; font-weight: 700; color: var(--ink); }
-  .sub-row .dt { font-size: 8.5px; color: var(--ink-faint); }
-  .sub-row .amt { margin-left: auto; font-size: 10.5px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* 비율은 실제 스크린샷(shots/web.png 1800x938)에 맞춘다 — 잘리거나 레터박스가 생기지 않도록 */
+  .laptop-bezel { position: relative; border-radius: 9px; overflow: hidden; aspect-ratio: 1800 / 938;
+    background: #000; box-shadow: inset 0 0 0 1.5px #05060a, 0 0 0 1px rgba(0,0,0,.55); }
+  .shot { width: 100%; height: 100%; display: block; object-fit: cover; }
+  /* 화면 글레어(유리 반사) */
+  .laptop-bezel::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+    background: linear-gradient(118deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.04) 15%, rgba(255,255,255,0) 30%); mix-blend-mode: screen; }
 
-  /* --- Mobile UI (inside phone) --- */
-  .m { height: 100%; background: linear-gradient(180deg, var(--sky), var(--surface) 34%); display: flex; flex-direction: column; padding: 20px 12px 12px; font-size: 9px; }
-  .m-head { display: flex; align-items: center; justify-content: space-between; padding: 0 3px; }
-  .m-head .t { font-weight: 800; font-size: 12px; letter-spacing: -.02em; color: var(--ink); }
-  .m-head .t small { display: block; font-size: 8px; font-weight: 600; color: var(--ink-faint); margin-top: 1px; }
-  .m-card { background: linear-gradient(135deg, var(--brand-2), var(--brand-deep)); color: #fff; border-radius: 16px; padding: 12px; margin: 12px 2px; box-shadow: var(--shadow-soft); }
-  .m-card .l { font-size: 8.5px; opacity: .9; }
-  .m-card .v { font-size: 21px; font-weight: 800; letter-spacing: -.03em; margin-top: 1px; font-variant-numeric: tabular-nums; }
-  .m-card .chip { display: inline-block; margin-top: 8px; background: rgba(255,255,255,.24); font-size: 8px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
-  .m-alert { display: flex; gap: 8px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px; margin: 0 2px 7px; }
-  .m-alert .d { width: 24px; height: 24px; border-radius: 8px; flex: none; display: grid; place-items: center; font-size: 12px; }
-  .m-alert.gold .d { background: color-mix(in srgb, var(--gold) 20%, transparent); }
-  .m-alert.coral .d { background: color-mix(in srgb, var(--coral) 18%, transparent); }
-  .m-alert.mint .d { background: color-mix(in srgb, var(--mint) 18%, transparent); }
-  .m-alert .tt { font-size: 9px; font-weight: 700; color: var(--ink); line-height: 1.3; }
-  .m-alert .ss { font-size: 8px; color: var(--ink-faint); margin-top: 1px; }
-  .m-alert .a { font-weight: 800; }
-  .m-alert.gold .a { color: var(--gold); } .m-alert.coral .a { color: var(--coral); } .m-alert.mint .a { color: var(--mint); }
-  .m-tab { margin-top: auto; display: flex; justify-content: space-around; padding: 9px 0 3px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 13px; }
-  .m-tab .on { color: var(--brand); }
+  /* 베이스: 리드보다 넓고, 위→아래로 밝은 알루미늄이 어두운 앞날로 떨어진다 */
+  .laptop-base { position: relative; z-index: 1;
+    /* 리드보다 52px 넓다. 컨테이너보다 넓은 요소는 margin:auto로 가운데 정렬이
+       되지 않으므로(양쪽 0으로 계산돼 오른쪽으로만 넘침) 절반을 직접 당긴다. */
+    width: calc(100% + 52px); height: 17px; margin: -1px 0 0 -26px;
+    background:
+      linear-gradient(180deg,
+        #0b0d10 0%, #24272c 4%, #4a4e55 10%, #63676e 19%, #52565d 38%,
+        #42454b 58%, #33363b 76%, #232529 90%, #0f1013 100%);
+    border-radius: 2px 2px 10px 10px;
+    box-shadow:
+      inset 1px 0 0 rgba(255,255,255,.14), inset -1px 0 0 rgba(255,255,255,.14),
+      inset 0 -1px 0 rgba(255,255,255,.08),
+      0 22px 30px -14px rgba(9,14,24,.55); }
+  /* 앞쪽 여는 홈(finger groove) — 앞날 가운데가 살짝 파인 부분 */
+  .kb-well { display: block; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: 13%; height: 7px; z-index: 2;
+    background: linear-gradient(180deg, #3c3f45 0%, #26292d 40%, #131518 100%);
+    border-radius: 0 0 8px 8px;
+    box-shadow: inset 0 1px 1.5px rgba(0,0,0,.5); }
+  /* 바닥 접지 그림자 — 기기 전체를 지면에 앉힌다 */
+  .deck-pad { display: block; position: absolute; left: 50%; bottom: -21px; transform: translateX(-50%);
+    width: 84%; height: 21px; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, rgba(20,33,58,.34) 0%, rgba(20,33,58,.15) 44%, rgba(20,33,58,0) 74%);
+    filter: blur(8px); }
 
-  /* ---------- Logo marquee ---------- */
-  .marquee-sec { padding: clamp(60px,8vw,90px) 0 14px; }
-  .marquee-label { text-align: center; font-size: 13px; color: var(--ink-faint); margin-bottom: 22px; }
+  /* ── 아이폰 ──────────────────────────────────────────────
+     얇은 티타늄 레일 + 균일한 검은 베젤 + 다이내믹 아일랜드 */
+  .phone { position: absolute; right: clamp(-14px, 0.6vw, 12px); bottom: -14px; width: clamp(124px, 13.5vw, 176px);
+    background:
+      linear-gradient(148deg, #9498a1 0%, #5a5e66 12%, #34383f 34%, #212429 55%, #171a1f 72%, #454951 92%, #6e727a 100%);
+    border-radius: 32px; padding: 3px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.42),
+      0 0 0 1px rgba(10,12,16,.6),
+      0 46px 64px -34px rgba(20,33,58,.62),
+      0 12px 22px -14px rgba(20,33,58,.4);
+    transform-origin: 50% 60%; will-change: transform; }
+  /* 비율은 shots/mobile.png(636x1213)에 맞춘다 */
+  .phone-screen { position: relative; border-radius: 29px; overflow: hidden; aspect-ratio: 636 / 1213;
+    background: #000; box-shadow: inset 0 0 0 1.5px #000; }
+  /* 폰 접지 그림자 — 노트북 앞에 서 있도록 */
+  .phone::after { content: ""; position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%);
+    width: 88%; height: 18px; z-index: -1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, rgba(20,33,58,.4) 0%, rgba(20,33,58,.17) 46%, rgba(20,33,58,0) 76%);
+    filter: blur(7px); }
+  /* 다이내믹 아일랜드 */
+  .phone::before { content: ""; position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+    width: 30%; height: 8px; background: #07080b; border-radius: 999px; z-index: 6; }
+  /* 아일랜드 안쪽 오른편 렌즈 */
+  .phone-cam { position: absolute; top: 10.5px; left: 50%; margin-left: 4.2%;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: radial-gradient(circle at 36% 30%, #2f3849, #05070c 68%); z-index: 7; }
+  /* 화면 글레어 */
+  .phone-screen::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 4;
+    background: linear-gradient(125deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.04) 14%, rgba(255,255,255,0) 29%); mix-blend-mode: screen; }
+  /* 측면 버튼: 왼쪽 액션 버튼 + 볼륨 업/다운, 오른쪽 전원 */
+  .phone-btn { position: absolute; z-index: 1;
+    background: linear-gradient(180deg, #7b7f88, #3c4048 40%, #23262b);
+    box-shadow: 0 1px 2px rgba(0,0,0,.45); }
+  .phone-btn.mute { left: -1.5px; top: 17.5%; width: 2px; height: 14px; border-radius: 2px 0 0 2px; }
+  .phone-btn.vol-up { left: -1.5px; top: 26%; width: 2px; height: 25px; border-radius: 2px 0 0 2px; }
+  .phone-btn.vol-down { left: -1.5px; top: 37.5%; width: 2px; height: 25px; border-radius: 2px 0 0 2px; }
+  .phone-btn.power { right: -1.5px; top: 30%; width: 2px; height: 42px; border-radius: 0 2px 2px 0; }
+
+  /* 디바이스 화면 내부 = 밝은 실제 앱 UI */
+
+  /* Marquee */
+  .marquee-sec { padding: clamp(90px,11vw,140px) 0 0; }
+  .marquee-label { text-align: center; font-size: 12.5px; color: var(--ink-faint); margin-bottom: 30px; letter-spacing: .04em; }
   .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
-  .marquee-track { display: flex; gap: 44px; width: max-content; animation: slide 36s linear infinite; align-items: center; }
+  .marquee-track { display: flex; gap: 46px; width: max-content; animation: slide 38s linear infinite; align-items: center; }
   @keyframes slide { to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
-  .marquee-track img { height: 30px; width: auto; opacity: .82; filter: grayscale(.12); }
+  .marquee-track img { height: 30px; width: auto; opacity: .62; filter: grayscale(.2); }
 
-  /* ---------- Sections ---------- */
-  section.block { padding: clamp(60px, 8vw, 104px) 0; }
-  .sec-head { text-align: center; max-width: 42rem; margin: 0 auto clamp(40px, 5vw, 60px); }
-  .sec-head h2 { font-size: clamp(27px, 4.2vw, 42px); font-weight: 800; margin-top: 14px; }
-  .sec-head p { color: var(--ink-soft); font-size: 16.5px; margin: 16px auto 0; }
+  /* Sections */
+  section.block { padding: clamp(110px, 15vw, 210px) 0; }
+  .sec-head { max-width: 48rem; margin: 0 auto clamp(64px, 8vw, 104px); text-align: center; }
+  .sec-head .eyebrow { display: block; }
+  .sec-head h2 { font-family: var(--serif); font-weight: 700; font-size: clamp(34px, 5.4vw, 68px); margin-top: 18px; letter-spacing: -.03em; line-height: 1.06; }
 
-  .diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
-  .diff { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow-card); overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
-  .diff:hover { transform: translateY(-4px); box-shadow: 0 26px 60px -30px rgba(20,33,58,.4); }
-  .diff::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--brand)); }
-  .diff .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 23px; margin-bottom: 18px; background: color-mix(in srgb, var(--accent, var(--brand)) 13%, transparent); }
-  .diff h3 { font-size: 20px; font-weight: 800; }
-  .diff p { color: var(--ink-soft); font-size: 15px; margin: 11px 0 0; }
-  .diff .demo { margin-top: 18px; font-size: 13px; font-weight: 600; padding: 12px 14px; border-radius: 13px; background: var(--surface-2); color: var(--ink-soft); line-height: 1.5; }
-  .diff .demo b { color: var(--accent, var(--brand)); font-weight: 800; font-variant-numeric: tabular-nums; }
+  /* Specifications — 3 프로스티드 카드 */
+  .spec-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  /* Specifications: nota식 세리프 헤딩 + 배경 노트북 + 투명 카드 */
+  #specs { position: relative; overflow: hidden; min-height: 100vh; display: flex; align-items: center; padding-top: 80px; padding-bottom: 80px; }
+  #specs .wrap { position: relative; z-index: 2; width: 100%; }
+  #specs .sec-head { margin-bottom: clamp(34px, 5vw, 60px); }
+  #specs .spec-title { font-family: "Playfair Display", Georgia, "Times New Roman", serif; font-weight: 600; font-size: clamp(50px, 9vw, 120px); line-height: .96; letter-spacing: -.005em; color: #0d1526; }
+  #specs .spec-title .dim { display: block; color: #a6abb4; font-weight: 500; }
+  /* nota의 배경 펜처럼 — 큰 SubFlow 로고 마크를 옅게 배경에 */
+  .spec-bg { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 0; width: min(760px, 62vw); pointer-events: none; opacity: .5;
+    -webkit-mask-image: radial-gradient(70% 70% at 50% 46%, #000 55%, transparent 88%); mask-image: radial-gradient(70% 70% at 50% 46%, #000 55%, transparent 88%); }
+  .spec-bg img { width: 100%; height: auto; display: block; }
+  .spec-cards { position: relative; z-index: 2; }
+  .spec-card { background: rgba(255,255,255,.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.7); border-radius: 24px; padding: 40px 36px; box-shadow: 0 14px 50px -26px rgba(20,33,58,.24); }
+  .spec-card h3 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+  .spec-card .en { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
+  .spec-list { list-style: none; margin: 26px 0 0; padding: 0; }
+  .spec-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 0; font-size: 16.5px; color: var(--ink-soft); border-top: 1px solid var(--line); }
+  .spec-list li b { color: var(--ink); font-weight: 700; }
+  .spec-list li .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--brand); flex: none; }
 
-  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .feat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px; box-shadow: var(--shadow-card); transition: transform .2s ease; }
-  .feat:hover { transform: translateY(-3px); }
-  .feat .fi { font-size: 25px; margin-bottom: 13px; }
-  .feat h3 { font-size: 16.5px; font-weight: 800; }
-  .feat p { color: var(--ink-soft); font-size: 14px; margin: 9px 0 0; }
-
-  .band { background: linear-gradient(135deg, var(--brand-deep), var(--brand-2)); color: #fff; border-radius: 30px; padding: clamp(40px, 6vw, 66px); text-align: center; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
-  .band::before { content: ""; position: absolute; width: 380px; height: 380px; background: radial-gradient(circle, rgba(255,255,255,.16), transparent 70%); top: -160px; right: -120px; }
-  .band h2 { color: #fff; font-size: clamp(25px, 3.8vw, 38px); font-weight: 800; position: relative; }
-  .band p { color: rgba(255,255,255,.9); font-size: 16.5px; max-width: 36rem; margin: 16px auto 0; position: relative; }
-  .band .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 28px; position: relative; }
-  .band .pill { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.26); padding: 10px 17px; border-radius: 999px; font-size: 13.5px; font-weight: 700; }
-
-  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .trust { text-align: center; padding: 28px 20px; }
-  .trust .ti { font-size: 28px; margin-bottom: 12px; }
-  .trust h3 { font-size: 16px; font-weight: 800; }
-  .trust p { color: var(--ink-soft); font-size: 13.5px; margin: 9px 0 0; }
-
-  .final { text-align: center; }
-  .final h2 { font-size: clamp(29px, 4.6vw, 46px); font-weight: 800; }
-  .final p { color: var(--ink-soft); font-size: 17.5px; margin: 18px auto 32px; max-width: 31rem; }
-
-  footer { border-top: 1px solid var(--line); padding: 44px 0 60px; margin-top: 20px; }
-  .foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: center; }
-  .foot-logo { height: 22px; opacity: .9; }
-  .foot-links { display: flex; flex-wrap: wrap; gap: 24px; font-size: 14px; }
-  .foot-links a { color: var(--ink-soft); font-weight: 600; }
-  .foot-links a:hover { color: var(--brand); }
-  .copyright { font-size: 12.5px; color: var(--ink-faint); margin-top: 20px; }
-
-  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
-  .reveal.in { opacity: 1; transform: none; }
-  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
-
-  /* Responsive */
+  /* About + Who it's for (에디토리얼 비대칭) */
+  .about { border-top: 1px solid var(--line); padding-top: clamp(70px, 9vw, 130px); }
+  .about .quote { font-family: var(--serif); font-weight: 700; font-size: clamp(27px, 4.4vw, 54px); letter-spacing: -.03em; line-height: 1.3; max-width: 20em; }
+  .about .quote .dim { color: var(--ink-faint); }
+  .about-split { display: grid; grid-template-columns: 200px 1fr; gap: 40px; margin-top: clamp(56px, 7vw, 96px); padding-top: 40px; border-top: 1px solid var(--line); }
+  .about-split .label { font-size: 11.5px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--ink-faint); }
+  .persona-list { display: flex; flex-direction: column; gap: 40px; }
+  .persona-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 30px; align-items: start; }
+  .persona-row h3 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+  .persona-row h3 .pi { display: block; font-size: 26px; margin-bottom: 12px; }
+  .persona-row p { color: var(--ink-soft); font-size: 15.5px; margin: 0; }
   @media (max-width: 820px) {
-    .diff-grid { grid-template-columns: 1fr; }
-    .feat-grid { grid-template-columns: repeat(2, 1fr); }
-    .trust-grid { grid-template-columns: 1fr; }
-    .web-nav { display: none; }
+    .about-split { grid-template-columns: 1fr; gap: 28px; }
+    .persona-row { grid-template-columns: 1fr; gap: 10px; }
   }
-  @media (max-width: 560px) {
-    .feat-grid { grid-template-columns: 1fr; }
-    .nav-links a.text { display: none; }
-    .phone { bottom: -22px; right: -2px; }
-    .web-body { grid-template-columns: 1fr; }
-    .web-side { display: none; }
-    .laptop { width: 96%; }
-  }
+
+  /* Inside the box */
+  .box-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; }
+  .box-item { background: var(--bg); padding: 34px 30px; transition: background .2s ease; }
+  .box-item:hover { background: var(--surface); }
+  .box-item .bi { font-size: 26px; margin-bottom: 15px; }
+  .box-item h3 { font-size: 17.5px; font-weight: 800; letter-spacing: -.02em; }
+  .box-item p { color: var(--ink-soft); font-size: 14.5px; margin: 10px 0 0; }
+
+  /* Band */
+  .band { background: linear-gradient(135deg, var(--brand-deep), var(--brand-2)); color: #fff; border-radius: 34px; padding: clamp(48px, 7vw, 84px); text-align: center; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
+  .band::before { content: ""; position: absolute; width: 460px; height: 460px; background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%); top: -200px; right: -140px; }
+  .band h2 { font-family: var(--serif); font-weight: 700; color: #fff; font-size: clamp(28px, 4.2vw, 48px); position: relative; letter-spacing: -.03em; }
+  .band p { color: rgba(255,255,255,.9); font-size: 17px; max-width: 36rem; margin: 18px auto 0; position: relative; }
+  .band .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 30px; position: relative; }
+  .band .pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.28); padding: 10px 18px; border-radius: 999px; font-size: 13.5px; font-weight: 700; }
+
+  /* Trust */
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .trust { text-align: center; padding: 20px; }
+  .trust .ti { font-size: 30px; margin-bottom: 14px; }
+  .trust h3 { font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+  .trust p { color: var(--ink-soft); font-size: 14px; margin: 10px 0 0; }
+
+  /* Order */
+  .final { text-align: center; }
+  .final h2 { font-family: var(--serif); font-weight: 800; font-size: clamp(38px, 6.2vw, 84px); letter-spacing: -.035em; line-height: 1.05; }
+  .final p { color: var(--ink-soft); font-size: 18px; margin: 26px auto 40px; max-width: 32rem; }
+
+  footer { border-top: 1px solid var(--line); padding: 52px 0 66px; }
+  .foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: center; }
+  .foot-logo { height: 18px; opacity: .8; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 26px; font-size: 14px; }
+  .foot-links a { color: var(--ink-soft); font-weight: 600; }
+  .foot-links a:hover { color: var(--brand-2); }
+  .copyright { font-size: 12.5px; color: var(--ink-faint); margin-top: 22px; }
+
+  /* 스토어 선택 모달 */
+  .store-modal { position: fixed; inset: 0; z-index: 200; display: none; }
+  .store-modal.open { display: block; }
+  .store-backdrop { position: absolute; inset: 0; background: rgba(8,9,13,.55); backdrop-filter: blur(5px); animation: fadeIn .2s ease; }
+  .store-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: min(440px, 92vw);
+    background: #fff; color: #0d1526; border-radius: 22px; padding: 36px 30px 30px; box-shadow: 0 44px 110px -30px rgba(0,0,0,.6);
+    animation: popIn .24s cubic-bezier(.2,.8,.3,1); }
+  @keyframes fadeIn { from { opacity: 0; } }
+  @keyframes popIn { from { opacity: 0; transform: translate(-50%,-46%) scale(.96); } }
+  .store-close { position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border: 0; background: transparent; font-size: 26px; line-height: 1; color: #93a0b8; cursor: pointer; border-radius: 8px; }
+  .store-close:hover { background: #f0f4f9; color: #0d1526; }
+  .store-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: #0d1526; }
+  .store-sub { color: #55617a; font-size: 14.5px; margin: 8px 0 24px; }
+  .store-opts { display: grid; gap: 12px; }
+  .store-opt { display: flex; align-items: center; gap: 16px; padding: 15px 18px; border: 1px solid #e6ecf4; border-radius: 14px; transition: background .15s, border-color .15s, transform .15s; }
+  .store-opt:hover { background: #f5f9fd; border-color: #bfdcf6; transform: translateY(-1px); }
+  .store-opt .soi { width: 36px; height: 36px; display: grid; place-items: center; flex: none; }
+  .store-opt .soi svg { width: 30px; height: 30px; display: block; }
+  .store-opt .sol { font-weight: 700; font-size: 16px; flex: 1; color: #0d1526; }
+  .store-opt .sob { font-size: 12px; font-weight: 700; color: #4a90d9; background: #eaf3fd; padding: 5px 11px; border-radius: 999px; }
+
+  .anim { opacity: 1; }
+  html.gsap-ready .anim { opacity: 0; }
+
+  @media (max-width: 860px) { .spec-cards, .box-grid, .trust-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .phone { bottom: -24px; right: -4px; } }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="wrap nav-in">
-    <img class="nav-logo" src="./subflow-logo.png" alt="SubFlow" />
-    <div class="nav-links">
-      <a class="text" href="#features">기능</a>
-      <a class="text" href="#trust">개인정보</a>
-      <a class="nav-cta" href="#start">시작하기 →</a>
+<nav id="nav">
+  <div class="nav-in">
+    <div class="nav-left">
+      <span class="nav-logo"><img src="./brand/subflow-logo-pen-point.png" alt="SubFlow" /></span>
+      <div class="nav-links">
+        <a href="#specs">Specifications</a>
+        <a href="#about">Who it's for</a>
+        <a href="#about">About</a>
+        <a href="#box">Inside the box</a>
+      </div>
+      <button type="button" class="lang-toggle" aria-label="Switch language">EN</button>
+    </div>
+    <div class="nav-pill">
+      <span class="mark"><img src="./brand/subflow-mark-black.png" alt="SubFlow" /></span>
+      <a class="go js-open-store" href="#start">시작하기 · 무료</a>
     </div>
   </div>
 </nav>
 
 <header class="hero">
-  <div class="glow a"></div>
-  <div class="glow b"></div>
-  <div class="wrap hero-in">
-    <span class="eyebrow">구독 관리 · 지출 분석 · 알림</span>
-    <h1>구독료, <span class="hl">어디서 새는지</span><br />알고 계세요?</h1>
-    <p class="lead">넷플릭스부터 ChatGPT까지 — 흩어진 구독을 한곳에. <b>환율로 오른 요금</b>, <b>겹치는 구독</b>, <b>슬쩍 인상된 가격</b>까지 SubFlow가 대신 감시합니다.</p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="#start">무료로 시작하기 →</a>
-      <a class="btn btn-ghost" href="#features">기능 둘러보기</a>
-    </div>
-    <p class="store-note">📱 <b>Android 앱 출시 준비 중</b> · 웹에서 먼저 만나보세요</p>
-
-    <!-- Device stage: laptop(web) + phone(mobile), 실제 SubFlow UI -->
+  <div class="hero-glow"></div>
+  <div class="hero-stage">
     <div class="stage">
-      <div class="stage-inner float">
+      <div class="stage-inner" id="stage-inner">
         <div class="laptop">
           <div class="laptop-screen">
             <div class="laptop-bezel">
-              <div class="web">
-                <div class="web-top">
-                  <div class="web-brand">SubFlow</div>
-                  <div class="web-nav"><span class="on">대시보드</span><span>분석</span><span>캘린더</span><span>카탈로그</span></div>
-                  <div class="web-ava"></div>
-                </div>
-                <div class="web-body">
-                  <div class="web-main">
-                    <div class="web-hello">안녕하세요, 경은님 👋</div>
-                    <div class="web-total">
-                      <div class="lab">이번 달 총 지출</div>
-                      <div class="big">₩62,739</div>
-                      <div class="bud"><i></i></div>
-                      <div class="cap">월 예산 ₩80,000 중 78% 사용</div>
-                    </div>
-                    <div class="web-trend">
-                      <div class="th"><span>최근 6개월 지출 추이</span><b>▼ 4.2%</b></div>
-                      <div class="bars">
-                        <i style="height:52%"></i><i style="height:70%"></i><i style="height:61%"></i>
-                        <i style="height:83%"></i><i style="height:74%"></i><i class="on" style="height:66%"></i>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="web-side">
-                    <div class="side-head">활성 구독 <span>6건</span></div>
-                    <div class="sub-row"><img src="./logos/netflix.png" alt="" /><div><div class="nm">Netflix</div><div class="dt">매월 15일</div></div><div class="amt">₩17,000</div></div>
-                    <div class="sub-row"><img src="./logos/chatgpt.png" alt="" /><div><div class="nm">ChatGPT Plus</div><div class="dt">매월 3일</div></div><div class="amt">₩29,900</div></div>
-                    <div class="sub-row"><img src="./logos/spotify.png" alt="" /><div><div class="nm">Spotify</div><div class="dt">매월 21일</div></div><div class="amt">₩10,900</div></div>
-                    <div class="sub-row"><img src="./logos/notion.png" alt="" /><div><div class="nm">Notion Plus</div><div class="dt">매월 9일</div></div><div class="amt">₩12,000</div></div>
-                  </div>
-                </div>
-              </div>
+              <img class="shot" src="./shots/web.png" alt="SubFlow 웹 대시보드" />
             </div>
           </div>
-          <div class="laptop-base"></div>
+          <div class="laptop-base">
+            <div class="kb-well"></div>
+            <div class="deck-pad"></div>
+          </div>
         </div>
 
-        <div class="phone">
+        <div class="phone" id="phone">
+          <span class="phone-cam" aria-hidden="true"></span>
+          <span class="phone-btn mute" aria-hidden="true"></span>
+          <span class="phone-btn vol-up" aria-hidden="true"></span>
+          <span class="phone-btn vol-down" aria-hidden="true"></span>
+          <span class="phone-btn power" aria-hidden="true"></span>
           <div class="phone-screen">
-            <div class="m">
-              <div class="m-head">
-                <div class="t">이번 달 구독<small>활성 6건 · 다음 결제 3일 후</small></div>
-                <div style="font-size:15px;">🔔</div>
-              </div>
-              <div class="m-card">
-                <div class="l">이번 달 총 지출</div>
-                <div class="v">₩62,739</div>
-                <span class="chip">예산 78%</span>
-              </div>
-              <div class="m-alert gold"><div class="d">💱</div><div><div class="tt">ChatGPT가 <span class="a">₩1,800</span> 올랐어요</div><div class="ss">요금 인상 아님 · 환율 때문</div></div></div>
-              <div class="m-alert coral"><div class="d">🔀</div><div><div class="tt">비슷한 구독이 겹쳐요</div><div class="ss">YouTube Music + Spotify</div></div></div>
-              <div class="m-alert mint"><div class="d">💡</div><div><div class="tt">광고형 전환 시 <span class="a">월 6,500원</span> 절약</div><div class="ss">Netflix · 원클릭 적용</div></div></div>
-              <div class="m-tab"><span class="on">⌂</span><span>▤</span><span>⌕</span><span>▥</span><span>▦</span></div>
-            </div>
+            <img class="shot" src="./shots/mobile.png" alt="SubFlow 모바일 앱" />
           </div>
         </div>
       </div>
     </div>
   </div>
+  <div class="hero-copy">
+    <span class="eyebrow">Subscription Intelligence</span>
+    <h1 class="serif split" data-split>구독료,<br /><span class="accent">어디서 새는지</span><br />아세요?</h1>
+    <div class="cta-row" style="margin-top:36px;">
+      <a class="btn btn-primary js-open-store" href="#start">무료로 시작하기 →</a>
+      <a class="btn btn-ghost" href="#specs">기능 둘러보기</a>
+    </div>
+    <p class="store-note">📱 <b>Android 앱 출시 준비 중</b> · 웹에서 먼저 만나보세요</p>
+  </div>
 </header>
 
 <section class="marquee-sec">
-  <div class="wrap">
-    <p class="marquee-label">80여 개 서비스를 기본 지원 — 카탈로그에서 골라 추가</p>
-  </div>
+  <div class="wrap"><p class="marquee-label anim">80여 개 서비스를 기본 지원 — 카탈로그에서 골라 추가</p></div>
   <div class="marquee">
     <div class="marquee-track">
       <img src="./logos/netflix.png" alt="Netflix" /><img src="./logos/spotify.png" alt="Spotify" />
@@ -406,70 +402,100 @@
   </div>
 </section>
 
-<section class="block" id="features">
+<!-- Specifications -->
+<section class="block" id="specs">
+  <div class="spec-bg" aria-hidden="true">
+    <img src="./brand/subflow-mark-point.png" alt="" />
+  </div>
   <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">다른 구독 앱과 뭐가 다른가요</span>
-      <h2>단순 목록이 아니라, 돈을 지켜주는 4가지</h2>
-      <p>구독을 나열하는 앱은 많습니다. SubFlow는 <b>새는 곳을 먼저 찾아 알려줍니다.</b></p>
+    <div class="sec-head">
+      <h2 class="spec-title"><span class="dim">SubFlow</span>Specifications</h2>
     </div>
-    <div class="diff-grid">
-      <div class="diff reveal" style="--accent: var(--gold);">
-        <div class="ic">💱</div>
-        <h3>환율 인상 감지</h3>
-        <p>달러로 결제하는 구독은 요금이 그대로여도 환율 때문에 매달 청구액이 달라집니다. SubFlow는 가입 시점 환율을 기억해 실제 인상분을 원화로 알려줍니다.</p>
-        <div class="demo">“당신의 ChatGPT 구독료, 지난달보다 <b>₩1,800</b> 올랐어요 — 요금 인상이 아니라 환율 때문입니다.”</div>
+    <div class="spec-cards">
+      <div class="spec-card">
+        <h3>지출 파악</h3><span class="en">Spending Clarity</span>
+        <ul class="spec-list">
+          <li><span><b>총 지출</b>을 한 화면에</span><span class="dot"></span></li>
+          <li><span>카테고리별 <b>도넛 분석</b></span><span class="dot"></span></li>
+          <li><span>6개월 <b>지출 추이</b> 그래프</span><span class="dot"></span></li>
+          <li><span>예산 대비 <b>실시간 사용률</b></span><span class="dot"></span></li>
+        </ul>
       </div>
-      <div class="diff reveal" style="--accent: var(--coral);">
-        <div class="ic">🔀</div>
-        <h3>중복 구독 감지</h3>
-        <p>같은 카테고리에서 겹치는 서비스를 자동으로 찾아냅니다. 음악·영상·클라우드 — 나도 모르게 두 번 내고 있진 않은지.</p>
-        <div class="demo">“YouTube Music과 Spotify를 <b>동시 구독</b> 중이에요. 하나만 유지하면 월 <b>10,900원</b> 절약.”</div>
+      <div class="spec-card">
+        <h3>새는 돈 감지</h3><span class="en">Leak Detection</span>
+        <ul class="spec-list">
+          <li><span>달러 구독 <b>환율 인상</b> 감지</span><span class="dot"></span></li>
+          <li><span>같은 카테고리 <b>중복 구독</b></span><span class="dot"></span></li>
+          <li><span>요금제 <b>인상 이력</b> 추적</span><span class="dot"></span></li>
+          <li><span>무료체험 <b>만료 전 알림</b></span><span class="dot"></span></li>
+        </ul>
       </div>
-      <div class="diff reveal" style="--accent: var(--brand);">
-        <div class="ic">📈</div>
-        <h3>요금 인상 이력 추적</h3>
-        <p>서비스가 요금을 올리면 조용히 지나가기 쉽습니다. SubFlow는 요금제 변동 이력을 기록해 인상 시점과 폭을 보여줍니다.</p>
-        <div class="demo">“이 서비스는 최근 <b>3년간 4번</b> 인상됐어요. 마지막 인상: 2개월 전.”</div>
+      <div class="spec-card">
+        <h3>똑똑한 관리</h3><span class="en">Smart Management</span>
+        <ul class="spec-list">
+          <li><span>결제일 <b>캘린더·타임라인</b></span><span class="dot"></span></li>
+          <li><span>결제 전 <b>푸시·이메일 알림</b></span><span class="dot"></span></li>
+          <li><span>내 구독 <b>뉴스 AI 요약</b></span><span class="dot"></span></li>
+          <li><span>공식 <b>해지 페이지</b> 바로가기</span><span class="dot"></span></li>
+        </ul>
       </div>
-      <div class="diff reveal" style="--accent: var(--mint);">
-        <div class="ic">📰</div>
-        <h3>내 구독 뉴스 AI 요약</h3>
-        <p>내가 구독한 서비스 관련 소식만 골라 상단에 정렬하고, 긴 기사는 한 줄 AI 요약으로. 요금 인상·신기능을 남보다 먼저.</p>
-        <div class="demo">“<b>내 구독 서비스</b> 소식만 골라서 — 카드 한 번 탭하면 핵심만 요약.”</div>
+    </div>
+  </div>
+</section>
+
+<!-- About + Who it's for -->
+<section class="block" id="about" style="padding-top:0;">
+  <div class="wrap about">
+    <p class="quote anim">구독은 편리한 대신, 조용합니다. <span class="dim">오른 요금도, 겹친 결제도, 잊은 무료체험도 — 알아채기 전엔 그냥 빠져나갑니다.</span> SubFlow는 그 흐름을 당신 편에서 지켜봅니다.</p>
+    <div class="about-split">
+      <div class="label anim">Who it's for</div>
+      <div class="persona-list">
+        <div class="persona-row anim">
+          <h3><span class="pi">🎬</span>구독이 많은 사람</h3>
+          <p>넷플릭스·디즈니+·티빙에 음악·AI까지. 여기저기 흩어진 구독이 매달 얼마인지, 다음 결제가 언제인지 더는 헷갈리지 않게 한 곳에 모읍니다.</p>
+        </div>
+        <div class="persona-row anim">
+          <h3><span class="pi">🌏</span>해외 구독을 쓰는 사람</h3>
+          <p>ChatGPT·Notion처럼 달러로 결제하는 서비스는 요금이 그대로여도 청구액이 달라집니다. 가입 시점 환율을 기억해, 실제 인상분을 원화로 정확히 알려줍니다.</p>
+        </div>
+        <div class="persona-row anim">
+          <h3><span class="pi">💸</span>새는 돈을 줄이려는 사람</h3>
+          <p>중복 구독, 안 쓰는 서비스, 슬쩍 오른 요금. 매달 조용히 빠져나가던 돈을 찾아내 되돌리고 싶은 사람에게 SubFlow가 먼저 알려줍니다.</p>
+        </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- Inside the box -->
+<section class="block" id="box" style="padding-top:0;">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow anim">Inside the box</span>
+      <h2 class="serif anim">시작하면, 함께</h2>
+    </div>
+    <div class="box-grid">
+      <div class="box-item anim"><div class="bi">📊</div><h3>대시보드</h3><p>총 지출·활성 구독·다음 결제일을 한눈에.</p></div>
+      <div class="box-item anim"><div class="bi">🍩</div><h3>지출 분석</h3><p>카테고리 도넛과 최근 6개월 추이 차트.</p></div>
+      <div class="box-item anim"><div class="bi">📅</div><h3>캘린더 · 타임라인</h3><p>결제일과 가입·해지 이력을 시간순으로.</p></div>
+      <div class="box-item anim"><div class="bi">🎯</div><h3>예산 · 알림</h3><p>월 예산을 정하고 결제 며칠 전에 미리 알림.</p></div>
+      <div class="box-item anim"><div class="bi">🗂️</div><h3>80+ 서비스 카탈로그</h3><p>12개 카테고리, 로고·요금제까지 준비된 목록.</p></div>
+      <div class="box-item anim"><div class="bi">🌐</div><h3>웹 · 모바일</h3><p>반응형 웹으로 지금 바로, Android 앱은 준비 중.</p></div>
     </div>
   </div>
 </section>
 
 <section class="block" style="padding-top:0;">
   <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">기본기도 탄탄하게</span>
-      <h2>구독 관리에 필요한 모든 것</h2>
-    </div>
-    <div class="feat-grid">
-      <div class="feat reveal"><div class="fi">📊</div><h3>대시보드</h3><p>월·연 총 지출, 활성 구독 수, 다음 결제일을 한 화면에.</p></div>
-      <div class="feat reveal"><div class="fi">🍩</div><h3>지출 분석</h3><p>카테고리별 비중 도넛 차트와 월별 지출 추이를 시각화.</p></div>
-      <div class="feat reveal"><div class="fi">📅</div><h3>캘린더 · 타임라인</h3><p>결제일을 달력으로, 가입·변경·해지 이력을 타임라인으로.</p></div>
-      <div class="feat reveal"><div class="fi">🎯</div><h3>예산 · 알림</h3><p>월 예산을 정하고, 결제 N일 전 이메일·푸시로 미리 알림.</p></div>
-      <div class="feat reveal"><div class="fi">🧾</div><h3>상태 추적</h3><p>활성·일시정지·해지·무료체험 상태를 이력과 함께 관리.</p></div>
-      <div class="feat reveal"><div class="fi">🔗</div><h3>해지 가이드</h3><p>서비스별 공식 해지 페이지로 바로 이동. 헤매지 않게.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="block" style="padding-top:0;">
-  <div class="wrap reveal">
-    <div class="band">
-      <span class="eyebrow" style="color:rgba(255,255,255,.88);">하나의 계정, 모든 기기</span>
-      <h2 style="margin-top:12px;">웹에서 정리하고, 앱에서 알림 받고</h2>
-      <p>같은 계정·같은 데이터를 웹과 모바일이 함께 씁니다. PC에서 구독을 정리하면, 결제일 알림은 휴대폰으로 도착합니다.</p>
+    <div class="band anim">
+      <span class="eyebrow" style="color:rgba(255,255,255,.85);">하나의 계정, 모든 기기</span>
+      <h2 style="margin-top:14px;">웹에서 정리하고, 앱에서 알림 받고</h2>
+      <p>같은 계정·같은 데이터를 웹과 모바일이 함께 씁니다. PC에서 구독을 정리해두면, 결제일 알림은 이메일로 먼저 도착하고 앱이 나오면 푸시로도 받아볼 수 있어요.</p>
       <div class="pills">
         <span class="pill">🌐 반응형 웹</span>
         <span class="pill">🤖 Android (준비 중)</span>
         <span class="pill">🍎 iOS (예정)</span>
-        <span class="pill">🇰🇷 한국어 · 🇺🇸 English</span>
+        <span class="pill">🇰🇷 한국어 · 🇺🇸 English (앱)</span>
       </div>
     </div>
   </div>
@@ -477,31 +503,31 @@
 
 <section class="block" id="trust" style="padding-top:0;">
   <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">믿고 맡기셔도 됩니다</span>
-      <h2>당신의 돈 이야기, 안전하게</h2>
+    <div class="sec-head">
+      <span class="eyebrow anim">Privacy</span>
+      <h2 class="serif anim">당신의 돈 이야기, 안전하게</h2>
     </div>
     <div class="trust-grid">
-      <div class="trust reveal"><div class="ti">🔒</div><h3>카드·계좌 정보 미수집</h3><p>실제 금융 정보는 받지 않습니다. 구독 금액은 관리용으로 직접 입력하는 값일 뿐이에요.</p></div>
-      <div class="trust reveal"><div class="ti">🔑</div><h3>비밀번호 단방향 암호화</h3><p>bcrypt로 암호화해 저장하며, 운영자도 원문 비밀번호를 알 수 없습니다.</p></div>
-      <div class="trust reveal"><div class="ti">🙈</div><h3>구독 데이터는 밖으로 안 나가요</h3><p>뉴스 요약 시에도 기사 제목만 사용 — 당신의 구독 내역은 외부로 전송되지 않습니다.</p></div>
+      <div class="trust anim"><div class="ti">🔒</div><h3>카드·계좌 정보 미수집</h3><p>실제 금융 정보는 받지 않습니다. 구독 금액은 관리용으로 직접 입력하는 값일 뿐이에요.</p></div>
+      <div class="trust anim"><div class="ti">🔑</div><h3>비밀번호 단방향 암호화</h3><p>bcrypt로 암호화해 저장하며, 운영자도 원문 비밀번호를 알 수 없습니다.</p></div>
+      <div class="trust anim"><div class="ti">🙈</div><h3>구독 데이터는 밖으로 안 나가요</h3><p>뉴스 요약 시에도 기사 제목만 사용 — 당신의 구독 내역은 외부로 전송되지 않습니다.</p></div>
     </div>
   </div>
 </section>
 
 <section class="block final" id="start">
-  <div class="wrap reveal">
-    <h2>이번 달, 얼마나 새고 있을까요?</h2>
-    <p>1분이면 시작합니다. 구독을 추가하고, 새는 곳을 바로 확인하세요.</p>
-    <a class="btn btn-primary" href="#" style="font-size:16px; padding:16px 32px;">무료로 시작하기 →</a>
-    <p class="store-note" style="margin-top:16px;">신용카드 필요 없음 · 이메일만 있으면 됩니다</p>
+  <div class="wrap">
+    <h2 class="serif split" data-split>이번 달, 얼마나 새고 있을까요?</h2>
+    <p class="anim">1분이면 시작합니다. 구독을 추가하고, 새는 곳을 바로 확인하세요.</p>
+    <a class="btn btn-primary anim js-open-store" href="#" style="font-size:16px; padding:17px 36px;">무료로 시작하기 →</a>
+    <p class="store-note anim" style="opacity:1; margin-top:20px;">신용카드 필요 없음 · 이메일만 있으면 됩니다</p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
     <div class="foot-in">
-      <img class="foot-logo" src="./subflow-logo.png" alt="SubFlow" />
+      <img class="foot-logo" src="./brand/subflow-logo-white.png" alt="SubFlow" />
       <div class="foot-links">
         <a href="./privacy.html">개인정보처리방침</a>
         <a href="./terms.html">이용약관</a>
@@ -512,11 +538,392 @@
   </div>
 </footer>
 
+<!-- 스토어 선택 모달 (링크는 출시 후 실제 주소로 교체) -->
+<div class="store-modal" id="storeModal" aria-hidden="true">
+  <div class="store-backdrop" data-close></div>
+  <div class="store-card" role="dialog" aria-modal="true" aria-label="SubFlow 시작하기">
+    <button class="store-close" type="button" data-close aria-label="닫기">×</button>
+    <h3 class="store-title">SubFlow 시작하기</h3>
+    <p class="store-sub">원하는 방법으로 만나보세요.</p>
+    <div class="store-opts">
+      <a class="store-opt" href="#" data-store="ios" target="_blank" rel="noopener">
+        <span class="soi"><svg viewBox="0 0 24 24" fill="#0d1526"><path d="M16.37 1.43c0 1.13-.42 2.19-1.12 2.98-.76.86-2.01 1.53-3.05 1.45-.13-1.1.42-2.27 1.09-3.02.76-.85 2.08-1.47 3.08-1.41zM20.5 17.05c-.55 1.28-.82 1.85-1.53 2.98-.99 1.57-2.38 3.53-4.1 3.54-1.53.02-1.92-1-3.99-.99-2.07.01-2.5.99-4.03.98-1.72-.01-3.03-1.77-4.02-3.34C.42 16.9.13 11.55 2.16 8.72c1.02-1.43 2.63-2.28 4.15-2.28 1.55 0 2.52.99 3.8.99 1.24 0 2-.99 3.79-.99 1.35 0 2.78.74 3.8 2.01-3.34 1.83-2.8 6.6.8 8.6z"/></svg></span>
+        <span class="sol">App Store</span>
+        <span class="sob">준비 중</span>
+      </a>
+      <a class="store-opt" href="#" data-store="android" target="_blank" rel="noopener">
+        <span class="soi"><svg viewBox="0 0 24 24"><path fill="#00C3FF" d="M3.6 2.2c-.3.3-.5.7-.5 1.2v17.2c0 .5.2.9.5 1.2l.1.1L13 12.1v-.2z"/><path fill="#00E676" d="M16.4 15.3 3.7 22.4l9.4-9.4z"/><path fill="#FFCE00" d="m16.4 8.7-3.4 3.3 3.4 3.4 4-2.3c1.1-.6 1.1-1.7 0-2.3z"/><path fill="#FF3D00" d="M3.7 1.6 16.4 8.7 13 12.1z"/></svg></span>
+        <span class="sol">Google Play</span>
+        <span class="sob">준비 중</span>
+      </a>
+      <a class="store-opt" href="#" data-store="web" target="_blank" rel="noopener">
+        <span class="soi"><svg viewBox="0 0 24 24" fill="none" stroke="#4a90d9" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg></span>
+        <span class="sol">웹으로 시작</span>
+        <span class="sob">준비 중</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ── i18n ────────────────────────────────────────────────────────────────
+     한국어를 원본으로 두고, 영어일 때만 DOM을 치환한다. data-i18n 속성 대신
+     한국어 텍스트 자체를 키로 쓰므로 마크업은 그대로다.
+     반드시 GSAP 스크립트보다 먼저 실행되어야 한다 — 헤드라인을 글자 단위로
+     쪼개기 전에 문구가 확정돼 있어야 하기 때문. -->
 <script>
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-  }, { threshold: 0.14 });
-  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+(function () {
+  // 안쪽에 <b>/<span>이 섞여 어순이 통째로 바뀌는 것들은 요소 단위로 교체한다.
+  var HTML_EN = {
+    '<b>총 지출</b>을 한 화면에': 'All spending <b>on one screen</b>',
+    '카테고리별 <b>도넛 분석</b>': '<b>Donut breakdown</b> by category',
+    '6개월 <b>지출 추이</b> 그래프': '<b>6-month trend</b> graph',
+    '예산 대비 <b>실시간 사용률</b>': '<b>Live budget usage</b>',
+    '달러 구독 <b>환율 인상</b> 감지': 'Detects <b>FX-driven hikes</b> on USD subs',
+    '같은 카테고리 <b>중복 구독</b>': '<b>Duplicate subs</b> in one category',
+    '요금제 <b>인상 이력</b> 추적': 'Tracks <b>price-hike history</b>',
+    '무료체험 <b>만료 전 알림</b>': '<b>Free-trial expiry</b> alerts',
+    '결제일 <b>캘린더·타임라인</b>': 'Billing <b>calendar &amp; timeline</b>',
+    '결제 전 <b>푸시·이메일 알림</b>': '<b>Push &amp; email</b> before billing',
+    '내 구독 <b>뉴스 AI 요약</b>': '<b>AI news digest</b> for your subs',
+    '공식 <b>해지 페이지</b> 바로가기': 'Jump to the official <b>cancel page</b>',
+    '📱 <b>Android 앱 출시 준비 중</b> · 웹에서 먼저 만나보세요':
+      '📱 <b>Android app coming soon</b> · start on the web today',
+    'ChatGPT가 <span class="a">₩1,800</span> 올랐어요':
+      'ChatGPT is up <span class="a">₩1,800</span>',
+    '광고형 전환 시 <span class="a">월 6,500원</span> 절약':
+      'Save <span class="a">₩6,500/mo</span> on the ad tier',
+    '<span>최근 6개월 지출 추이</span><b>▼ 4.2%</b>':
+      '<span>Last 6 months</span><b>▼ 4.2%</b>',
+    '활성 구독 <span>6건</span>': 'Active <span>6</span>'
+  };
+
+  // 그 밖의 모든 문구는 텍스트 노드 단위로 1:1 치환한다.
+  var TEXT_EN = {
+    '시작하기 · 무료': 'Get started · Free',
+    '대시보드': 'Dashboard', '분석': 'Analytics', '캘린더': 'Calendar', '카탈로그': 'Catalog',
+    '안녕하세요, 경은님 👋': 'Welcome back 👋',
+    '이번 달 총 지출': 'Total spend this month',
+    '월 예산 ₩80,000 중 78% 사용': '78% of your ₩80,000 monthly budget',
+    '매월 15일': 'Monthly · 15th', '매월 3일': 'Monthly · 3rd',
+    '매월 21일': 'Monthly · 21st', '매월 9일': 'Monthly · 9th',
+    '이번 달 구독': 'This month',
+    '활성 6건 · 다음 결제 3일 후': '6 active · next charge in 3 days',
+    '예산 78%': '78% of budget',
+    '요금 인상 아님 · 환율 때문': 'Not a price hike — it is the exchange rate',
+    '비슷한 구독이 겹쳐요': 'You have overlapping subscriptions',
+    'Netflix · 원클릭 적용': 'Netflix · apply in one tap',
+
+    '구독료,': 'Where is your',
+    '어디서 새는지': 'subscription money',
+    '아세요?': 'leaking?',
+    '무료로 시작하기 →': 'Start free →',
+    '기능 둘러보기': 'See features',
+    '80여 개 서비스를 기본 지원 — 카탈로그에서 골라 추가':
+      '80+ services supported out of the box — just pick one from the catalog',
+
+    '지출 파악': 'See your spending',
+    '새는 돈 감지': 'Catch the leaks',
+    '똑똑한 관리': 'Stay on top of it',
+
+    '구독은 편리한 대신, 조용합니다.': 'Subscriptions are convenient — and quiet.',
+    '오른 요금도, 겹친 결제도, 잊은 무료체험도 — 알아채기 전엔 그냥 빠져나갑니다.':
+      'A raised price, a duplicate charge, a forgotten free trial — it all slips away before you notice.',
+    'SubFlow는 그 흐름을 당신 편에서 지켜봅니다.': 'SubFlow watches that flow on your side.',
+
+    '구독이 많은 사람': 'People with a lot of subscriptions',
+    '넷플릭스·디즈니+·티빙에 음악·AI까지. 여기저기 흩어진 구독이 매달 얼마인지, 다음 결제가 언제인지 더는 헷갈리지 않게 한 곳에 모읍니다.':
+      'Netflix, Disney+, music, AI tools. SubFlow gathers everything scattered across services so you always know the monthly total and the next charge date.',
+    '해외 구독을 쓰는 사람': 'People paying in foreign currency',
+    'ChatGPT·Notion처럼 달러로 결제하는 서비스는 요금이 그대로여도 청구액이 달라집니다. 가입 시점 환율을 기억해, 실제 인상분을 원화로 정확히 알려줍니다.':
+      'With USD-billed services like ChatGPT or Notion, your bill moves even when the price does not. SubFlow remembers the rate at signup and shows the real increase in your own currency.',
+    '새는 돈을 줄이려는 사람': 'People trimming wasted spend',
+    '중복 구독, 안 쓰는 서비스, 슬쩍 오른 요금. 매달 조용히 빠져나가던 돈을 찾아내 되돌리고 싶은 사람에게 SubFlow가 먼저 알려줍니다.':
+      'Duplicate subscriptions, services you stopped using, prices that crept up. SubFlow surfaces the money quietly leaving each month — before you have to go looking.',
+
+    '시작하면, 함께': 'What you get',
+    '총 지출·활성 구독·다음 결제일을 한눈에.': 'Total spend, active subs and the next charge at a glance.',
+    '지출 분석': 'Spending analysis',
+    '카테고리 도넛과 최근 6개월 추이 차트.': 'A category donut plus a 6-month trend chart.',
+    '캘린더 · 타임라인': 'Calendar · Timeline',
+    '결제일과 가입·해지 이력을 시간순으로.': 'Billing dates and your signup/cancel history in order.',
+    '예산 · 알림': 'Budget · Alerts',
+    '월 예산을 정하고 결제 며칠 전에 미리 알림.': 'Set a monthly budget and get a heads-up days before billing.',
+    '80+ 서비스 카탈로그': '80+ service catalog',
+    '12개 카테고리, 로고·요금제까지 준비된 목록.': '12 categories, with logos and plans already filled in.',
+    '웹 · 모바일': 'Web · Mobile',
+    '반응형 웹으로 지금 바로, Android 앱은 준비 중.': 'Responsive web today; the Android app is on the way.',
+
+    '하나의 계정, 모든 기기': 'One account, every device',
+    '웹에서 정리하고, 앱에서 알림 받고': 'Organise on the web, get alerted on your phone',
+    '같은 계정·같은 데이터를 웹과 모바일이 함께 씁니다. PC에서 구독을 정리해두면, 결제일 알림은 이메일로 먼저 도착하고 앱이 나오면 푸시로도 받아볼 수 있어요.':
+      'Web and mobile share the same account and the same data. Tidy up your subscriptions on a desktop, and billing reminders arrive by email — and by push once the app ships.',
+    '🌐 반응형 웹': '🌐 Responsive web',
+    '🤖 Android (준비 중)': '🤖 Android (coming soon)',
+    '🍎 iOS (예정)': '🍎 iOS (planned)',
+    '🇰🇷 한국어 · 🇺🇸 English (앱)': '🇰🇷 Korean · 🇺🇸 English (app)',
+
+    '당신의 돈 이야기, 안전하게': 'Your money, kept private',
+    '카드·계좌 정보 미수집': 'No card or bank details',
+    '실제 금융 정보는 받지 않습니다. 구독 금액은 관리용으로 직접 입력하는 값일 뿐이에요.':
+      'We never collect real financial data. Subscription amounts are just numbers you type in for your own tracking.',
+    '비밀번호 단방향 암호화': 'One-way password hashing',
+    'bcrypt로 암호화해 저장하며, 운영자도 원문 비밀번호를 알 수 없습니다.':
+      'Passwords are stored with bcrypt — not even the operator can read them.',
+    '구독 데이터는 밖으로 안 나가요': 'Your subscription data stays in',
+    '뉴스 요약 시에도 기사 제목만 사용 — 당신의 구독 내역은 외부로 전송되지 않습니다.':
+      'Even news summaries send only article titles — your subscription list never leaves.',
+
+    '이번 달, 얼마나 새고 있을까요?': 'How much is leaking this month?',
+    '1분이면 시작합니다. 구독을 추가하고, 새는 곳을 바로 확인하세요.':
+      'It takes a minute. Add your subscriptions and see the leaks right away.',
+    '신용카드 필요 없음 · 이메일만 있으면 됩니다': 'No credit card · just an email',
+
+    '개인정보처리방침': 'Privacy Policy', '이용약관': 'Terms of Service', '문의': 'Contact',
+    '© 2026 SubFlow. 개인 프로젝트로 만들어졌습니다. All rights reserved.':
+      '© 2026 SubFlow. Built as a personal project. All rights reserved.',
+    'SubFlow 시작하기': 'Get started with SubFlow',
+    '원하는 방법으로 만나보세요.': 'Pick how you want to begin.',
+    '준비 중': 'Coming soon', '웹으로 시작': 'Start on the web'
+  };
+
+  var META_EN = {
+    title: 'SubFlow — See where your subscription money leaks',
+    desc: 'Track every subscription in one place. Spot FX-driven price hikes, duplicate services and forgotten free trials before they charge you.'
+  };
+
+  var STORE = 'subflow-lang';
+  // 한국어가 기본. 브라우저 언어와 무관하게 ko로 시작하고,
+  // 사용자가 토글로 고른 선택만 기억한다.
+  function detect() {
+    var saved = null;
+    try { saved = localStorage.getItem(STORE); } catch (e) {}
+    return saved === 'en' ? 'en' : 'ko';
+  }
+
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+
+  function toEnglish() {
+    // 1) 요소 단위 (내부 마크업 포함)
+    document.querySelectorAll('#specs li span, .store-note, .m-alert .tt, .web-trend .th, .side-head')
+      .forEach(function (el) {
+        var v = HTML_EN[norm(el.innerHTML)];
+        if (v) el.innerHTML = v;
+      });
+
+    // 2) 텍스트 노드 단위
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    var nodes = [], n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(function (t) {
+      if (t.parentNode && t.parentNode.tagName === 'SCRIPT') return;
+      var key = norm(t.textContent);
+      var v = TEXT_EN[key];
+      if (v !== undefined) t.textContent = t.textContent.replace(t.textContent.trim(), v);
+    });
+
+    document.title = META_EN.title;
+    var md = document.querySelector('meta[name="description"]');
+    if (md) md.setAttribute('content', META_EN.desc);
+  }
+
+  var lang = detect();
+  document.documentElement.lang = lang;
+  if (lang === 'en') toEnglish();
+
+  // 토글: 언어를 저장하고 새로고침한다. 헤드라인이 이미 글자 단위로 쪼개진
+  // 뒤라 DOM을 되돌리는 것보다 다시 그리는 편이 확실하다.
+  window.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.lang-toggle').forEach(function (btn) {
+      btn.textContent = lang === 'ko' ? 'EN' : '한국어';
+      btn.addEventListener('click', function () {
+        try { localStorage.setItem(STORE, lang === 'ko' ? 'en' : 'ko'); } catch (e) {}
+        location.reload();
+      });
+    });
+  });
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.8/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var hasGSAP = window.gsap && window.ScrollTrigger;
+  var nav = document.getElementById('nav');
+
+  // 스토어 선택 모달 (GSAP 유무와 무관하게 항상 동작)
+  var modal = document.getElementById('storeModal');
+  function openStore(ev) { if (ev) ev.preventDefault(); if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; } }
+  function closeStore() { if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; } }
+  document.querySelectorAll('.js-open-store').forEach(function (b) { b.addEventListener('click', openStore); });
+  if (modal) {
+    modal.querySelectorAll('[data-close]').forEach(function (c) { c.addEventListener('click', closeStore); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeStore(); });
+    // 아직 링크가 없는(준비 중) 항목은 클릭해도 이동하지 않도록
+    modal.querySelectorAll('.store-opt').forEach(function (a) {
+      a.addEventListener('click', function (ev) { if (a.getAttribute('href') === '#') ev.preventDefault(); });
+    });
+  }
+
+  // 네비/카드: 마우스가 상단에 가까우면(또는 페이지 최상단) 표시
+  if (nav) {
+    if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) {
+      nav.classList.add('show'); // 터치 기기: 항상 표시
+    } else {
+      var lastMouseY = 999;
+      var updateNavShow = function () { nav.classList.toggle('show', window.scrollY < window.innerHeight * 1.2 || lastMouseY < 150); };
+      window.addEventListener('mousemove', function (ev) { lastMouseY = ev.clientY; updateNavShow(); });
+      window.addEventListener('scroll', updateNavShow);
+      updateNavShow();
+    }
+  }
+  if (!hasGSAP || reduce) {
+    document.querySelectorAll('.hero .eyebrow, .hero p.lead, .hero .cta-row, .hero .store-note, .stage')
+      .forEach(function (e) { e.style.opacity = 1; });
+    return;
+  }
+  document.documentElement.classList.add('gsap-ready');
+  gsap.registerPlugin(ScrollTrigger);
+
+  if (window.Lenis) {
+    var lenis = new Lenis({ duration: 1.2, easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); } });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  function splitToChars(el) {
+    var out = [];
+    Array.prototype.slice.call(el.childNodes).forEach(function (node) {
+      if (node.nodeType === 3) {
+        var frag = document.createDocumentFragment();
+        node.textContent.split('').forEach(function (c) {
+          if (c === ' ') { frag.appendChild(document.createTextNode(' ')); return; }
+          var s = document.createElement('span'); s.className = 'ch'; s.textContent = c; frag.appendChild(s); out.push(s);
+        });
+        el.replaceChild(frag, node);
+      } else if (node.nodeType === 1) {
+        Array.prototype.slice.call(node.childNodes).forEach(function (t) {
+          if (t.nodeType === 3) {
+            var f = document.createDocumentFragment();
+            t.textContent.split('').forEach(function (c) {
+              if (c === ' ') { f.appendChild(document.createTextNode(' ')); return; }
+              var s = document.createElement('span'); s.className = 'ch'; s.textContent = c; f.appendChild(s); out.push(s);
+            });
+            node.replaceChild(f, t);
+          }
+        });
+      }
+    });
+    return out;
+  }
+
+  document.querySelectorAll('[data-split]').forEach(function (h) {
+    if (h.closest('.hero')) return; // 히어로 헤드라인은 아래 스크롤 연동 타임라인에서 한 번만 분해·처리
+    var chars = splitToChars(h);
+    gsap.set(chars, { yPercent: 115, opacity: 0 });
+    gsap.to(chars, {
+      yPercent: 0, opacity: 1, duration: 0.95, ease: 'power4.out', stagger: 0.026,
+      scrollTrigger: { trigger: h, start: 'top 85%' }
+    });
+  });
+
+  gsap.set('.stage', { opacity: 1 }); // 래퍼는 즉시 노출, 내부 디바이스가 각자 등장 애니메이션 담당
+
+  // 좌하단 텍스트(eyebrow/헤드라인/버튼/안내문) 숨김 → 아래 스크롤 연동 타임라인에서 등장
+  gsap.set('.hero-copy .eyebrow', { y: 14, opacity: 0 });
+  var heroChars = splitToChars(document.querySelector('.hero-copy h1[data-split]'));
+  gsap.set(heroChars, { yPercent: 115, opacity: 0 });
+  gsap.set('.hero-copy .cta-row', { y: 16, opacity: 0 });
+  gsap.set('.hero-copy .store-note', { opacity: 0 });
+
+  // 노트북 열림 pin (히어로는 흰색 유지 — 색은 아래 전역 테마가 담당)
+  gsap.set('#phone', { transformPerspective: 1200, transformOrigin: '50% 55%' });
+  if (window.matchMedia('(min-width: 901px)').matches) {
+    // 애플 continuity 스타일: 폰이 먼저 크게 가운데 → 스크롤하면 폰은 오른쪽 제자리로,
+    // 노트북(이미 열린 상태)이 왼쪽에서 슬라이드 인 → 최종적으로 나란히.
+    // 좌하단 텍스트는 스크롤을 시작하자마자(맨 앞 구간) 순차로 등장.
+    gsap.set('.laptop-screen', { rotateX: 0 });
+    gsap.set('.laptop', { x: '-26vw', opacity: 0, scale: 0.95 });
+    // 인트로에서 폰이 크게 보였다가 제자리로 줄어든다.
+    // 폰 기본 폭이 238→176px로 작아졌으므로 시작 크기를 유지하려면 스케일을 키워야 한다
+    // (238*1.5/176 ≈ 2.03). yPercent도 같은 픽셀만큼 띄우려고 -10 → -15로 맞췄다.
+    gsap.set('#phone', { x: '-34vw', yPercent: -15, scale: 2.03, rotateY: 0, opacity: 1 });
+    gsap.timeline({ scrollTrigger: {
+        trigger: '.hero', start: 'top top', end: '+=170%', scrub: 1,
+        pin: true, pinSpacing: true, anticipatePin: 1
+      } })
+      .to('.laptop', { x: '0vw', opacity: 1, scale: 1, ease: 'power2.out', duration: 1 }, 0.3)
+      .to('.hero-copy .eyebrow', { y: 0, opacity: 1, ease: 'power2.out', duration: 0.32 }, 0.3)
+      .to(heroChars, { yPercent: 0, opacity: 1, ease: 'power3.out', duration: 0.32 }, 0.3)
+      .to('.hero-copy .cta-row', { y: 0, opacity: 1, ease: 'power2.out', duration: 0.32 }, 0.3)
+      .to('.hero-copy .store-note', { opacity: 1, duration: 0.32 }, 0.3)
+      .to('#phone', { x: '0vw', yPercent: 0, scale: 1, rotateY: -13, ease: 'power2.out', duration: 1 }, 0.36);
+  } else {
+    gsap.set('.laptop-screen', { rotateX: 0 });
+    gsap.set('#phone', { rotateY: -13, xPercent: 0, opacity: 1 });
+    // 모바일: 핀 없이 히어로 진입 시 순차 등장
+    gsap.timeline({ scrollTrigger: { trigger: '.hero', start: 'top 92%' } })
+      .to('.hero-copy .eyebrow', { y: 0, opacity: 1, ease: 'power2.out', duration: 0.5 }, 0)
+      .to(heroChars, { yPercent: 0, opacity: 1, ease: 'power3.out', duration: 0.5 }, 0)
+      .to('.hero-copy .cta-row', { y: 0, opacity: 1, ease: 'power2.out', duration: 0.5 }, 0)
+      .to('.hero-copy .store-note', { opacity: 1, duration: 0.5 }, 0);
+  }
+
+  // ===== 전역: 히어로 이후부터 페이지를 내려갈수록 흰색 → 검정으로 물듦 =====
+  // 히어로 구간은 라이트(흰색) 유지, Specifications부터 Footer까지 다크로 전환.
+  var L = { bg:'#ffffff', bg2:'#f5f8fc', surface:'#ffffff', surface2:'#eef4fb',
+            ink:'#0d1526', soft:'#55617a', faint:'#8593ab',
+            line:'rgba(0,0,0,0.10)', lineStrong:'rgba(0,0,0,0.18)' };
+  var D = { bg:'#08090d', bg2:'#0e1016', surface:'#14171f', surface2:'#1a1e28',
+            ink:'#f3f5f9', soft:'#a6b0c2', faint:'#6a7488',
+            line:'rgba(255,255,255,0.09)', lineStrong:'rgba(255,255,255,0.16)' };
+  var themeProg = { p: 0 };
+  var rootStyle = document.documentElement.style;
+  var ip = gsap.utils.interpolate;
+  function applyTheme() {
+    var p = themeProg.p;
+    rootStyle.setProperty('--bg', ip(L.bg, D.bg, p));
+    rootStyle.setProperty('--bg-2', ip(L.bg2, D.bg2, p));
+    rootStyle.setProperty('--surface', ip(L.surface, D.surface, p));
+    rootStyle.setProperty('--surface-2', ip(L.surface2, D.surface2, p));
+    rootStyle.setProperty('--ink', ip(L.ink, D.ink, p));
+    rootStyle.setProperty('--ink-soft', ip(L.soft, D.soft, p));
+    rootStyle.setProperty('--ink-faint', ip(L.faint, D.faint, p));
+    rootStyle.setProperty('--line', ip(L.line, D.line, p));
+    rootStyle.setProperty('--line-strong', ip(L.lineStrong, D.lineStrong, p));
+    document.querySelectorAll('.nav-logo').forEach(function (el) {
+      el.style.filter = 'brightness(' + ip(1, 1.7, p) + ')';
+    });
+  }
+  applyTheme();
+  gsap.to(themeProg, {
+    p: 1, ease: 'none', onUpdate: applyTheme,
+    scrollTrigger: { trigger: '#about', start: 'top 72%', endTrigger: 'footer', end: 'bottom bottom', scrub: 0.5 }
+  });
+
+  gsap.utils.toArray('.anim:not(.spec-card):not(.box-item):not(.trust):not(.persona-row)').forEach(function (el) {
+    gsap.fromTo(el, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%' } });
+  });
+  // Specifications: 섹션을 고정(pin)하고 스크롤에 맞춰 제목 → 배경(노트북) → 카드 3개가 하나씩 위로.
+  // 모두 나타날 때까지 이 섹션에서 멈췄다가 완료되면 다음으로 진행.
+  gsap.timeline({ scrollTrigger: {
+      trigger: '#specs', start: 'top top', end: '+=150%', scrub: 1,
+      pin: true, pinSpacing: true, anticipatePin: 1
+    } })
+    .from('#specs .spec-title', { y: 48, opacity: 0, duration: 0.9, ease: 'power2.out' })
+    .from('#specs .spec-bg', { y: 44, opacity: 0, duration: 1.0, ease: 'power2.out' }, '-=0.25')
+    .from('#specs .spec-card', { y: 72, opacity: 0, duration: 1.0, ease: 'power2.out', stagger: 0.5 }, '-=0.1');
+
+  [ ['.box-grid', '.box-item'], ['.trust-grid', '.trust'], ['.persona-list', '.persona-row'] ].forEach(function (pair) {
+    var items = gsap.utils.toArray(pair[0] + ' ' + pair[1]);
+    if (!items.length) return;
+    gsap.fromTo(items, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', stagger: 0.1, scrollTrigger: { trigger: pair[0], start: 'top 84%' } });
+  });
+
+  ScrollTrigger.refresh();
+})();
 </script>
 </body>
 </html>
