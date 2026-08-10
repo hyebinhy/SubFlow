@@ -20,7 +20,8 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  language: 'en',
+  // 한국어가 기본. 사용자가 설정에서 바꾸면 AsyncStorage에 저장된다.
+  language: 'ko',
   currency: 'KRW',
   pushEnabled: true,
   emailEnabled: false,
@@ -63,7 +64,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     const days = await AsyncStorage.getItem('daysBefore');
     const budget = await AsyncStorage.getItem('monthlyBudget');
     set({
-      language: (lang as Language) || 'en',
+      language: (lang as Language) || 'ko',
       currency: curr || 'KRW',
       pushEnabled: push !== null ? push === 'true' : true,
       emailEnabled: email !== null ? email === 'true' : false,

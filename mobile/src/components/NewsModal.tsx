@@ -2,6 +2,7 @@ import React from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -223,7 +224,11 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
         <SafeAreaView edges={['top']} style={styles.modalSafe}>
           <View style={styles.modalHeader}>
             <View style={styles.modalTitleWrap}>
-              <Ionicons name="newspaper" size={20} color={Colors.textPrimary} />
+              <Image
+                source={require('../../assets/brand/subflow-mark-black.png')}
+                style={styles.modalTitleMark}
+                resizeMode="contain"
+              />
               <Text style={styles.modalTitle}>{t('news.section')}</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={8}>
@@ -265,12 +270,20 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
 
 const styles = StyleSheet.create({
   // ── Modal shell (frosted glass) ──
-  modalRoot: { flex: 1 },
+  // 아래에서 올라오는 시트라 윗모서리만 둥글게 깎는다.
+  modalRoot: {
+    flex: 1,
+    marginTop: 44,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+  },
   modalTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(226,239,250,0.55)',
+    backgroundColor: 'rgba(226,239,250,0.30)',
   },
   modalSafe: { flex: 1 },
+  modalTitleMark: { width: 21, height: 22 },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { GradientButton } from '../../src/components/GradientButton';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import {
   Colors,
   Spacing,
@@ -61,11 +61,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.formCard}>
-            <Image
-              source={require('../../assets/subflow-logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+            <AppLogoMark width={148} variant="pen" tone="point" style={styles.logo} />
 
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>이메일</Text>
@@ -143,8 +139,6 @@ const styles = StyleSheet.create({
     marginVertical: 40,
   },
   logo: {
-    width: 200,
-    height: 73,
     alignSelf: 'center',
     marginBottom: Spacing.md,
   },

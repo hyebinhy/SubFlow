@@ -63,6 +63,18 @@ export default function InboxScreen() {
     [t]
   );
 
+  // 알림함을 한 번 열면 전부 읽음 처리한다.
+  // 그래야 홈의 배지가 사라지고, 이후 새 알림이 오면 다시 뜬다.
+  const autoMarked = React.useRef(false);
+  React.useEffect(() => {
+    if (autoMarked.current || !data || unread === 0) return;
+    autoMarked.current = true;
+    notificationAPI
+      .markAllRead()
+      .then(() => refetch())
+      .catch(() => { /* noop */ });
+  }, [data, unread, refetch]);
+
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     await refetch();

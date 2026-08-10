@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, Image, StyleSheet, TextInput, TouchableOpacity,
+  View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { GradientButton } from '../../src/components/GradientButton';
+import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
 
 export default function RegisterScreen() {
@@ -52,11 +53,7 @@ export default function RegisterScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.formCard}>
-              <Image
-                source={require('../../assets/subflow-logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
+              <AppLogoMark width={132} variant="pen" tone="point" style={styles.logo} />
               <Text style={styles.formTitle}>회원가입</Text>
               
               <View style={styles.fieldContainer}>
@@ -165,8 +162,6 @@ const styles = StyleSheet.create({
     marginVertical: 40,
   },
   logo: {
-    width: 168,
-    height: 61,
     alignSelf: 'center',
     marginBottom: Spacing.sm,
   },

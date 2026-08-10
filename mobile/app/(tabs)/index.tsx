@@ -2,6 +2,7 @@ import React from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -15,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
 import { OnboardingModal } from '../../src/components/OnboardingModal';
@@ -138,7 +139,7 @@ import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { NewsModal } from '../../src/components/NewsModal';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts, useInbox } from '../../src/hooks/useApi';
+import { useSubscriptions, useAnalyticsOverview, useExchangeRateAlerts, useInbox, useNews } from '../../src/hooks/useApi';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { notificationAPI } from '../../src/services/api';
 
@@ -168,6 +169,34 @@ export default function HomeScreen() {
   const exchangeQuery = useExchangeRateAlerts();
   const inboxQuery = useInbox();
   const unreadCount = inboxQuery.data?.unread_count ?? 0;
+
+  // 알림함에 다녀오면 읽음 처리가 반영되도록 다시 조회한다.
+  const refetchInbox = inboxQuery.refetch;
+  useFocusEffect(
+    React.useCallback(() => {
+      refetchInbox();
+    }, [refetchInbox])
+  );
+
+  // ── 구독 브리핑 '새 소식' 점 ──
+  // 마지막으로 확인한 최신 기사(link)를 저장해두고, 그보다 새 기사가 오면 다시 켠다.
+  const newsQuery = useNews();
+  const latestNewsKey = newsQuery.data?.items?.[0]?.link ?? null;
+  const [seenNewsKey, setSeenNewsKey] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem('subflow-news-seen').then((v) => setSeenNewsKey(v)).catch(() => {});
+  }, []);
+
+  const hasNewNews = !!latestNewsKey && latestNewsKey !== seenNewsKey;
+
+  const openNews = React.useCallback(() => {
+    setShowNews(true);
+    if (latestNewsKey) {
+      setSeenNewsKey(latestNewsKey);
+      AsyncStorage.setItem('subflow-news-seen', latestNewsKey).catch(() => {});
+    }
+  }, [latestNewsKey]);
 
   // 환율 알림 (실데이터만)
   const rawAlerts = (exchangeQuery.data as any)?.alerts ?? [];
@@ -247,7 +276,7 @@ export default function HomeScreen() {
         {/* ── 헤더 (Clerio 스타일) ── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <AppLogoMark />
+            <AppLogoMark tone="white" />
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/inbox')}>
@@ -279,22 +308,24 @@ export default function HomeScreen() {
               <Text style={styles.mainTitle}>{t('home.title')}</Text>
               <TouchableOpacity
                 style={styles.newsBtn}
-                onPress={() => setShowNews(true)}
+                onPress={openNews}
                 activeOpacity={0.85}
                 accessibilityLabel={t('news.section')}
               >
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.12)']}
-                  start={{ x: 0.15, y: 0 }}
-                  end={{ x: 0.85, y: 1 }}
-                  style={styles.newsBtnGlass}
-                >
-                  {/* 상단 유리알 하이라이트 */}
-                  <View style={styles.newsBtnHighlight} />
-                  <Ionicons name="newspaper" size={20} color={Colors.textWhite} />
-                </LinearGradient>
-                {/* 새 소식 표시 점 */}
-                <View style={styles.newsBtnDot} />
+                {/* 마크 뒤에 살짝 내린 검은 복사본 = 모양을 따라가는 그림자.
+                    투명 PNG는 box-shadow가 사각으로 떨어져서 이 방식이 자연스럽다. */}
+                <Image
+                  source={require('../../assets/brand/subflow-mark-black.png')}
+                  style={styles.newsBtnShadow}
+                  resizeMode="contain"
+                />
+                <Image
+                  source={require('../../assets/brand/subflow-mark-white.png')}
+                  style={styles.newsBtnMark}
+                  resizeMode="contain"
+                />
+                {/* 새 소식 표시 점 — 확인하면 사라지고, 새 기사가 오면 다시 뜬다 */}
+                {hasNewNews && <View style={styles.newsBtnDot} />}
               </TouchableOpacity>
             </View>
 
@@ -648,7 +679,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
+    // 상단 여백을 넉넉히 — 노치/상태바 바로 아래에 붙지 않도록
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.sm,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -732,34 +765,18 @@ const styles = StyleSheet.create({
   newsBtn: {
     width: 48,
     height: 48,
-    borderRadius: 24,
     marginTop: 4,
-    // 유리알 부양감: 아래로 떨어지는 컬러 섀도우 + 하단 어두운 테두리 느낌
-    shadowColor: Colors.shadowTint,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  newsBtnGlass: {
-    flex: 1,
-    borderRadius: 24,
+    marginRight: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-    overflow: 'hidden',
   },
-  // 상단 좌측에 몰린 밝은 반사 → 볼록한 유리알 착시
-  newsBtnHighlight: {
+  newsBtnMark: { width: 36, height: 38 },
+  newsBtnShadow: {
     position: 'absolute',
-    top: -10,
-    left: -6,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-    opacity: 0.9,
+    width: 36,
+    height: 38,
+    top: 8,
+    opacity: 0.22,
   },
   newsBtnDot: {
     position: 'absolute',
