@@ -18,7 +18,7 @@ interface Props {
 
 export default function MonthlySpendingChart({ trend }: Props) {
   const data = trend.data.map((d) => ({
-    name: `${d.month}월`,
+    name: tr("{n}월", { n: d.month }),
     total: Number(d.total),
     isForecast: d.is_forecast ?? false,
   }));

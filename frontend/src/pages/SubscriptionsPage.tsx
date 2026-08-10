@@ -99,7 +99,7 @@ export default function SubscriptionsPage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">{tr("구독 관리")}</h2>
           <p className="mt-1 text-sm text-slate-400">
-            활성 {fmtCount(activeCount, "개")} · 월 예상 비용{" "}
+            {tr("활성 {n} · 월 예상 비용", { n: fmtCount(activeCount, "개") })}{" "}
             {fmtMoney(Math.round(totalMonthly))}
           </p>
         </div>

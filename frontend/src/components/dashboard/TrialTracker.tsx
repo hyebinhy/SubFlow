@@ -48,7 +48,7 @@ export default function TrialTracker({ trials }: Props) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">{trial.service_name}</p>
                 <p className="text-xs text-slate-400">
-                  체험 종료 후 <span className="font-semibold text-slate-700">{fmtMoney(trial.cost_after_trial_krw)}</span>
+                  {tr("체험 종료 후")} <span className="font-semibold text-slate-700">{fmtMoney(trial.cost_after_trial_krw)}</span>
                 </p>
               </div>
             </div>

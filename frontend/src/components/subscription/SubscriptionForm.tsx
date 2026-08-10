@@ -327,7 +327,7 @@ export default function SubscriptionForm({
                     {plan.name}
                   </p>
                   <p className={`text-xs mt-0.5 ${isSelected ? "text-indigo-500" : "text-slate-400"}`}>
-                    {priceLabel}/월
+                    {priceLabel}{tr("/월")}
                   </p>
                 </button>
               );
@@ -415,11 +415,11 @@ export default function SubscriptionForm({
         </div>
         {form.member_count > 1 && Number(form.cost) > 0 && (
           <p className="mt-2 text-xs text-indigo-500 bg-indigo-50/50 rounded-lg px-3 py-2">
-            내 몫: {form.currency === "KRW"
+            {tr("내 몫")}: {form.currency === "KRW"
               ? fmtMoney(Math.round(Number(form.cost) / form.member_count))
               : `${(Number(form.cost) / form.member_count).toFixed(2)} ${form.currency}`}
             {" "}/ {form.billing_cycle === "monthly" ? tr("월") : form.billing_cycle === "yearly" ? tr("년") : form.billing_cycle === "weekly" ? tr("주") : tr("분기")}
-            {" "}· 대시보드·분석에는 내 몫만 반영됩니다
+            {" "}{tr("· 대시보드·분석에는 내 몫만 반영됩니다")}
           </p>
         )}
       </div>

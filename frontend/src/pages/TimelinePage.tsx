@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { ko, enUS } from "date-fns/locale";
 import { subscriptionApi } from "../api/subscriptions";
 import type { SubscriptionHistoryItem } from "../types/subscription";
-import { tr } from "../i18n/translations";
+import { tr, currentLang } from "../i18n/translations";
 
 function getEventIcon(event: SubscriptionHistoryItem): {
   icon: LucideIcon;
@@ -43,8 +43,10 @@ function getEventIcon(event: SubscriptionHistoryItem): {
 
 function RelativeTime({ dateStr }: { dateStr: string }) {
   const date = new Date(dateStr);
-  const relative = formatDistanceToNow(date, { addSuffix: true, locale: ko });
-  const absolute = format(date, "yyyy.MM.dd HH:mm", { locale: ko });
+  // 언어에 맞는 date-fns 로케일 (기본 ko 고정이면 영어 화면에서도 "3일 전"이 나온다)
+  const locale = currentLang() === "en" ? enUS : ko;
+  const relative = formatDistanceToNow(date, { addSuffix: true, locale });
+  const absolute = format(date, "yyyy.MM.dd HH:mm", { locale });
 
   return (
     <div className="text-right shrink-0">

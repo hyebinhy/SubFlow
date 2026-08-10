@@ -108,7 +108,7 @@ export default function DashboardPage() {
     : overlapCount > 0
       ? tr("비슷한 카테고리의 구독이 겹쳐 있어요. 하나로 묶거나 낮은 요금제를 검토해볼 만합니다.")
       : savingsEstimate > 0
-        ? `요금제 조정으로 월 최대 ${fmtMoney(savingsEstimate)}까지 줄일 수 있어요.`
+        ? tr("요금제 조정으로 월 최대 {a}까지 줄일 수 있어요.", { a: fmtMoney(savingsEstimate) })
         : tr("다가오는 결제와 가격 변동만 가볍게 확인하면 됩니다.");
 
   return (
@@ -145,7 +145,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold text-slate-700">{tr("절약 가능 금액")}</span>
                 <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700">
-                  월 {fmtMoney(savingsEstimate)}
+                  {tr("월 {a}", { a: fmtMoney(savingsEstimate) })}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-500">{tr("사용 빈도와 낮은 요금제를 기준으로 먼저 확인할 후보를 정리했어요.")}</p>

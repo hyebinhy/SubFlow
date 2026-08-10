@@ -71,12 +71,12 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
           </span>
         </p>
         <p className="mt-1 text-xs text-slate-400">
-          다음 결제: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
+          {tr("다음 결제")}: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
         </p>
         {subscription.member_count > 1 && (
           <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-700">
             <Users className="h-3 w-3" />
-            {subscription.member_count}명 분담 · 내 몫{" "}
+            {tr("{n}명 분담 · 내 몫", { n: subscription.member_count })}{" "}
             {new Intl.NumberFormat("ko-KR").format(
               Math.round(subscription.cost / subscription.member_count)
             )}{" "}

@@ -30,7 +30,7 @@ export default function OverlapWarning({ overlaps }: Props) {
                 <Folder className="h-3.5 w-3.5" />
               </span>
               <span className="text-sm font-semibold text-slate-800">{item.category}</span>
-              <span className="ml-auto text-sm font-bold text-slate-700">월 {fmtMoney(item.total_monthly_cost)}</span>
+              <span className="ml-auto text-sm font-bold text-slate-700">{tr("월 {a}", { a: fmtMoney(item.total_monthly_cost) })}</span>
             </div>
 
             <div className="mt-1.5 flex flex-wrap gap-1.5">

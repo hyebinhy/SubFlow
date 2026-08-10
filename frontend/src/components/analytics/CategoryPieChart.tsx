@@ -1,6 +1,6 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { CategoryBreakdown } from "../../types/analytics";
-import { tr } from "../../i18n/translations";
+import { tr, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   breakdown: CategoryBreakdown;
@@ -49,7 +49,7 @@ export default function CategoryPieChart({ breakdown }: Props) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value) => [`${new Intl.NumberFormat("ko-KRtr(").format(Number(value ?? 0))}원`, ")지출"]}
+            formatter={(value) => [fmtMoney(Number(value ?? 0)), tr("지출")]}
             contentStyle={{
               background: "rgba(255,255,255,0.94)",
               border: "0",

@@ -157,7 +157,7 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
           {/* 출처 (원문 링크) */}
           <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
             <span className="text-xs text-slate-400">
-              출처 · {item.source}
+              {tr("출처")} · {item.source}
             </span>
             <a
               href={item.link}
@@ -165,7 +165,7 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
               rel="noopener noreferrer"
               className="btn-primary-glass inline-flex items-center gap-2 px-4 py-2 text-sm"
             >
-              원문 보기
+              {tr("원문 보기")}
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

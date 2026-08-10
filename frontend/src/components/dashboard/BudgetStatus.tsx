@@ -50,7 +50,7 @@ export default function BudgetStatus({ budgetStatus }: Props) {
             </div>
           </div>
           <Link to="/settings" className="btn-primary-glass inline-flex shrink-0 items-center gap-1.5 px-4 py-2 text-sm">
-            설정하기
+            {tr("설정하기")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

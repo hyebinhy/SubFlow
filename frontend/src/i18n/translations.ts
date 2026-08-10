@@ -291,6 +291,8 @@ const EN: Record<string, string> = {
   "{n}개": "{n}",
   "{n}일 전": "{n}d ago",
   "{n}시간 전": "{n}h ago",
+  // 알림함의 "3일 전"(과거)과 설정의 "결제 3일 전"(예정)은 뜻이 달라 키를 분리한다
+  "결제 {n}일 전": "{n} days before",
   "{n}분 전": "{n}m ago",
   "{n}개월": "{n} months",
   "{n}년": "{n} years",
@@ -312,10 +314,23 @@ const EN: Record<string, string> = {
   "이번 달 남은 예산은 {amount}입니다.": "{amount} left in this month's budget.",
   "예산을 {amount} 초과했어요.": "You are {amount} over budget.",
   "현재 {a} / 기준 {b}": "{a} of {b}",
+  "{d} 결제": "Due {d}",
+  "{d} 결제 일정": "{d} schedule",
+  "{d}부터": "from {d}",
+  "월 최대 {a}": "up to {a}/mo",
+  "월 {a} 절약": "save {a}/mo",
+  "월 {a}": "{a}/mo",
+  "월 +{a}": "+{a}/mo",
+  "현재 환율: 1 USD = {a}": "Rate: 1 USD = {a}",
+  "요금제 조정으로 월 최대 {a}까지 줄일 수 있어요.": "Switching plans could save up to {a} a month.",
+  "{n}명 분담 · 내 몫": "Split {n} ways · your share",
+  "{n}개 요금제": "{n} plans",
+  "활성 {n} · 월 예상 비용": "{n} active · projected monthly",
+  "· 대시보드·분석에는 내 몫만 반영됩니다": "· only your share counts on the dashboard",
+  "내 몫": "Your share",
+  "출처": "Source",
   "중복 {a}건, 가격 변동 {b}건, 체험 만료 {c}건 기준입니다.":
     "Based on {a} duplicates, {b} price changes and {c} expiring trials.",
-  "요금제 조정으로 월 최대 {amount}원까지 줄일 수 있어요.":
-    "Switching plans could save up to {amount} a month.",
 };
 
 /**

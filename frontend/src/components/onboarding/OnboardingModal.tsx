@@ -97,7 +97,7 @@ export default function OnboardingModal({ onClose }: Props) {
               className={`h-2 rounded-full transition-all ${
                 i === step ? "w-6 bg-indigo-500" : "w-2 bg-slate-300 dark:bg-slate-600"
               }`}
-              aria-label={`${i + 1}번째 안내로 이동`}
+              aria-label={tr("{n}번째 안내로 이동", { n: i + 1 })}
             />
           ))}
         </div>

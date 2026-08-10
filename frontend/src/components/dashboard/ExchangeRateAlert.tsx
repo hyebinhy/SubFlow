@@ -34,7 +34,7 @@ export default function ExchangeRateAlert({ alerts }: Props) {
               <span className="rounded-xl bg-rose-100/80 px-2.5 py-0.5 text-xs font-bold text-rose-600">
                 +{alert.change_percentage.toFixed(1)}%
               </span>
-              <span className="text-sm font-semibold text-rose-600">월 +{fmtMoney(alert.extra_cost_krw)}</span>
+              <span className="text-sm font-semibold text-rose-600">{tr("월 +{a}", { a: fmtMoney(alert.extra_cost_krw) })}</span>
             </div>
           </div>
         ))}

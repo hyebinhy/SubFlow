@@ -66,7 +66,7 @@ export default function PriceChangeAlert({ alerts }: Props) {
                   {alert.change_percentage}%
                 </div>
                 <span className="text-[10px] text-slate-400">
-                  {format(new Date(alert.effective_date), "yyyy.MM.dd")}부터
+                  {tr("{d}부터", { d: format(new Date(alert.effective_date), "yyyy.MM.dd") })}
                 </span>
               </div>
             </div>

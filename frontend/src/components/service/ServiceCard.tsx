@@ -1,6 +1,6 @@
 import { CreditCard } from "lucide-react";
 import type { ServiceListItem } from "../../types/service";
-import { tr, fmtCount } from "../../i18n/translations";
+import { tr } from "../../i18n/translations";
 
 interface Props {
   service: ServiceListItem;
@@ -47,7 +47,7 @@ export default function ServiceCard({ service, onClick }: Props) {
       </div>
       <div className="shrink-0 text-right">
         <p className="text-sm font-semibold text-slate-900">{priceDisplay}</p>
-        <p className="text-xs text-slate-400">{fmtCount(service.plan_count, "개")} 요금제</p>
+        <p className="text-xs text-slate-400">{tr("{n}개 요금제", { n: service.plan_count })}</p>
       </div>
     </button>
   );

@@ -254,7 +254,7 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
         {selectedDate && selectedRenewals.length > 0 && (
           <div className="glass p-5">
             <p className="text-sm font-semibold text-indigo-500">
-              {format(selectedDate, tr("MM월 dd일"))} 결제
+              {tr("{d} 결제", { d: format(selectedDate, tr("MM월 dd일")) })}
             </p>
             <div className="mt-3 space-y-3">
               {selectedRenewals.map((entry) => (
@@ -290,7 +290,7 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
         {/* Monthly renewal list */}
         <div className="glass p-5">
           <p className="mb-3 text-sm font-semibold text-slate-900">
-            {format(currentMonth, tr("M월"))} 결제 일정
+            {tr("{d} 결제 일정", { d: format(currentMonth, tr("M월")) })}
           </p>
           {monthRenewals.length === 0 ? (
             <p className="text-sm text-slate-400">{tr("이번 달 결제 예정이 없습니다.")}</p>

@@ -164,7 +164,7 @@ export default function SettingsPage() {
                   >
                     {[1, 2, 3, 5, 7, 14].map((day) => (
                       <option key={day} value={day}>
-                        {day}일 전
+                        {tr("결제 {n}일 전", { n: day })}
                       </option>
                     ))}
                   </select>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Mail className="h-4 w-4" />
-                    이메일 {emailNotif ? tr("켜짐") : tr("꺼짐")}
+                    {tr("이메일")} {emailNotif ? tr("켜짐") : tr("꺼짐")}
                   </button>
                   <button
                     onClick={() => setPushNotif(!pushNotif)}
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Smartphone className="h-4 w-4" />
-                    앱 연동 {pushNotif ? tr("켜짐") : tr("꺼짐")}
+                    {tr("앱 연동")} {pushNotif ? tr("켜짐") : tr("꺼짐")}
                   </button>
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function SettingsPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl bg-white/50 p-4">
               <p className="text-xs text-slate-400">{tr("알림 시점")}</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">{notifyDays}일 전</p>
+              <p className="mt-1 text-lg font-bold text-slate-900">{tr("결제 {n}일 전", { n: notifyDays })}</p>
             </div>
             <div className="rounded-2xl bg-white/50 p-4">
               <p className="text-xs text-slate-400">{tr("이메일")}</p>

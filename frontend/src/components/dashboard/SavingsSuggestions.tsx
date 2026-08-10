@@ -19,7 +19,7 @@ export default function SavingsSuggestions({ suggestions, totalSavings }: Props)
         </div>
         <h3 className="text-lg font-semibold text-slate-900">{tr("절약 제안")}</h3>
         <span className="ml-auto rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-          월 최대 {fmtMoney(totalSavings)}
+          {tr("월 최대 {a}", { a: fmtMoney(totalSavings) })}
         </span>
       </div>
 
@@ -41,7 +41,7 @@ export default function SavingsSuggestions({ suggestions, totalSavings }: Props)
                     )}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    현재 <span className="font-semibold text-slate-700">{fmtMoney(item.current_monthly_krw)}</span>
+                    {tr("현재")} <span className="font-semibold text-slate-700">{fmtMoney(item.current_monthly_krw)}</span>
                     {" -> "}
                     {cheapest.plan_name}{" "}
                     <span className="font-semibold text-slate-700">{fmtMoney(cheapest.monthly_cost_krw)}</span>
@@ -49,7 +49,7 @@ export default function SavingsSuggestions({ suggestions, totalSavings }: Props)
                 </div>
 
                 <span className="shrink-0 rounded-xl bg-emerald-100/80 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
-                  월 {fmtMoney(item.max_savings_krw)} 절약
+                  {tr("월 {a} 절약", { a: fmtMoney(item.max_savings_krw) })}
                 </span>
               </div>
             </div>

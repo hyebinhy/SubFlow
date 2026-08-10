@@ -42,7 +42,7 @@ export default function SpendingTrendChart({ trend }: Props) {
   const forecastData = trend.data.filter((d) => d.is_forecast);
 
   const allData = trend.data.map((d) => ({
-    name: `${d.month}월`,
+    name: tr("{n}월", { n: d.month }),
     actual: d.is_forecast ? undefined : Number(d.total),
     forecast: d.is_forecast ? Number(d.total) : undefined,
     total: Number(d.total),
@@ -131,7 +131,7 @@ export default function SpendingTrendChart({ trend }: Props) {
           />
           {forecastData.length > 0 && (
             <ReferenceDot
-              x={`${forecastData[0].month}월`}
+              x={tr("{n}월", { n: forecastData[0].month })}
               y={Number(forecastData[0].total)}
               r={0}
               label={<ForecastLabel />}

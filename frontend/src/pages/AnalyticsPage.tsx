@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
             </p>
             {overview.most_expensive && (
               <p className="text-sm text-slate-400">
-                월 {fmtMoney(overview.most_expensive.monthly_cost)}
+                {tr("월 {a}", { a: fmtMoney(overview.most_expensive.monthly_cost) })}
               </p>
             )}
           </div>
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
           <ExchangeRateAlert alerts={exchangeRateAlerts.alerts} />
           {exchangeRateAlerts.current_usd_krw && (
             <p className="mt-2 text-xs text-slate-400">
-              현재 환율: 1 USD = {fmtMoney(exchangeRateAlerts.current_usd_krw)}
+              {tr("현재 환율: 1 USD = {a}", { a: fmtMoney(exchangeRateAlerts.current_usd_krw) })}
             </p>
           )}
         </div>
