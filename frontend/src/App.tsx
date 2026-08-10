@@ -11,10 +11,15 @@ import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import ServicesPage from "./pages/ServicesPage";
 import TimelinePage from "./pages/TimelinePage";
+import { useSettingsStore } from "./store/settingsStore";
 
 export default function App() {
+  // 언어가 바뀌면 트리를 통째로 다시 그린다. 덕분에 화면마다 훅을 심지 않고
+  // 모듈 함수 tr()만으로 번역이 반영된다.
+  const language = useSettingsStore((s) => s.language);
+
   return (
-    <BrowserRouter>
+    <BrowserRouter key={language}>
       <Toaster position="top-right" />
       <Routes>
         <Route path="/login" element={<LoginPage />} />

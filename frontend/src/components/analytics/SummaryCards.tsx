@@ -1,34 +1,34 @@
 import { format } from "date-fns";
 import type { DashboardOverview } from "../../types/analytics";
+import { tr, fmtMoney, fmtCount } from "../../i18n/translations";
 
 interface Props {
   overview: DashboardOverview;
 }
 
 export default function SummaryCards({ overview }: Props) {
-  const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
   const cards = [
     {
-      label: "활성 구독",
-      value: `${overview.total_active_subscriptions}개`,
+      label: tr("활성 구독"),
+      value: fmtCount(overview.total_active_subscriptions, "개"),
       color: "bg-blue-500/10 text-blue-600",
     },
     {
-      label: "월 예상 비용",
-      value: `${fmt(overview.total_monthly_cost)}원`,
+      label: tr("월 예상 비용"),
+      value: fmtMoney(overview.total_monthly_cost),
       color: "bg-emerald-500/10 text-emerald-600",
     },
     {
-      label: "연 예상 비용",
-      value: `${fmt(overview.total_yearly_cost)}원`,
+      label: tr("연 예상 비용"),
+      value: fmtMoney(overview.total_yearly_cost),
       color: "bg-purple-500/10 text-purple-600",
     },
     {
-      label: "다음 결제",
+      label: tr("다음 결제"),
       value: overview.next_renewal
         ? `${overview.next_renewal.service_name} (${format(new Date(overview.next_renewal.next_billing_date), "MM.dd")})`
-        : "없음",
+        : tr("없음"),
       color: "bg-orange-500/10 text-orange-500",
     },
   ];

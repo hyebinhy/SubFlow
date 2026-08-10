@@ -1,23 +1,25 @@
 import type { ServicePlan } from "../../types/service";
+import { tr } from "../../i18n/translations";
 
 interface Props {
   plans: ServicePlan[];
   onSelect: (plan: ServicePlan) => void;
 }
 
-const cycleLabels: Record<string, string> = {
-  monthly: "/월",
-  yearly: "/년",
-  weekly: "/주",
-  quarterly: "/분기",
-};
+// 언어 변경이 반영되도록 상수가 아니라 호출 시점에 만든다
+const cycleLabels = (): Record<string, string> => ({
+  monthly: tr("/월"),
+  yearly: tr("/년"),
+  weekly: tr("/주"),
+  quarterly: tr("/분기"),
+});
 
 export default function PlanSelector({ plans, onSelect }: Props) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {plans.map((plan) => {
         const price = new Intl.NumberFormat("ko-KR").format(plan.price);
-        const unit = plan.currency === "KRW" ? "원" : "$";
+        const unit = plan.currency === "KRW" ? tr("원") : "$";
         const isUsd = plan.currency === "USD";
 
         return (
@@ -32,7 +34,7 @@ export default function PlanSelector({ plans, onSelect }: Props) {
               {price}
               {!isUsd && unit}
               <span className="text-sm font-normal text-slate-400">
-                {cycleLabels[plan.billing_cycle]}
+                {cycleLabels()[plan.billing_cycle]}
               </span>
             </p>
             {plan.description && (

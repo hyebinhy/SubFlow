@@ -4,10 +4,9 @@ import toast from "react-hot-toast";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import BrandLogo from "../BrandLogo";
-import { useTranslation } from "../../hooks/useTranslation";
+import { tr } from "../../i18n/translations";
 
 export default function LoginForm() {
-  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,16 +21,16 @@ export default function LoginForm() {
       login(tokens.access_token, tokens.refresh_token);
       const user = await authApi.getMe();
       setUser(user);
-      toast.success(t("로그인 성공!"));
+      toast.success(tr("로그인 성공!"));
       navigate("/");
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404) {
-        toast.error(t("등록되지 않은 회원입니다. 회원가입을 먼저 진행해주세요."));
+        toast.error(tr("등록되지 않은 회원입니다. 회원가입을 먼저 진행해주세요."));
       } else if (status === 401) {
-        toast.error(t("비밀번호가 올바르지 않습니다."));
+        toast.error(tr("비밀번호가 올바르지 않습니다."));
       } else {
-        toast.error(t("로그인에 실패했습니다. 다시 시도해주세요."));
+        toast.error(tr("로그인에 실패했습니다. 다시 시도해주세요."));
       }
     } finally {
       setLoading(false);
@@ -45,7 +44,7 @@ export default function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-500">
-              {t("이메일")}
+              {tr("이메일")}
             </label>
             <input
               type="email"
@@ -60,7 +59,7 @@ export default function LoginForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500">
-              {t("비밀번호")}
+              {tr("비밀번호")}
             </label>
             <input
               type="password"
@@ -78,13 +77,13 @@ export default function LoginForm() {
             disabled={loading}
             className="btn-primary-glass w-full px-4 py-2 font-medium disabled:opacity-50"
           >
-            {loading ? t("로그인 중...") : t("로그인")}
+            {loading ? tr("로그인 중...") : tr("로그인")}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-slate-500">
-          {t("계정이 없으신가요?")}{" "}
+          {tr("계정이 없으신가요?")}{" "}
           <Link to="/register" className="text-blue-600 hover:underline">
-            {t("회원가입")}
+            {tr("회원가입")}
           </Link>
         </p>
       </div>

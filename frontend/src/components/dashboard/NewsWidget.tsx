@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { getNewsSummary } from "../../api/news";
 import type { NewsItem } from "../../api/news";
+import { tr } from "../../i18n/translations";
 
 interface NewsWidgetProps {
   news: NewsItem[];
@@ -25,7 +26,7 @@ function formatDate(raw: string): string {
 
 function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
   const isAI = item.category === "AI Updates";
-  const label = isAI ? "AI 소식" : "구독 알림";
+  const label = isAI ? tr("AI 소식") : tr("구독 알림");
   const date = formatDate(item.pub_date);
 
   const [summary, setSummary] = useState<string | null>(null);
@@ -79,7 +80,7 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="닫기"
+          aria-label={tr("닫기")}
           className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-slate-600 shadow-sm transition hover:bg-white"
         >
           <X className="h-4 w-4" />
@@ -112,9 +113,7 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
               {label}
             </span>
             {item.matched && (
-              <span className="rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-semibold text-white">
-                내 구독
-              </span>
+              <span className="rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-semibold text-white">{tr("내 구독")}</span>
             )}
           </div>
         </div>
@@ -138,23 +137,19 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
           <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
             {summaryMode === "loading" && (
               <div className="flex items-center gap-2 text-slate-400">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
-                AI 요약 생성 중…
-              </div>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />{tr("AI 요약 생성 중…")}</div>
             )}
             {summaryMode === "ai" && (
               <div className="space-y-2">
-                <span className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
-                  AI 요약 · 헤드라인 기반
-                </span>
+                <span className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">{tr("AI 요약 · 헤드라인 기반")}</span>
                 <p className="whitespace-pre-line">{summary}</p>
               </div>
             )}
             {summaryMode === "unavailable" && (
               <p className="text-slate-500">
                 {isAI
-                  ? "AI가 이 소식의 핵심을 요약한 제목이에요. 전체 기사는 원문에서 확인하세요."
-                  : "구독 서비스 관련 소식이에요. 자세한 내용은 원문에서 확인하세요."}
+                  ? tr("AI가 이 소식의 핵심을 요약한 제목이에요. 전체 기사는 원문에서 확인하세요.")
+                  : tr("구독 서비스 관련 소식이에요. 자세한 내용은 원문에서 확인하세요.")}
               </p>
             )}
           </div>
@@ -193,17 +188,13 @@ export default function NewsWidget({ news, loading, error }: NewsWidgetProps) {
 
   if (error) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-3xl bg-rose-50 p-5 text-sm text-rose-500 shadow-sm">
-        소식을 불러오지 못했습니다.
-      </div>
+      <div className="flex h-48 items-center justify-center rounded-3xl bg-rose-50 p-5 text-sm text-rose-500 shadow-sm">{tr("소식을 불러오지 못했습니다.")}</div>
     );
   }
 
   if (!news || news.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-3xl bg-white/70 p-5 text-sm text-slate-500 shadow-sm">
-        최신 소식이 없습니다.
-      </div>
+      <div className="flex h-48 items-center justify-center rounded-3xl bg-white/70 p-5 text-sm text-slate-500 shadow-sm">{tr("최신 소식이 없습니다.")}</div>
     );
   }
 
@@ -215,7 +206,7 @@ export default function NewsWidget({ news, loading, error }: NewsWidgetProps) {
           const bgClass = isAI
             ? "bg-gradient-to-br from-indigo-900 to-slate-900 text-white"
             : "bg-white text-slate-900";
-          const label = isAI ? "AI 소식" : "구독 알림";
+          const label = isAI ? tr("AI 소식") : tr("구독 알림");
 
           return (
             <button
@@ -246,9 +237,7 @@ export default function NewsWidget({ news, loading, error }: NewsWidgetProps) {
                   {label}
                 </span>
                 {item.matched && (
-                  <span className="rounded-full bg-emerald-500/90 px-2 py-1 text-[10px] font-semibold text-white">
-                    내 구독
-                  </span>
+                  <span className="rounded-full bg-emerald-500/90 px-2 py-1 text-[10px] font-semibold text-white">{tr("내 구독")}</span>
                 )}
               </div>
 

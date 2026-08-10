@@ -10,6 +10,7 @@ import type { Category } from "../types/category";
 import ServiceCard from "../components/service/ServiceCard";
 import ServiceDetail from "../components/service/ServiceDetail";
 import SubscriptionModal from "../components/subscription/SubscriptionModal";
+import { tr } from "../i18n/translations";
 
 export default function ServicesPage() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function ServicesPage() {
       setServices(svcs);
       setCategories(cats);
     } catch {
-      toast.error("서비스 목록을 불러오는데 실패했습니다.");
+      toast.error(tr("서비스 목록을 불러오는데 실패했습니다."));
     } finally {
       setLoading(false);
     }
@@ -64,11 +65,11 @@ export default function ServicesPage() {
         start_date: startDate,
         next_billing_date: nextDate,
       });
-      toast.success("구독이 등록되었습니다!");
+      toast.success(tr("구독이 등록되었습니다!"));
       setSubscribing(null);
       navigate("/subscriptions");
     } catch {
-      toast.error("구독 등록에 실패했습니다.");
+      toast.error(tr("구독 등록에 실패했습니다."));
     } finally {
       setSaving(false);
     }
@@ -78,7 +79,7 @@ export default function ServicesPage() {
   if (selectedServiceId) {
     return (
       <div>
-        <h2 className="mb-6 text-2xl font-bold text-slate-900">서비스 상세</h2>
+        <h2 className="mb-6 text-2xl font-bold text-slate-900">{tr("서비스 상세")}</h2>
         <ServiceDetail
           serviceId={selectedServiceId}
           onBack={() => setSelectedServiceId(null)}
@@ -91,7 +92,7 @@ export default function ServicesPage() {
         <SubscriptionModal
           isOpen={!!subscribing}
           onClose={() => setSubscribing(null)}
-          title="구독 등록"
+          title={tr("구독 등록")}
         >
           {subscribing && (
             <div className="space-y-4">
@@ -102,16 +103,14 @@ export default function ServicesPage() {
                 <p className="text-2xl font-bold text-blue-700">
                   {subscribing.plan.currency === "USD" && "$"}
                   {new Intl.NumberFormat("ko-KR").format(subscribing.plan.price)}
-                  {subscribing.plan.currency === "KRW" && "원"}
+                  {subscribing.plan.currency === "KRW" && tr("원")}
                   <span className="text-sm font-normal text-blue-500">
-                    /{subscribing.plan.billing_cycle === "monthly" ? "월" : subscribing.plan.billing_cycle === "yearly" ? "년" : subscribing.plan.billing_cycle}
+                    /{subscribing.plan.billing_cycle === "monthly" ? tr("월") : subscribing.plan.billing_cycle === "yearly" ? tr("년") : subscribing.plan.billing_cycle}
                   </span>
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-500">
-                  구독 시작일
-                </label>
+                <label className="block text-sm font-medium text-slate-500">{tr("구독 시작일")}</label>
                 <input
                   type="date"
                   value={startDate}
@@ -120,9 +119,7 @@ export default function ServicesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-500">
-                  다음 결제일
-                </label>
+                <label className="block text-sm font-medium text-slate-500">{tr("다음 결제일")}</label>
                 <input
                   type="date"
                   value={nextDate}
@@ -134,15 +131,13 @@ export default function ServicesPage() {
                 <button
                   onClick={() => setSubscribing(null)}
                   className="btn-secondary-glass px-4 py-2 text-sm font-medium"
-                >
-                  취소
-                </button>
+                >{tr("취소")}</button>
                 <button
                   onClick={handleSubscribe}
                   disabled={saving}
                   className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
-                  {saving ? "등록 중..." : "구독 등록"}
+                  {saving ? tr("등록 중...") : tr("구독 등록")}
                 </button>
               </div>
             </div>
@@ -155,7 +150,7 @@ export default function ServicesPage() {
   // Service list view
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-900">서비스 탐색</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-900">{tr("서비스 탐색")}</h2>
 
       {/* Search & Filter */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row">
@@ -166,7 +161,7 @@ export default function ServicesPage() {
             setSearch(e.target.value);
             setSelectedCategory(undefined);
           }}
-          placeholder="서비스 검색 (예: Netflix, Spotify...)"
+          placeholder={tr("서비스 검색 (예: Netflix, Spotify...)")}
           className="glass-input flex-1 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -183,9 +178,7 @@ export default function ServicesPage() {
               ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
               : "glass text-slate-500 hover:bg-white/40"
           }`}
-        >
-          전체
-        </button>
+        >{tr("전체")}</button>
         {categories.map((cat) => (
           <button
             key={cat.id}
@@ -214,7 +207,7 @@ export default function ServicesPage() {
         </div>
       ) : services.length === 0 ? (
         <div className="glass py-12 text-center">
-          <p className="text-slate-400">검색 결과가 없습니다.</p>
+          <p className="text-slate-400">{tr("검색 결과가 없습니다.")}</p>
         </div>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">

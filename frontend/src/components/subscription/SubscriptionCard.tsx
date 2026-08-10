@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { CreditCard, ExternalLink, Pencil, Trash2, Users } from "lucide-react";
 import type { Subscription } from "../../types/subscription";
+import { tr } from "../../i18n/translations";
 
 interface Props {
   subscription: Subscription;
@@ -15,19 +16,21 @@ const statusColors: Record<string, string> = {
   trial: "bg-indigo-500/10 text-indigo-700",
 };
 
-const statusLabels: Record<string, string> = {
-  active: "활성",
-  paused: "일시정지",
-  cancelled: "취소됨",
-  trial: "체험 중",
-};
+// 언어 변경이 반영되도록 상수가 아니라 호출 시점에 만든다
+const statusLabels = (): Record<string, string> => ({
+  active: tr("활성"),
+  paused: tr("일시정지"),
+  cancelled: tr("취소됨"),
+  trial: tr("체험 중"),
+});
 
-const cycleLabels: Record<string, string> = {
-  monthly: "월",
-  yearly: "년",
-  weekly: "주",
-  quarterly: "분기",
-};
+// 언어 변경이 반영되도록 상수가 아니라 호출 시점에 만든다
+const cycleLabels = (): Record<string, string> => ({
+  monthly: tr("월"),
+  yearly: tr("년"),
+  weekly: tr("주"),
+  quarterly: tr("분기"),
+});
 
 export default function SubscriptionCard({ subscription, onEdit, onDelete }: Props) {
   const costDisplay = new Intl.NumberFormat("ko-KR").format(subscription.cost);
@@ -52,11 +55,11 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
           )}
           <div className="min-w-0">
             <h3 className="truncate font-semibold text-slate-900">{subscription.service_name}</h3>
-            <p className="truncate text-xs text-slate-400">{subscription.category?.name ?? "미분류"}</p>
+            <p className="truncate text-xs text-slate-400">{subscription.category?.name ?? tr("미분류")}</p>
           </div>
         </div>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[subscription.status]}`}>
-          {statusLabels[subscription.status]}
+          {statusLabels()[subscription.status]}
         </span>
       </div>
 
@@ -64,7 +67,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
         <p className="text-2xl font-bold text-slate-900">
           {costDisplay}
           <span className="text-sm font-normal text-slate-400">
-            {" "}{subscription.currency}/{cycleLabels[subscription.billing_cycle]}
+            {" "}{subscription.currency}/{cycleLabels()[subscription.billing_cycle]}
           </span>
         </p>
         <p className="mt-1 text-xs text-slate-400">
@@ -77,7 +80,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
             {new Intl.NumberFormat("ko-KR").format(
               Math.round(subscription.cost / subscription.member_count)
             )}{" "}
-            {subscription.currency}/{cycleLabels[subscription.billing_cycle]}
+            {subscription.currency}/{cycleLabels()[subscription.billing_cycle]}
           </p>
         )}
       </div>
@@ -87,9 +90,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
           onClick={() => onEdit(subscription)}
           className="btn-secondary-glass inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
         >
-          <Pencil className="h-3.5 w-3.5" />
-          수정
-        </button>
+          <Pencil className="h-3.5 w-3.5" />{tr("수정")}</button>
         {subscription.service?.cancel_url && subscription.status === "active" && (
           <a
             href={subscription.service.cancel_url}
@@ -97,17 +98,13 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
             rel="noopener noreferrer"
             className="btn-warning-glass inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-            해지하기
-          </a>
+            <ExternalLink className="h-3.5 w-3.5" />{tr("해지하기")}</a>
         )}
         <button
           onClick={() => onDelete(subscription.id)}
           className="btn-danger-glass inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          삭제
-        </button>
+          <Trash2 className="h-3.5 w-3.5" />{tr("삭제")}</button>
       </div>
     </div>
   );

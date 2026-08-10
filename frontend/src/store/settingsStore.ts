@@ -22,10 +22,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setLanguage: (language) => {
     localStorage.setItem(STORAGE_KEY, language);
     document.documentElement.lang = language;
+    (globalThis as { __subflowLang?: Language }).__subflowLang = language;
     set({ language });
   },
 
   toggleLanguage: () => get().setLanguage(get().language === "ko" ? "en" : "ko"),
 }));
 
-document.documentElement.lang = useSettingsStore.getState().language;
+const initial = useSettingsStore.getState().language;
+document.documentElement.lang = initial;
+// 훅 없이 쓰는 tr()이 읽어가는 값. 스토어와 항상 같이 움직인다.
+(globalThis as { __subflowLang?: Language }).__subflowLang = initial;

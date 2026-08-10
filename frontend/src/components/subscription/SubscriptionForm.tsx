@@ -8,6 +8,7 @@ import type {
   SubscriptionStatus,
 } from "../../types/subscription";
 import { serviceApi } from "../../api/services";
+import { tr, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   categories: Category[];
@@ -163,9 +164,7 @@ export default function SubscriptionForm({
       {/* Service Selection */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-slate-500">
-            서비스 *
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("서비스 *")}</label>
           <button
             type="button"
             onClick={() => {
@@ -179,7 +178,7 @@ export default function SubscriptionForm({
             }}
             className="text-xs text-blue-500 hover:underline"
           >
-            {useCustom ? "카탈로그에서 선택" : "직접 입력"}
+            {useCustom ? tr("카탈로그에서 선택") : tr("직접 입력")}
           </button>
         </div>
 
@@ -190,7 +189,7 @@ export default function SubscriptionForm({
             onChange={(e) => setForm({ ...form, service_name: e.target.value })}
             required
             className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="서비스 이름을 입력하세요"
+            placeholder={tr("서비스 이름을 입력하세요")}
           />
         ) : (
           <div ref={dropdownRef} className="relative mt-1">
@@ -218,7 +217,7 @@ export default function SubscriptionForm({
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-slate-400">서비스를 선택하세요</span>
+                <span className="text-sm text-slate-400">{tr("서비스를 선택하세요")}</span>
               )}
               <svg
                 className={`ml-auto h-4 w-4 text-slate-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
@@ -280,7 +279,7 @@ export default function SubscriptionForm({
                         {svc.min_price != null && (
                           <p className="text-xs text-slate-400">
                             {svc.currency === "KRW"
-                              ? `${new Intl.NumberFormat("ko-KR").format(svc.min_price)}원~`
+                              ? `${fmtMoney(svc.min_price)}~`
                               : `$${svc.min_price}~`}
                           </p>
                         )}
@@ -302,15 +301,13 @@ export default function SubscriptionForm({
       {/* Plan Selection */}
       {!useCustom && serviceDetail && serviceDetail.plans.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            플랜 *
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("플랜 *")}</label>
           <div className="mt-1 grid grid-cols-2 gap-2">
             {serviceDetail.plans.filter((p) => p.is_active).map((plan) => {
               const isSelected = selectedPlanId === plan.id;
               const priceLabel =
                 plan.currency === "KRW"
-                  ? `${new Intl.NumberFormat("ko-KR").format(plan.price)}원`
+                  ? fmtMoney(plan.price)
                   : new Intl.NumberFormat("en-US", {
                       style: "currency",
                       currency: plan.currency,
@@ -341,9 +338,7 @@ export default function SubscriptionForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            비용 *
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("비용 *")}</label>
           <input
             type="number"
             value={form.cost}
@@ -356,9 +351,7 @@ export default function SubscriptionForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            결제 주기 *
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("결제 주기 *")}</label>
           <select
             value={form.billing_cycle}
             onChange={(e) =>
@@ -369,19 +362,17 @@ export default function SubscriptionForm({
             }
             className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="monthly">월간</option>
-            <option value="yearly">연간</option>
-            <option value="weekly">주간</option>
-            <option value="quarterly">분기</option>
+            <option value="monthly">{tr("월간")}</option>
+            <option value="yearly">{tr("연간")}</option>
+            <option value="weekly">{tr("주간")}</option>
+            <option value="quarterly">{tr("분기")}</option>
           </select>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            시작일
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("시작일")}</label>
           <input
             type="date"
             value={form.start_date}
@@ -390,9 +381,7 @@ export default function SubscriptionForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            다음 결제일
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("다음 결제일")}</label>
           <input
             type="date"
             value={form.next_billing_date}
@@ -406,9 +395,7 @@ export default function SubscriptionForm({
 
       {/* 공유/가족 분담 */}
       <div>
-        <label className="block text-sm font-medium text-slate-500">
-          함께 쓰는 인원 (비용 분담)
-        </label>
+        <label className="block text-sm font-medium text-slate-500">{tr("함께 쓰는 인원 (비용 분담)")}</label>
         <div className="mt-1 flex items-center gap-3">
           <input
             type="number"
@@ -424,14 +411,14 @@ export default function SubscriptionForm({
             step="1"
             className="glass-input block w-24 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
-          <span className="text-sm text-slate-400">명이 나눠서 사용</span>
+          <span className="text-sm text-slate-400">{tr("명이 나눠서 사용")}</span>
         </div>
         {form.member_count > 1 && Number(form.cost) > 0 && (
           <p className="mt-2 text-xs text-indigo-500 bg-indigo-50/50 rounded-lg px-3 py-2">
             내 몫: {form.currency === "KRW"
-              ? `${new Intl.NumberFormat("ko-KR").format(Math.round(Number(form.cost) / form.member_count))}원`
+              ? fmtMoney(Math.round(Number(form.cost) / form.member_count))
               : `${(Number(form.cost) / form.member_count).toFixed(2)} ${form.currency}`}
-            {" "}/ {form.billing_cycle === "monthly" ? "월" : form.billing_cycle === "yearly" ? "년" : form.billing_cycle === "weekly" ? "주" : "분기"}
+            {" "}/ {form.billing_cycle === "monthly" ? tr("월") : form.billing_cycle === "yearly" ? tr("년") : form.billing_cycle === "weekly" ? tr("주") : tr("분기")}
             {" "}· 대시보드·분석에는 내 몫만 반영됩니다
           </p>
         )}
@@ -439,9 +426,7 @@ export default function SubscriptionForm({
 
       {/* 결제 유형 */}
       <div>
-        <label className="block text-sm font-medium text-slate-500 mb-2">
-          결제 유형
-        </label>
+        <label className="block text-sm font-medium text-slate-500 mb-2">{tr("결제 유형")}</label>
         <div className="glass-input inline-flex rounded-full p-1">
           <button
             type="button"
@@ -451,9 +436,7 @@ export default function SubscriptionForm({
                 ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
                 : "text-slate-500 hover:text-slate-700"
             }`}
-          >
-            정기 결제
-          </button>
+          >{tr("정기 결제")}</button>
           <button
             type="button"
             onClick={() => setForm({ ...form, is_recurring: false })}
@@ -462,17 +445,13 @@ export default function SubscriptionForm({
                 ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
                 : "text-slate-500 hover:text-slate-700"
             }`}
-          >
-            일회성 결제
-          </button>
+          >{tr("일회성 결제")}</button>
         </div>
 
         {!form.is_recurring && (
           <div className="mt-3 glass rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-700">
-                해지 알림이 필요하신가요?
-              </span>
+              <span className="text-sm font-medium text-slate-700">{tr("해지 알림이 필요하신가요?")}</span>
               <button
                 type="button"
                 onClick={() => setForm({ ...form, cancel_reminder: !form.cancel_reminder })}
@@ -488,9 +467,7 @@ export default function SubscriptionForm({
               </button>
             </div>
             {form.cancel_reminder && (
-              <p className="text-xs text-indigo-500 bg-indigo-50/50 rounded-lg px-3 py-2">
-                결제 3일 전, 1일 전, 당일에 알림을 보내드립니다
-              </p>
+              <p className="text-xs text-indigo-500 bg-indigo-50/50 rounded-lg px-3 py-2">{tr("결제 3일 전, 1일 전, 당일에 알림을 보내드립니다")}</p>
             )}
           </div>
         )}
@@ -498,9 +475,7 @@ export default function SubscriptionForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            카테고리
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("카테고리")}</label>
           <select
             value={form.category_id ?? ""}
             onChange={(e) =>
@@ -511,7 +486,7 @@ export default function SubscriptionForm({
             }
             className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="">선택 안함</option>
+            <option value="">{tr("선택 안함")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icon} {c.name}
@@ -520,9 +495,7 @@ export default function SubscriptionForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-500">
-            상태
-          </label>
+          <label className="block text-sm font-medium text-slate-500">{tr("상태")}</label>
           <select
             value={form.status}
             onChange={(e) =>
@@ -533,22 +506,22 @@ export default function SubscriptionForm({
             }
             className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="active">활성</option>
-            <option value="trial">체험판</option>
-            <option value="paused">일시정지</option>
-            <option value="cancelled">취소됨</option>
+            <option value="active">{tr("활성")}</option>
+            <option value="trial">{tr("체험판")}</option>
+            <option value="paused">{tr("일시정지")}</option>
+            <option value="cancelled">{tr("취소됨")}</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-500">메모</label>
+        <label className="block text-sm font-medium text-slate-500">{tr("메모")}</label>
         <textarea
           value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
           rows={2}
           className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="프리미엄 플랜, 가족 공유 등..."
+          placeholder={tr("프리미엄 플랜, 가족 공유 등...")}
         />
       </div>
 
@@ -557,15 +530,13 @@ export default function SubscriptionForm({
           type="button"
           onClick={onCancel}
           className="btn-secondary-glass px-4 py-2 text-sm font-medium"
-        >
-          취소
-        </button>
+        >{tr("취소")}</button>
         <button
           type="submit"
           disabled={loading}
           className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
-          {loading ? "저장 중..." : initial ? "수정" : "추가"}
+          {loading ? tr("저장 중...") : initial ? tr("수정") : tr("추가")}
         </button>
       </div>
     </form>

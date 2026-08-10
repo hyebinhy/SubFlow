@@ -3,6 +3,7 @@ import { CreditCard } from "lucide-react";
 import { serviceApi } from "../../api/services";
 import type { Service, ServicePlan } from "../../types/service";
 import PlanSelector from "./PlanSelector";
+import { tr } from "../../i18n/translations";
 
 interface Props {
   serviceId: number;
@@ -22,7 +23,7 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
       .getById(serviceId)
       .then(setService)
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "서비스 정보를 불러오는데 실패했습니다.");
+        setError(err instanceof Error ? err.message : tr("서비스 정보를 불러오는데 실패했습니다."));
       })
       .finally(() => setLoading(false));
   }, [serviceId]);
@@ -41,9 +42,7 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
         <button
           onClick={onBack}
           className="mb-4 text-sm text-slate-400 hover:text-slate-500"
-        >
-          &larr; 서비스 목록으로
-        </button>
+        >{tr("&larr; 서비스 목록으로")}</button>
         <div className="glass border-red-200/60 bg-red-50/50 p-4 text-red-700">
           {error}
         </div>
@@ -58,9 +57,7 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
       <button
         onClick={onBack}
         className="mb-4 text-sm text-slate-400 hover:text-slate-500"
-      >
-        &larr; 서비스 목록으로
-      </button>
+      >{tr("&larr; 서비스 목록으로")}</button>
 
       <div className="glass p-6">
         <div className="flex items-center gap-4">
@@ -87,17 +84,13 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-blue-500 hover:underline"
-              >
-                공식 사이트 &rarr;
-              </a>
+              >{tr("공식 사이트 &rarr;")}</a>
             )}
           </div>
         </div>
 
         <div className="mt-6">
-          <h3 className="mb-3 text-lg font-semibold text-slate-900">
-            요금제 선택
-          </h3>
+          <h3 className="mb-3 text-lg font-semibold text-slate-900">{tr("요금제 선택")}</h3>
           <PlanSelector
             plans={service.plans.filter((p) => p.is_active)}
             onSelect={(plan) => onSubscribe(service.id, plan)}

@@ -1,12 +1,12 @@
 import { Sparkles } from "lucide-react";
 import type { SavingSuggestionItem } from "../../types/analytics";
+import { tr, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   suggestions: SavingSuggestionItem[];
   totalSavings: number;
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
 export default function SavingsSuggestions({ suggestions, totalSavings }: Props) {
   if (suggestions.length === 0) return null;
@@ -17,9 +17,9 @@ export default function SavingsSuggestions({ suggestions, totalSavings }: Props)
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100/80 text-emerald-600">
           <Sparkles className="h-4 w-4" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">절약 제안</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tr("절약 제안")}</h3>
         <span className="ml-auto rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-          월 최대 {fmt(totalSavings)}원
+          월 최대 {fmtMoney(totalSavings)}
         </span>
       </div>
 
@@ -41,15 +41,15 @@ export default function SavingsSuggestions({ suggestions, totalSavings }: Props)
                     )}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    현재 <span className="font-semibold text-slate-700">{fmt(item.current_monthly_krw)}원</span>
+                    현재 <span className="font-semibold text-slate-700">{fmtMoney(item.current_monthly_krw)}</span>
                     {" -> "}
                     {cheapest.plan_name}{" "}
-                    <span className="font-semibold text-slate-700">{fmt(cheapest.monthly_cost_krw)}원</span>
+                    <span className="font-semibold text-slate-700">{fmtMoney(cheapest.monthly_cost_krw)}</span>
                   </p>
                 </div>
 
                 <span className="shrink-0 rounded-xl bg-emerald-100/80 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
-                  월 {fmt(item.max_savings_krw)}원 절약
+                  월 {fmtMoney(item.max_savings_krw)} 절약
                 </span>
               </div>
             </div>

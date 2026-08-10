@@ -7,6 +7,7 @@ import {
   PiggyBank,
   type LucideIcon,
 } from "lucide-react";
+import { tr } from "../../i18n/translations";
 
 interface Step {
   icon: LucideIcon;
@@ -14,30 +15,31 @@ interface Step {
   description: string;
 }
 
-const STEPS: Step[] = [
+// 언어 변경이 반영되도록 상수가 아니라 호출 시점에 만든다
+const STEPS = (): Step[] => [
   {
     icon: CreditCard,
-    title: "구독을 한곳에 모아보세요",
+    title: tr("구독을 한곳에 모아보세요"),
     description:
-      "넷플릭스, 유튜브, 스포티파이처럼 흩어진 정기 결제를 한 화면에서 관리해요. 카탈로그에서 고르거나 직접 입력할 수 있어요.",
+      tr("넷플릭스, 유튜브, 스포티파이처럼 흩어진 정기 결제를 한 화면에서 관리해요. 카탈로그에서 고르거나 직접 입력할 수 있어요."),
   },
   {
     icon: BarChart3,
-    title: "지출을 분석하고 절약하세요",
+    title: tr("지출을 분석하고 절약하세요"),
     description:
-      "월·연 지출과 카테고리별 비중을 자동 집계하고, 더 저렴한 요금제나 중복 구독을 찾아 절약 힌트를 드려요.",
+      tr("월·연 지출과 카테고리별 비중을 자동 집계하고, 더 저렴한 요금제나 중복 구독을 찾아 절약 힌트를 드려요."),
   },
   {
     icon: PiggyBank,
-    title: "가족과 나눠 쓰면 내 몫만",
+    title: tr("가족과 나눠 쓰면 내 몫만"),
     description:
-      "함께 쓰는 인원을 입력하면 1인당 비용으로 계산돼요. 대시보드·분석에는 내가 실제 부담하는 금액만 반영됩니다.",
+      tr("함께 쓰는 인원을 입력하면 1인당 비용으로 계산돼요. 대시보드·분석에는 내가 실제 부담하는 금액만 반영됩니다."),
   },
   {
     icon: BellRing,
-    title: "결제 전에 미리 알려드려요",
+    title: tr("결제 전에 미리 알려드려요"),
     description:
-      "다가오는 결제일과 체험 만료, 가격 변동을 알림과 캘린더로 확인하세요. 자동 갱신도 알아서 처리돼요.",
+      tr("다가오는 결제일과 체험 만료, 가격 변동을 알림과 캘린더로 확인하세요. 자동 갱신도 알아서 처리돼요."),
   },
 ];
 
@@ -49,8 +51,8 @@ export default function OnboardingModal({ onClose }: Props) {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
 
-  const isLast = step === STEPS.length - 1;
-  const current = STEPS[step];
+  const isLast = step === STEPS().length - 1;
+  const current = STEPS()[step];
   const Icon = current.icon;
 
   const handleNext = () => {
@@ -70,9 +72,7 @@ export default function OnboardingModal({ onClose }: Props) {
           <button
             onClick={onClose}
             className="text-xs font-medium text-slate-400 hover:text-slate-500"
-          >
-            건너뛰기
-          </button>
+          >{tr("건너뛰기")}</button>
         </div>
 
         <div className="mt-2 flex flex-col items-center text-center">
@@ -89,7 +89,7 @@ export default function OnboardingModal({ onClose }: Props) {
 
         {/* Progress dots */}
         <div className="mt-6 flex justify-center gap-2">
-          {STEPS.map((_, i) => (
+          {STEPS().map((_, i) => (
             <button
               key={i}
               type="button"
@@ -108,15 +108,13 @@ export default function OnboardingModal({ onClose }: Props) {
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
             className="btn-secondary-glass px-4 py-2 text-sm font-medium disabled:opacity-0"
-          >
-            이전
-          </button>
+          >{tr("이전")}</button>
           <button
             type="button"
             onClick={handleNext}
             className="btn-primary-glass px-5 py-2 text-sm font-medium"
           >
-            {isLast ? "구독 추가하러 가기" : "다음"}
+            {isLast ? tr("구독 추가하러 가기") : tr("다음")}
           </button>
         </div>
       </div>

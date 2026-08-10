@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { CreditCard, TrendingDown, TrendingUp } from "lucide-react";
 import type { PriceChangeAlertItem } from "../../types/analytics";
+import { tr, fmtMoney, fmtCount } from "../../i18n/translations";
 
 interface Props {
   alerts: PriceChangeAlertItem[];
@@ -10,7 +11,7 @@ export default function PriceChangeAlert({ alerts }: Props) {
   const fmt = (price: number | string, currency: string) => {
     const numericPrice = Number(price);
     const safePrice = Number.isFinite(numericPrice) ? numericPrice : 0;
-    return currency === "KRW" ? `${new Intl.NumberFormat("ko-KR").format(safePrice)}원` : `$${safePrice.toFixed(2)}`;
+    return currency === "KRW" ? fmtMoney(safePrice) : `$${safePrice.toFixed(2)}`;
   };
 
   return (
@@ -19,9 +20,9 @@ export default function PriceChangeAlert({ alerts }: Props) {
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100/80 text-rose-500">
           <TrendingUp className="h-4 w-4" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">가격 변동 알림</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tr("가격 변동 알림")}</h3>
         <span className="ml-auto rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-          {alerts.length}건
+          {fmtCount(alerts.length, "건")}
         </span>
       </div>
 

@@ -296,11 +296,45 @@ const EN: Record<string, string> = {
   "{n}년": "{n} years",
   "{n}월": "{n}",
   "{n}번째 안내로 이동": "Go to slide {n}",
-  "이번 달 남은 예산은 {amount}원입니다.": "{amount} left in this month's budget.",
-  "예산을 {amount}원 초과했어요.": "You are {amount} over budget.",
+
+  // ── date-fns 포맷 패턴 (표시 문구가 아니라 형식 문자열) ──
+  "yyyy년 MM월": "MMMM yyyy",
+  "MM월 dd일": "MMM d",
+  "M월": "MMM",
+  "d일 (EEE)": "d (EEE)",
+
+  // ── 그 밖 ──
+  "0원": "₩0",
+  "사용": "On",
+  "실제 지출": "Actual",
+  "예상 지출": "Projected",
+  "한국어": "한국어", // 언어 토글 라벨 — 영어 화면에서도 한국어로 보여야 한다
+  "이번 달 남은 예산은 {amount}입니다.": "{amount} left in this month's budget.",
+  "예산을 {amount} 초과했어요.": "You are {amount} over budget.",
+  "현재 {a} / 기준 {b}": "{a} of {b}",
+  "중복 {a}건, 가격 변동 {b}건, 체험 만료 {c}건 기준입니다.":
+    "Based on {a} duplicates, {b} price changes and {c} expiring trials.",
   "요금제 조정으로 월 최대 {amount}원까지 줄일 수 있어요.":
     "Switching plans could save up to {amount} a month.",
 };
+
+/**
+ * 훅 없이 어디서든 쓰는 번역 함수. 스토어에서 현재 언어를 직접 읽는다.
+ * 구독을 걸지 않으므로, 언어를 바꿀 때는 App 루트를 language로 리마운트해
+ * 트리 전체가 새 문구로 다시 그려지게 한다(App.tsx의 key 참고).
+ *
+ *   <h1>{tr("구독 관리")}</h1>
+ */
+/** 사전 키가 겹치는 동음이의어("월" = 개월/월요일)는 이걸로 직접 분기한다. */
+export function currentLang(): Language {
+  return (globalThis as { __subflowLang?: Language }).__subflowLang ?? "ko";
+}
+
+export function tr(ko: string, params?: Record<string, string | number>): string {
+  // 순환 import를 피하려고 여기서 지연 로드한다.
+  const lang = (globalThis as { __subflowLang?: Language }).__subflowLang ?? "ko";
+  return t(ko, lang, params);
+}
 
 export function t(
   ko: string,
@@ -319,4 +353,35 @@ export function t(
 /** date-fns 등 로케일이 필요한 곳에서 쓴다. */
 export function localeTag(lang: Language): string {
   return lang === "ko" ? "ko-KR" : "en-US";
+}
+
+/**
+ * 금액. 한국어는 "102,190원", 영어는 "₩102,190" 처럼 단위 위치가 달라서
+ * 문자열 이어붙이기 대신 이 함수로 통일한다.
+ */
+export function fmtMoney(value: number | string, currency = "KRW"): string {
+  const n = Number(value) || 0;
+  if (currency !== "KRW") {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
+  }
+  return currentLang() === "en"
+    ? "₩" + new Intl.NumberFormat("en-US").format(n)
+    : new Intl.NumberFormat("ko-KR").format(n) + "원";
+}
+
+/** 개수 단위. 한국어의 개/건/일 은 영어에서 접미사가 없거나 형태가 다르다. */
+export function fmtCount(value: number, unit: "개" | "건" | "일" | "개월" | "년"): string {
+  const n = Number(value) || 0;
+  if (currentLang() === "ko") return `${n}${unit}`;
+  switch (unit) {
+    case "개":
+    case "건":
+      return String(n);
+    case "일":
+      return n === 1 ? "1 day" : `${n} days`;
+    case "개월":
+      return n === 1 ? "1 month" : `${n} months`;
+    case "년":
+      return n === 1 ? "1 year" : `${n} years`;
+  }
 }

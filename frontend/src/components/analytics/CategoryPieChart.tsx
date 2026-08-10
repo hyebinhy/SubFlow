@@ -1,5 +1,6 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { CategoryBreakdown } from "../../types/analytics";
+import { tr } from "../../i18n/translations";
 
 interface Props {
   breakdown: CategoryBreakdown;
@@ -26,7 +27,7 @@ export default function CategoryPieChart({ breakdown }: Props) {
   }));
 
   if (data.length === 0) {
-    return <p className="py-12 text-center text-sm text-slate-400">데이터가 없습니다.</p>;
+    return <p className="py-12 text-center text-sm text-slate-400">{tr("데이터가 없습니다.")}</p>;
   }
 
   return (
@@ -48,7 +49,7 @@ export default function CategoryPieChart({ breakdown }: Props) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value) => [`${new Intl.NumberFormat("ko-KR").format(Number(value ?? 0))}원`, "지출"]}
+            formatter={(value) => [`${new Intl.NumberFormat("ko-KRtr(").format(Number(value ?? 0))}원`, ")지출"]}
             contentStyle={{
               background: "rgba(255,255,255,0.94)",
               border: "0",

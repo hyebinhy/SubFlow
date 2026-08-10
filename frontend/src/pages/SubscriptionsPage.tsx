@@ -10,6 +10,7 @@ import type {
   Subscription,
   SubscriptionCreateRequest,
 } from "../types/subscription";
+import { tr, fmtMoney, fmtCount } from "../i18n/translations";
 
 export default function SubscriptionsPage() {
   const { subscriptions, categories, loading, refetch } = useSubscriptions();
@@ -30,9 +31,9 @@ export default function SubscriptionsPage() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("CSV 파일을 내보냈습니다.");
+      toast.success(tr("CSV 파일을 내보냈습니다."));
     } catch {
-      toast.error("내보내기에 실패했습니다.");
+      toast.error(tr("내보내기에 실패했습니다."));
     } finally {
       setExporting(false);
     }
@@ -42,11 +43,11 @@ export default function SubscriptionsPage() {
     setSaving(true);
     try {
       await subscriptionApi.create(data);
-      toast.success("구독이 추가되었습니다.");
+      toast.success(tr("구독이 추가되었습니다."));
       setModalOpen(false);
       refetch();
     } catch {
-      toast.error("구독 추가에 실패했습니다.");
+      toast.error(tr("구독 추가에 실패했습니다."));
     } finally {
       setSaving(false);
     }
@@ -57,24 +58,24 @@ export default function SubscriptionsPage() {
     setSaving(true);
     try {
       await subscriptionApi.update(editing.id, data);
-      toast.success("구독이 수정되었습니다.");
+      toast.success(tr("구독이 수정되었습니다."));
       setEditing(null);
       refetch();
     } catch {
-      toast.error("구독 수정에 실패했습니다.");
+      toast.error(tr("구독 수정에 실패했습니다."));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("이 구독을 삭제하시겠습니까?")) return;
+    if (!window.confirm(tr("이 구독을 삭제하시겠습니까?"))) return;
     try {
       await subscriptionApi.delete(id);
-      toast.success("구독이 삭제되었습니다.");
+      toast.success(tr("구독이 삭제되었습니다."));
       refetch();
     } catch {
-      toast.error("구독 삭제에 실패했습니다.");
+      toast.error(tr("구독 삭제에 실패했습니다."));
     }
   };
 
@@ -96,10 +97,10 @@ export default function SubscriptionsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">구독 관리</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{tr("구독 관리")}</h2>
           <p className="mt-1 text-sm text-slate-400">
-            활성 {activeCount}개 · 월 예상 비용{" "}
-            {new Intl.NumberFormat("ko-KR").format(Math.round(totalMonthly))}원
+            활성 {fmtCount(activeCount, "개")} · 월 예상 비용{" "}
+            {fmtMoney(Math.round(totalMonthly))}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -109,15 +110,13 @@ export default function SubscriptionsPage() {
             className="btn-secondary-glass inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
-            {exporting ? "내보내는 중..." : "CSV 내보내기"}
+            {exporting ? tr("내보내는 중...") : tr("CSV 내보내기")}
           </button>
           <button
             onClick={() => setModalOpen(true)}
             className="btn-primary-glass inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium"
           >
-            <Plus className="h-4 w-4" />
-            구독 추가
-          </button>
+            <Plus className="h-4 w-4" />{tr("구독 추가")}</button>
         </div>
       </div>
 
@@ -127,14 +126,12 @@ export default function SubscriptionsPage() {
         </div>
       ) : subscriptions.length === 0 ? (
         <div className="glass py-12 text-center">
-          <p className="text-slate-400">아직 등록된 구독이 없습니다.</p>
+          <p className="text-slate-400">{tr("아직 등록된 구독이 없습니다.")}</p>
           <button
             onClick={() => setModalOpen(true)}
             className="btn-primary-glass mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-sm"
           >
-            <Plus className="h-4 w-4" />
-            첫 번째 구독 추가하기
-          </button>
+            <Plus className="h-4 w-4" />{tr("첫 번째 구독 추가하기")}</button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -152,7 +149,7 @@ export default function SubscriptionsPage() {
       <SubscriptionModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="구독 추가"
+        title={tr("구독 추가")}
       >
         <SubscriptionForm
           categories={categories}
@@ -165,7 +162,7 @@ export default function SubscriptionsPage() {
       <SubscriptionModal
         isOpen={!!editing}
         onClose={() => setEditing(null)}
-        title="구독 수정"
+        title={tr("구독 수정")}
       >
         <SubscriptionForm
           categories={categories}

@@ -3,6 +3,7 @@ import { useSubscriptions } from "../hooks/useSubscriptions";
 import { subscriptionApi } from "../api/subscriptions";
 import type { CalendarEvent } from "../types/subscription";
 import RenewalCalendar from "../components/calendar/RenewalCalendar";
+import { tr } from "../i18n/translations";
 
 export default function CalendarPage() {
   const { subscriptions, loading, error } = useSubscriptions();
@@ -50,9 +51,9 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">결제 캘린더</h2>
+      <h2 className="text-2xl font-bold text-slate-900">{tr("결제 캘린더")}</h2>
       {active.length === 0 && calendarEvents.length === 0 ? (
-        <p className="text-center text-slate-400">활성화된 구독이 없습니다.</p>
+        <p className="text-center text-slate-400">{tr("활성화된 구독이 없습니다.")}</p>
       ) : (
         <RenewalCalendar subscriptions={active} calendarEvents={calendarEvents} />
       )}

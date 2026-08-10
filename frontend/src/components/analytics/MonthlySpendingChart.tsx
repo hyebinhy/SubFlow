@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import type { SpendingTrend } from "../../types/analytics";
+import { tr, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   trend: SpendingTrend;
@@ -28,13 +29,9 @@ export default function MonthlySpendingChart({ trend }: Props) {
     <div className="h-full min-h-0">
       <div className="mb-3 flex items-center justify-end gap-3 text-xs text-slate-400">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-500" />
-          실제 지출
-        </span>
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-500" />{tr("실제 지출")}</span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-full border border-dashed border-indigo-400 bg-indigo-300/50" />
-          예상 지출
-        </span>
+          <span className="inline-block h-2.5 w-2.5 rounded-full border border-dashed border-indigo-400 bg-indigo-300/50" />{tr("예상 지출")}</span>
       </div>
       <div className="h-[calc(100%-28px)]">
         <ResponsiveContainer width="100%" height="100%">
@@ -50,8 +47,8 @@ export default function MonthlySpendingChart({ trend }: Props) {
             />
             <Tooltip
               formatter={(value, _name, props) => [
-                `${new Intl.NumberFormat("ko-KR").format(Number(value ?? 0))}원`,
-                props.payload?.isForecast ? "예상 지출" : "지출",
+                fmtMoney(Number(value ?? 0)),
+                props.payload?.isForecast ? tr("예상 지출") : tr("지출"),
               ]}
               contentStyle={{
                 background: "rgba(255,255,255,0.92)",

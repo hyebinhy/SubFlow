@@ -1,11 +1,11 @@
 import { DollarSign } from "lucide-react";
 import type { ExchangeRateAlertItem } from "../../types/analytics";
+import { tr, fmtMoney, fmtCount } from "../../i18n/translations";
 
 interface Props {
   alerts: ExchangeRateAlertItem[];
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
 export default function ExchangeRateAlert({ alerts }: Props) {
   if (alerts.length === 0) return null;
@@ -16,9 +16,9 @@ export default function ExchangeRateAlert({ alerts }: Props) {
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100/80 text-rose-500">
           <DollarSign className="h-4 w-4" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">환율 변동 알림</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tr("환율 변동 알림")}</h3>
         <span className="ml-auto rounded-xl bg-rose-100/80 px-2.5 py-0.5 text-xs font-medium text-rose-600">
-          {alerts.length}건
+          {fmtCount(alerts.length, "건")}
         </span>
       </div>
 
@@ -34,7 +34,7 @@ export default function ExchangeRateAlert({ alerts }: Props) {
               <span className="rounded-xl bg-rose-100/80 px-2.5 py-0.5 text-xs font-bold text-rose-600">
                 +{alert.change_percentage.toFixed(1)}%
               </span>
-              <span className="text-sm font-semibold text-rose-600">월 +{fmt(alert.extra_cost_krw)}원</span>
+              <span className="text-sm font-semibold text-rose-600">월 +{fmtMoney(alert.extra_cost_krw)}</span>
             </div>
           </div>
         ))}

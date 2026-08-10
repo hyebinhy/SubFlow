@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import type { SpendingTrend } from "../../types/analytics";
+import { tr, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   trend: SpendingTrend;
@@ -32,9 +33,7 @@ function ForecastLabel({ viewBox }: ForecastLabelProps) {
       fontSize={11}
       fontWeight={700}
       textAnchor="end"
-    >
-      예상 지출
-    </text>
+    >{tr("예상 지출")}</text>
   );
 }
 
@@ -63,16 +62,12 @@ export default function SpendingTrendChart({ trend }: Props) {
   return (
     <div className="glass p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold text-slate-900">지출 추이</h3>
+        <h3 className="font-semibold text-slate-900">{tr("지출 추이")}</h3>
         <div className="flex items-center gap-3 text-xs text-slate-400">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-0.5 w-4 rounded bg-indigo-500" />
-            실제
-          </span>
+            <span className="inline-block h-0.5 w-4 rounded bg-indigo-500" />{tr("실제")}</span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-0.5 w-4 border-t border-dashed border-indigo-400" />
-            예상
-          </span>
+            <span className="inline-block h-0.5 w-4 border-t border-dashed border-indigo-400" />{tr("예상")}</span>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={300}>
@@ -104,8 +99,8 @@ export default function SpendingTrendChart({ trend }: Props) {
           />
           <Tooltip
             formatter={(value, name) => [
-              `${new Intl.NumberFormat("ko-KR").format(Number(value ?? 0))}원`,
-              name === "forecast" ? "예상 지출" : "지출",
+              fmtMoney(Number(value ?? 0)),
+              name === "forecast" ? tr("예상 지출") : tr("지출"),
             ]}
             contentStyle={{
               background: "rgba(255,255,255,0.92)",

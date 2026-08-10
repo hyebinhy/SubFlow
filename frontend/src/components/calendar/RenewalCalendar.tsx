@@ -14,17 +14,23 @@ import {
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import type { Subscription } from "../../types/subscription";
 import type { CalendarEvent } from "../../types/subscription";
+import { tr, currentLang, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   subscriptions: Subscription[];
   calendarEvents?: CalendarEvent[];
 }
 
-const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+// 요일 "월"은 결제주기 "월(mo)"과 사전 키가 겹치므로 tr()을 쓰지 않고 직접 고른다.
+// 호출 시점에 만들어야 언어 변경이 반영된다.
+const dayLabels = () =>
+  currentLang() === "en"
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : ["일", "월", "화", "수", "목", "금", "토"];
 
 const fmtCost = (cost: number, currency: string) =>
   currency === "KRW"
-    ? `${new Intl.NumberFormat("ko-KR").format(cost)}원`
+    ? fmtMoney(cost)
     : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cost);
 
 interface CalendarEntry {
@@ -132,7 +138,7 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
             <ChevronLeft size={18} />
           </button>
           <h3 className="text-lg font-bold text-slate-900">
-            {format(currentMonth, "yyyy년 MM월")}
+            {format(currentMonth, tr("yyyy년 MM월"))}
           </h3>
           <button
             onClick={() => { setCurrentMonth((m) => addMonths(m, 1)); setSelectedDate(null); }}
@@ -144,7 +150,7 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
 
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-1">
-          {DAY_LABELS.map((day, i) => (
+          {dayLabels().map((day, i) => (
             <div
               key={day}
               className={`py-2 text-center text-xs font-semibold ${
@@ -224,22 +230,22 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
       <div className="flex flex-col gap-4">
         {/* Month summary */}
         <div className="glass p-5">
-          <p className="text-xs font-medium text-slate-400">이번 달 결제 예정</p>
+          <p className="text-xs font-medium text-slate-400">{tr("이번 달 결제 예정")}</p>
           <p className="mt-1 text-2xl font-extrabold text-slate-900">
-            {totalCount}<span className="text-base font-semibold text-slate-400">건</span>
+            {totalCount}<span className="text-base font-semibold text-slate-400">{tr("건")}</span>
           </p>
           <div className="mt-3 h-px bg-slate-200/50" />
-          <p className="mt-3 text-xs font-medium text-slate-400">예상 결제 금액</p>
+          <p className="mt-3 text-xs font-medium text-slate-400">{tr("예상 결제 금액")}</p>
           <div className="mt-1 space-y-0.5">
             {Array.from(monthTotals.entries()).map(([currency, total]) => (
               <p key={currency} className="text-xl font-bold gradient-text">
                 {currency === "KRW"
-                  ? `${new Intl.NumberFormat("ko-KR").format(Math.round(total))}원`
+                  ? fmtMoney(Math.round(total))
                   : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(total)}
               </p>
             ))}
             {monthTotals.size === 0 && (
-              <p className="text-xl font-bold text-slate-300">0원</p>
+              <p className="text-xl font-bold text-slate-300">{tr("0원")}</p>
             )}
           </div>
         </div>
@@ -248,7 +254,7 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
         {selectedDate && selectedRenewals.length > 0 && (
           <div className="glass p-5">
             <p className="text-sm font-semibold text-indigo-500">
-              {format(selectedDate, "MM월 dd일")} 결제
+              {format(selectedDate, tr("MM월 dd일"))} 결제
             </p>
             <div className="mt-3 space-y-3">
               {selectedRenewals.map((entry) => (
@@ -271,7 +277,7 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
                           <Check size={12} className="text-green-500" />
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400">{entry.category_name ?? "미분류"}</p>
+                      <p className="text-[11px] text-slate-400">{entry.category_name ?? tr("미분류")}</p>
                     </div>
                   </div>
                   <p className="text-sm font-bold text-slate-900">{fmtCost(entry.cost, entry.currency)}</p>
@@ -284,16 +290,16 @@ export default function RenewalCalendar({ subscriptions, calendarEvents }: Props
         {/* Monthly renewal list */}
         <div className="glass p-5">
           <p className="mb-3 text-sm font-semibold text-slate-900">
-            {format(currentMonth, "M월")} 결제 일정
+            {format(currentMonth, tr("M월"))} 결제 일정
           </p>
           {monthRenewals.length === 0 ? (
-            <p className="text-sm text-slate-400">이번 달 결제 예정이 없습니다.</p>
+            <p className="text-sm text-slate-400">{tr("이번 달 결제 예정이 없습니다.")}</p>
           ) : (
             <div className="space-y-2">
               {monthRenewals.map(([dateKey, items]) => (
                 <div key={dateKey}>
                   <p className="mb-1 text-[11px] font-medium text-slate-400">
-                    {format(new Date(dateKey), "d일 (EEE)")}
+                    {format(new Date(dateKey), tr("d일 (EEE)"))}
                   </p>
                   {items.map((entry) => (
                     <button

@@ -1,11 +1,11 @@
 import { Timer } from "lucide-react";
 import type { TrialSubscriptionItem } from "../../types/analytics";
+import { tr, fmtMoney, fmtCount } from "../../i18n/translations";
 
 interface Props {
   trials: TrialSubscriptionItem[];
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
 function DdayBadge({ days }: { days: number }) {
   const label = days <= 0 ? "D-Day" : `D-${days}`;
@@ -28,9 +28,9 @@ export default function TrialTracker({ trials }: Props) {
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100/80 text-violet-600">
           <Timer className="h-4 w-4" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">무료 체험 추적</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tr("무료 체험 추적")}</h3>
         <span className="ml-auto rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-          {trials.length}건
+          {fmtCount(trials.length, "건")}
         </span>
       </div>
 
@@ -48,7 +48,7 @@ export default function TrialTracker({ trials }: Props) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">{trial.service_name}</p>
                 <p className="text-xs text-slate-400">
-                  체험 종료 후 <span className="font-semibold text-slate-700">{fmt(trial.cost_after_trial_krw)}원</span>
+                  체험 종료 후 <span className="font-semibold text-slate-700">{fmtMoney(trial.cost_after_trial_krw)}</span>
                 </p>
               </div>
             </div>

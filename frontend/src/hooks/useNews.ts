@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getNews } from "../api/news";
 import type { NewsItem } from "../api/news";
+import { tr } from "../i18n/translations";
 
 export function useNews() {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -15,7 +16,7 @@ export function useNews() {
         setNews(data.items);
         setError(null);
       } catch (err) {
-        setError("뉴스를 불러오지 못했습니다.");
+        setError(tr("뉴스를 불러오지 못했습니다."));
         console.error("Failed to fetch news:", err);
       } finally {
         setLoading(false);

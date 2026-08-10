@@ -12,6 +12,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { subscriptionApi } from "../api/subscriptions";
 import type { SubscriptionHistoryItem } from "../types/subscription";
+import { tr } from "../i18n/translations";
 
 function getEventIcon(event: SubscriptionHistoryItem): {
   icon: LucideIcon;
@@ -62,17 +63,15 @@ export default function TimelinePage() {
     subscriptionApi
       .getTimeline()
       .then((data) => setEvents(data.events))
-      .catch(() => setError("히스토리를 불러오는데 실패했습니다."))
+      .catch(() => setError(tr("히스토리를 불러오는데 실패했습니다.")))
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-900">구독 히스토리</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          구독 변경 이력을 한눈에 확인하세요
-        </p>
+        <h2 className="text-2xl font-bold text-slate-900">{tr("구독 히스토리")}</h2>
+        <p className="mt-1 text-sm text-slate-400">{tr("구독 변경 이력을 한눈에 확인하세요")}</p>
       </div>
 
       {loading ? (
@@ -89,18 +88,16 @@ export default function TimelinePage() {
               subscriptionApi
                 .getTimeline()
                 .then((data) => setEvents(data.events))
-                .catch(() => setError("히스토리를 불러오는데 실패했습니다."))
+                .catch(() => setError(tr("히스토리를 불러오는데 실패했습니다.")))
                 .finally(() => setLoading(false));
             }}
             className="mt-3 text-sm text-blue-600 hover:underline"
-          >
-            다시 시도
-          </button>
+          >{tr("다시 시도")}</button>
         </div>
       ) : events.length === 0 ? (
         <div className="glass px-6 py-12 text-center">
           <Clock className="mx-auto mb-3 text-slate-300" size={40} />
-          <p className="text-slate-400">아직 구독 히스토리가 없습니다</p>
+          <p className="text-slate-400">{tr("아직 구독 히스토리가 없습니다")}</p>
         </div>
       ) : (
         <div className="relative pl-8">

@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, WalletCards } from "lucide-react";
 import type { BudgetStatus as BudgetStatusType } from "../../types/analytics";
+import { tr, fmtMoney } from "../../i18n/translations";
 
 interface Props {
   budgetStatus: BudgetStatusType;
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
 function getProgressTone(percentage: number) {
   if (percentage > 90) {
@@ -45,8 +45,8 @@ export default function BudgetStatus({ budgetStatus }: Props) {
               <WalletCards className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">월 예산</h3>
-              <p className="text-sm text-slate-500">예산을 설정하면 지출 속도를 더 쉽게 볼 수 있어요.</p>
+              <h3 className="text-lg font-bold text-slate-900">{tr("월 예산")}</h3>
+              <p className="text-sm text-slate-500">{tr("예산을 설정하면 지출 속도를 더 쉽게 볼 수 있어요.")}</p>
             </div>
           </div>
           <Link to="/settings" className="btn-primary-glass inline-flex shrink-0 items-center gap-1.5 px-4 py-2 text-sm">
@@ -62,8 +62,8 @@ export default function BudgetStatus({ budgetStatus }: Props) {
   const barWidth = Math.min(pct, 100);
   const tone = getProgressTone(pct);
   const statusText = is_over_budget
-    ? `예산을 ${fmt(Math.abs(remaining ?? 0))}원 초과했어요.`
-    : `이번 달 남은 예산은 ${fmt(remaining ?? 0)}원입니다.`;
+    ? tr("예산을 {amount} 초과했어요.", { amount: fmtMoney(Math.abs(remaining ?? 0)) })
+    : tr("이번 달 남은 예산은 {amount}입니다.", { amount: fmtMoney(remaining ?? 0) });
 
   return (
     <Link to="/settings" className="glass block p-6">
@@ -74,8 +74,8 @@ export default function BudgetStatus({ budgetStatus }: Props) {
               <WalletCards className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">월 예산</h3>
-              <p className="text-sm text-slate-500">현재 {fmt(current_spending)}원 / 기준 {fmt(budget_monthly)}원</p>
+              <h3 className="text-lg font-bold text-slate-900">{tr("월 예산")}</h3>
+              <p className="text-sm text-slate-500">{tr("현재 {a} / 기준 {b}", { a: fmtMoney(current_spending), b: fmtMoney(budget_monthly) })}</p>
             </div>
           </div>
 
@@ -87,10 +87,10 @@ export default function BudgetStatus({ budgetStatus }: Props) {
         </div>
 
         <div className="rounded-3xl bg-white/65 px-6 py-5 text-right shadow-sm">
-          <p className="text-xs font-medium text-slate-400">예산 소진율</p>
+          <p className="text-xs font-medium text-slate-400">{tr("예산 소진율")}</p>
           <p className="mt-1 text-3xl font-extrabold text-slate-900">{pct.toFixed(0)}%</p>
           <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${tone.chip}`}>
-            {is_over_budget ? "조정 필요" : "관리 중"}
+            {is_over_budget ? tr("조정 필요") : tr("관리 중")}
           </span>
         </div>
       </div>

@@ -3,10 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authApi } from "../../api/auth";
 import BrandLogo from "../BrandLogo";
-import { useTranslation } from "../../hooks/useTranslation";
+import { tr } from "../../i18n/translations";
 
 export default function RegisterForm() {
-  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,20 +16,20 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error(t("비밀번호가 일치하지 않습니다."));
+      toast.error(tr("비밀번호가 일치하지 않습니다."));
       return;
     }
     if (password.length < 8) {
-      toast.error(t("비밀번호는 8자 이상이어야 합니다."));
+      toast.error(tr("비밀번호는 8자 이상이어야 합니다."));
       return;
     }
     setLoading(true);
     try {
       await authApi.register({ email, password, username });
-      toast.success(t("회원가입 성공! 로그인해주세요."));
+      toast.success(tr("회원가입 성공! 로그인해주세요."));
       navigate("/login");
     } catch {
-      toast.error(t("회원가입에 실패했습니다. 이미 가입된 이메일일 수 있습니다."));
+      toast.error(tr("회원가입에 실패했습니다. 이미 가입된 이메일일 수 있습니다."));
     } finally {
       setLoading(false);
     }
@@ -41,12 +40,12 @@ export default function RegisterForm() {
       <div className="glass w-full max-w-md p-8">
         <BrandLogo className="mx-auto mb-5 h-6 w-auto" />
         <h1 className="mb-6 text-center text-2xl font-bold text-slate-900">
-          {t("회원가입")}
+          {tr("회원가입")}
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-500">
-              {t("사용자 이름")}
+              {tr("사용자 이름")}
             </label>
             <input
               type="text"
@@ -57,12 +56,12 @@ export default function RegisterForm() {
               required
               minLength={2}
               className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder={t("홍길동")}
+              placeholder={tr("홍길동")}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500">
-              {t("이메일")}
+              {tr("이메일")}
             </label>
             <input
               type="email"
@@ -77,7 +76,7 @@ export default function RegisterForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500">
-              {t("비밀번호")}
+              {tr("비밀번호")}
             </label>
             <input
               type="password"
@@ -88,12 +87,12 @@ export default function RegisterForm() {
               required
               minLength={8}
               className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder={t("8자 이상")}
+              placeholder={tr("8자 이상")}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500">
-              {t("비밀번호 확인")}
+              {tr("비밀번호 확인")}
             </label>
             <input
               type="password"
@@ -103,7 +102,7 @@ export default function RegisterForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder={t("비밀번호 재입력")}
+              placeholder={tr("비밀번호 재입력")}
             />
           </div>
           <button
@@ -111,13 +110,13 @@ export default function RegisterForm() {
             disabled={loading}
             className="btn-primary-glass w-full px-4 py-2 font-medium disabled:opacity-50"
           >
-            {loading ? t("가입 중...") : t("회원가입")}
+            {loading ? tr("가입 중...") : tr("회원가입")}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-slate-500">
-          {t("이미 계정이 있으신가요?")}{" "}
+          {tr("이미 계정이 있으신가요?")}{" "}
           <Link to="/login" className="text-blue-600 hover:underline">
-            {t("로그인")}
+            {tr("로그인")}
           </Link>
         </p>
       </div>
