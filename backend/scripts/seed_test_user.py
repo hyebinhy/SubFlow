@@ -25,14 +25,21 @@ TEST_USERNAME = "Mobile Tester"
 MONTHLY_BUDGET = 70_000
 
 # (서비스명, 플랜명, 월 비용 KRW, 통화, billing_day, 가입 시작 일자(개월 전))
+#
+# 지출 추이 차트는 start_date로만 각 달의 포함 여부를 정한다(analytics_service.get_spending_trend).
+# 전부 6개월 이전에 시작하면 막대가 전부 같은 높이로 나와 가짜 티가 나므로,
+# 최근 6개월 구간에 시작 시점을 흩어 계단이 생기게 둔다. 아래 구성의 월별 합계는
+# 56,890 / 56,890 / 71,790 / 71,790 / 97,790 / 102,190 (+ 다음 달 예상 102,190).
 TEST_SUBSCRIPTIONS = [
-    ("Notion",          "Plus",       14_000, "KRW", 5,  10),
+    # 6개월 구간 내내 유지된 기본 구독
     ("Netflix",         "프리미엄",   17_000, "KRW", 7,  39),  # 3y 3m subscribed (홈 화면 매칭)
     ("Spotify",         "개인",       11_990, "KRW", 12, 18),
-    ("YouTube Premium", "개인",       14_900, "KRW", 15, 14),
-    ("iCloud+",         "200GB",       4_400, "KRW", 20, 8),
-    ("ChatGPT Plus",    "Plus",       26_000, "KRW", 22, 6),
     ("Disney+",         "프리미엄",   13_900, "KRW", 25, 12),
+    ("Notion",          "Plus",       14_000, "KRW", 5,  10),
+    # 최근에 하나씩 늘어난 구독 — 차트의 계단을 만든다
+    ("YouTube Premium", "개인",       14_900, "KRW", 15, 3),
+    ("ChatGPT Plus",    "Plus",       26_000, "KRW", 22, 1),
+    ("iCloud+",         "200GB",       4_400, "KRW", 2,  0),
 ]
 
 
@@ -92,12 +99,23 @@ async def seed_subscriptions(db, user: User) -> int:
     existing_result = await db.execute(
         select(Subscription).where(Subscription.user_id == user.id)
     )
-    existing = {s.service_name for s in existing_result.scalars().all()}
+    existing = {s.service_name: s for s in existing_result.scalars().all()}
 
     created = 0
     for service_name, plan_name, cost, currency, billing_day, months_ago in TEST_SUBSCRIPTIONS:
-        if service_name in existing:
-            print(f"  - skip (exists): {service_name}")
+        start = (today - relativedelta(months=months_ago)).replace(day=min(billing_day, 28))
+        next_billing = next_billing_from(today, billing_day)
+
+        # 이미 있으면 위 표를 정답으로 보고 맞춰 준다. 표를 고친 뒤 다시 돌리면
+        # 그대로 반영돼야 시드 스크립트가 데이터의 단일 출처로 남는다.
+        sub = existing.get(service_name)
+        if sub is not None:
+            sub.cost = cost
+            sub.currency = currency
+            sub.billing_day = billing_day
+            sub.start_date = start
+            sub.next_billing_date = next_billing
+            print(f"  ~ update: {service_name} start={start} next={next_billing} KRW {cost:,}")
             continue
 
         service = svc_map.get(service_name)
@@ -105,11 +123,6 @@ async def seed_subscriptions(db, user: User) -> int:
             print(f"  ! not in catalog, skip: {service_name}")
             continue
         plan = plan_map.get((service.id, plan_name))
-
-        start = today - relativedelta(months=months_ago)
-        # billing_day에 맞춰 start_date 보정
-        start = start.replace(day=min(billing_day, 28))
-        next_billing = next_billing_from(today, billing_day)
 
         sub = Subscription(
             user_id=user.id,
