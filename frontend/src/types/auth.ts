@@ -3,6 +3,8 @@ export interface User {
   email: string;
   username: string;
   is_active: boolean;
+  /** 이메일 주소 확인 여부. 미확인이면 알림 메일이 나가지 않는다. */
+  email_verified: boolean;
   created_at: string;
 }
 

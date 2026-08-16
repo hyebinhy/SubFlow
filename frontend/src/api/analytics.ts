@@ -11,7 +11,19 @@ import type {
 } from "../types/analytics";
 import apiClient from "./client";
 
+export interface ExchangeRatesResponse {
+  base: string;
+  rates: Record<string, number>;
+  /** 환율 기준일(YYYY-MM-DD). ECB 고시라 영업일 1회만 갱신된다. */
+  as_of: string | null;
+}
+
 export const analyticsApi = {
+  getExchangeRates: () =>
+    apiClient
+      .get<ExchangeRatesResponse>("/analytics/exchange-rates")
+      .then((r) => r.data),
+
   getOverview: () =>
     apiClient.get<DashboardOverview>("/analytics/overview").then((r) => r.data),
 

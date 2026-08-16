@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { CreditCard, ExternalLink, Pencil, Trash2, Users } from "lucide-react";
 import type { Subscription } from "../../types/subscription";
 import { tr } from "../../i18n/translations";
+import { krwHint } from "../../utils/currency";
 
 interface Props {
   subscription: Subscription;
@@ -34,6 +35,17 @@ const cycleLabels = (): Record<string, string> => ({
 
 export default function SubscriptionCard({ subscription, onEdit, onDelete }: Props) {
   const costDisplay = new Intl.NumberFormat("ko-KR").format(subscription.cost);
+  // 외화 구독은 원화 환산액을 함께 보여준다. 서버가 준 현재 환율을 쓴다.
+  const costKrw = krwHint(
+    subscription.cost,
+    subscription.currency,
+    subscription.exchange_rate_krw
+  );
+  const shareKrw = krwHint(
+    subscription.cost / subscription.member_count,
+    subscription.currency,
+    subscription.exchange_rate_krw
+  );
 
   return (
     <div className="glass p-5">
@@ -70,6 +82,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
             {" "}{subscription.currency}/{cycleLabels()[subscription.billing_cycle]}
           </span>
         </p>
+        {costKrw && <p className="mt-0.5 text-sm text-slate-500">{costKrw}</p>}
         <p className="mt-1 text-xs text-slate-400">
           {tr("다음 결제")}: {format(new Date(subscription.next_billing_date), "yyyy.MM.dd")}
         </p>
@@ -81,6 +94,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Pro
               Math.round(subscription.cost / subscription.member_count)
             )}{" "}
             {subscription.currency}/{cycleLabels()[subscription.billing_cycle]}
+            {shareKrw ? ` (${shareKrw})` : ""}
           </p>
         )}
       </div>

@@ -2,16 +2,49 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authApi } from "../../api/auth";
-import BrandLogo from "../BrandLogo";
 import { tr } from "../../i18n/translations";
 
+// 국내 사용자가 많이 쓰는 순서. 직접 입력도 그대로 되고, 여기서 고르면
+// @ 뒤만 갈아 끼운다(앞부분은 유지).
+// daum.net과 hanmail.net은 같은 메일함이지만 가입 시기에 따라 주소가 달라 둘 다 둔다.
+const EMAIL_DOMAINS = [
+  "naver.com",
+  "gmail.com",
+  "daum.net",
+  "hanmail.net",
+  "kakao.com",
+  "nate.com",
+  "outlook.com",
+  "hotmail.com",
+  "icloud.com",
+  "yahoo.com",
+  "korea.com",
+  "empas.com",
+];
+
 export default function RegisterForm() {
-  const [email, setEmail] = useState("");
+  // 이메일은 앞부분(로컬)과 도메인을 나눠 받는다. 아래 버튼은 도메인만 채우고,
+  // 목록에 없는 주소는 도메인 칸에 직접 쓰면 된다.
+  const [emailLocal, setEmailLocal] = useState("");
+  const [emailDomain, setEmailDomain] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const email = emailLocal && emailDomain ? `${emailLocal}@${emailDomain}` : "";
+
+  // 앞칸에 'me@naver.com'처럼 통째로 붙여넣는 경우가 흔하다 — 그때는 알아서 쪼갠다.
+  const handleLocalChange = (value: string) => {
+    if (value.includes("@")) {
+      const [local, ...rest] = value.split("@");
+      setEmailLocal(local);
+      setEmailDomain(rest.join("@"));
+      return;
+    }
+    setEmailLocal(value);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +71,12 @@ export default function RegisterForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mesh">
       <div className="glass w-full max-w-md p-8">
-        <BrandLogo className="mx-auto mb-5 h-6 w-auto" />
+        {/* 로그인 화면과 같은 펜 스타일 워드마크 */}
+        <img
+          src="/brand/subflow-logo-pen-point.png"
+          alt="SubFlow"
+          className="mx-auto mb-5 h-10 w-auto"
+        />
         <h1 className="mb-6 text-center text-2xl font-bold text-slate-900">
           {tr("회원가입")}
         </h1>
@@ -63,16 +101,45 @@ export default function RegisterForm() {
             <label className="block text-sm font-medium text-slate-500">
               {tr("이메일")}
             </label>
-            <input
-              type="email"
-              name="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="email@example.com"
-            />
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                type="text"
+                name="email-local"
+                autoComplete="username"
+                value={emailLocal}
+                onChange={(e) => handleLocalChange(e.target.value)}
+                required
+                className="glass-input min-w-0 flex-1 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="email"
+              />
+              <span className="shrink-0 text-slate-400">@</span>
+              <input
+                type="text"
+                name="email-domain"
+                value={emailDomain}
+                onChange={(e) => setEmailDomain(e.target.value.replace("@", ""))}
+                required
+                className="glass-input min-w-0 flex-1 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder={tr("직접입력")}
+              />
+            </div>
+            {/* 도메인 빠른 선택 — 목록에 없으면 오른쪽 칸에 직접 입력하면 됩니다 */}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {EMAIL_DOMAINS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setEmailDomain(d)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    emailDomain === d
+                      ? "bg-blue-600 text-white"
+                      : "glass text-slate-500 hover:bg-white/40"
+                  }`}
+                >
+                  @{d}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500">

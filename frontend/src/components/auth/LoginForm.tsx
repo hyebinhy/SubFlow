@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
-import BrandLogo from "../BrandLogo";
 import { tr } from "../../i18n/translations";
 
 export default function LoginForm() {
@@ -40,7 +39,13 @@ export default function LoginForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mesh">
       <div className="glass w-full max-w-md p-8">
-        <BrandLogo className="mx-auto mb-8 h-8 w-auto" />
+        {/* 로그인 화면만 펜 스타일 워드마크를 쓴다. 아웃라인이라 라이트/다크
+            어느 쪽에서도 같은 이미지로 읽혀 BrandLogo(2장 전환)가 필요 없다. */}
+        <img
+          src="/brand/subflow-logo-pen-point.png"
+          alt="SubFlow"
+          className="mx-auto mb-8 h-10 w-auto"
+        />
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-500">
@@ -81,6 +86,11 @@ export default function LoginForm() {
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-slate-500">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            {tr("비밀번호를 잊으셨나요?")}
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-sm text-slate-500">
           {tr("계정이 없으신가요?")}{" "}
           <Link to="/register" className="text-blue-600 hover:underline">
             {tr("회원가입")}

@@ -4,14 +4,18 @@ import { serviceApi } from "../../api/services";
 import type { Service, ServicePlan } from "../../types/service";
 import PlanSelector from "./PlanSelector";
 import { tr } from "../../i18n/translations";
+import type { RateTable } from "../../utils/currency";
 
 interface Props {
   serviceId: number;
   onSubscribe: (serviceId: number, plan: ServicePlan) => void;
   onBack: () => void;
+  /** 원화 환산 보기 (목록 화면의 토글을 그대로 이어받는다) */
+  showKrw?: boolean;
+  rates?: RateTable;
 }
 
-export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props) {
+export default function ServiceDetail({ serviceId, onSubscribe, onBack, showKrw, rates }: Props) {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +98,8 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack }: Props)
           <PlanSelector
             plans={service.plans.filter((p) => p.is_active)}
             onSelect={(plan) => onSubscribe(service.id, plan)}
+            showKrw={showKrw}
+            rates={rates}
           />
         </div>
       </div>

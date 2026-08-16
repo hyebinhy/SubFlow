@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Tag } from "lucide-react";
+import { ArrowLeftRight, Tag } from "lucide-react";
 import { serviceApi } from "../api/services";
 import { subscriptionApi } from "../api/subscriptions";
 import { categoryApi } from "../api/categories";
+import { analyticsApi } from "../api/analytics";
+import type { RateTable } from "../utils/currency";
 import type { ServiceListItem, ServicePlan } from "../types/service";
 import type { Category } from "../types/category";
 import ServiceCard from "../components/service/ServiceCard";
@@ -31,6 +33,25 @@ export default function ServicesPage() {
     new Date().toISOString().split("T")[0]
   );
   const [saving, setSaving] = useState(false);
+
+  // 원화 환산 토글. 환율은 처음 켤 때 한 번만 받는다(서버도 1시간 캐시).
+  const [showKrw, setShowKrw] = useState(false);
+  const [rates, setRates] = useState<RateTable>({});
+  const [ratesAsOf, setRatesAsOf] = useState<string | null>(null);
+
+  const toggleKrw = async () => {
+    if (!showKrw && Object.keys(rates).length === 0) {
+      try {
+        const res = await analyticsApi.getExchangeRates();
+        setRates(res.rates);
+        setRatesAsOf(res.as_of);
+      } catch {
+        toast.error(tr("환율을 가져오지 못했습니다."));
+        return;
+      }
+    }
+    setShowKrw((v) => !v);
+  };
 
   const fetchServices = useCallback(async () => {
     setLoading(true);
@@ -79,13 +100,36 @@ export default function ServicesPage() {
   if (selectedServiceId) {
     return (
       <div>
-        <h2 className="mb-6 text-2xl font-bold text-slate-900">{tr("서비스 상세")}</h2>
+        {/* 상세에서도 요금제를 보며 바로 환산할 수 있어야 한다 */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold text-slate-900">{tr("서비스 상세")}</h2>
+          <div className="text-right">
+            <button
+              onClick={toggleKrw}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                showKrw
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                  : "glass text-slate-500 hover:bg-white/40"
+              }`}
+            >
+              <ArrowLeftRight className="h-3.5 w-3.5" />
+              {showKrw ? tr("원화") : tr("원화로")}
+            </button>
+            {showKrw && ratesAsOf && (
+              <p className="mt-1 text-xs text-slate-400">
+                {ratesAsOf} {tr("고시 환율 기준")}
+              </p>
+            )}
+          </div>
+        </div>
         <ServiceDetail
           serviceId={selectedServiceId}
           onBack={() => setSelectedServiceId(null)}
           onSubscribe={(serviceId, plan) =>
             setSubscribing({ serviceId, plan })
           }
+          showKrw={showKrw}
+          rates={rates}
         />
 
         {/* Subscribe modal */}
@@ -150,7 +194,29 @@ export default function ServicesPage() {
   // Service list view
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-900">{tr("서비스 탐색")}</h2>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold text-slate-900">{tr("서비스 탐색")}</h2>
+        <div className="text-right">
+          {/* 외화 요금을 원화로 환산해 보는 토글 */}
+          <button
+            onClick={toggleKrw}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              showKrw
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                : "glass text-slate-500 hover:bg-white/40"
+            }`}
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            {showKrw ? tr("원화") : tr("원화로")}
+          </button>
+          {/* ECB 고시라 영업일 1회 갱신 — 언제 기준인지 밝힌다 */}
+          {showKrw && ratesAsOf && (
+            <p className="mt-1 text-xs text-slate-400">
+              {ratesAsOf} {tr("고시 환율 기준")}
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Search & Filter */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row">
@@ -216,6 +282,8 @@ export default function ServicesPage() {
               key={svc.id}
               service={svc}
               onClick={setSelectedServiceId}
+              showKrw={showKrw}
+              rates={rates}
             />
           ))}
         </div>

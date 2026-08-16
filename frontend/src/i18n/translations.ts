@@ -94,6 +94,50 @@ const EN: Record<string, string> = {
   "지출 분석": "Analytics",
   "캘린더": "Calendar",
   "서비스 탐색": "Browse services",
+  // 원화 환산 토글 (ServicesPage)
+  "원화로": "To KRW",
+  "원화": "KRW",
+  "고시 환율 기준": "reference rate",
+  "환율을 가져오지 못했습니다.": "Could not load exchange rates.",
+  "직접입력": "Type it in",
+  // 비밀번호 재설정
+  "비밀번호를 잊으셨나요?": "Forgot your password?",
+  "비밀번호 재설정": "Reset password",
+  "가입하신 이메일로 재설정 링크를 보내드립니다.": "We'll email you a reset link.",
+  "재설정 링크 받기": "Send reset link",
+  "보내는 중...": "Sending...",
+  "로그인으로 돌아가기": "Back to sign in",
+  "메일을 확인해주세요": "Check your email",
+  "가입된 주소라면 재설정 링크를 보냈습니다. 링크는 30분 뒤 만료됩니다.":
+    "If that address is registered, we've sent a reset link. It expires in 30 minutes.",
+  "새 비밀번호 설정": "Set a new password",
+  "새 비밀번호": "New password",
+  "새 비밀번호 확인": "Confirm new password",
+  "영문과 숫자를 포함해 8자 이상": "At least 8 characters, with letters and numbers",
+  "영문과 숫자를 포함해 8자 이상으로 입력해주세요.":
+    "Use at least 8 characters, including letters and numbers.",
+  "비밀번호 변경": "Change password",
+  "변경 중...": "Changing...",
+  "비밀번호가 서로 다릅니다.": "Passwords do not match.",
+  "비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.":
+    "Password changed. Please sign in with your new password.",
+  "유효하지 않은 링크입니다": "Invalid link",
+  "재설정 링크를 다시 요청해주세요.": "Please request a new reset link.",
+  // 이메일 인증
+  "확인 중...": "Verifying...",
+  "이메일 주소가 확인되었습니다": "Email address verified",
+  "이제 결제일 알림 메일을 받아보실 수 있습니다.":
+    "You'll now receive billing reminder emails.",
+  "확인하지 못했습니다": "Verification failed",
+  "링크가 만료되었거나 유효하지 않습니다. 설정에서 다시 보낼 수 있습니다.":
+    "The link is expired or invalid. You can resend it from settings.",
+  "SubFlow로 이동": "Go to SubFlow",
+  "이메일 주소가 아직 확인되지 않았습니다. 확인 전에는 결제일 알림 메일이 발송되지 않습니다.":
+    "Your email address isn't verified yet. Billing reminder emails won't be sent until it is.",
+  "인증 메일 다시 받기": "Resend verification email",
+  "인증 메일을 다시 보냈습니다.": "Verification email sent again.",
+  "잠시 후 다시 시도해주세요.": "Please try again in a moment.",
+  "나중에": "Later",
   "설정": "Settings",
   "알림": "Notifications",
   "히스토리": "History",

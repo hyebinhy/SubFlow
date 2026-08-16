@@ -29,6 +29,10 @@ export interface Subscription {
   notes?: string;
   created_at: string;
   updated_at: string;
+  /** 분담 반영 '내 몫'을 월 단위 KRW로 환산한 값. 대시보드 총액과 같은 기준. */
+  monthly_cost_krw?: number;
+  /** 이 구독 통화의 현재 환율(1 통화 = ? KRW). 원화 구독은 없음. */
+  exchange_rate_krw?: number;
 }
 
 export interface SubscriptionCreateRequest {

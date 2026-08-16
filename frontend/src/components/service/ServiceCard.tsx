@@ -1,14 +1,24 @@
 import { CreditCard } from "lucide-react";
 import type { ServiceListItem } from "../../types/service";
 import { tr } from "../../i18n/translations";
+import { toKrw, type RateTable } from "../../utils/currency";
 
 interface Props {
   service: ServiceListItem;
   onClick: (id: number) => void;
+  /** 원화 환산 보기. 켜져 있으면 외화 요금을 원화로 바꿔 보여준다. */
+  showKrw?: boolean;
+  rates?: RateTable;
 }
 
-export default function ServiceCard({ service, onClick }: Props) {
-  const priceDisplay = service.min_price
+export default function ServiceCard({ service, onClick, showKrw, rates }: Props) {
+  const krw =
+    showKrw && rates && service.min_price
+      ? toKrw(service.min_price, service.currency ?? "KRW", rates)
+      : null;
+  const priceDisplay = krw
+    ? `${new Intl.NumberFormat("ko-KR").format(krw)}${tr("원")}~`
+    : service.min_price
     ? `${new Intl.NumberFormat("ko-KR").format(service.min_price)}${service.currency === "KRW" ? tr("원") : "$"}~`
     : "";
 
