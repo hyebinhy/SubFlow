@@ -10,6 +10,7 @@ from app.models.notification import Notification, NotificationType
 from app.models.notification_setting import NotificationSetting
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.schemas.notification import NotificationSettingsUpdateRequest
+from app.services.subscription_service import annotate_monthly_krw
 
 
 class NotificationService:
@@ -382,4 +383,4 @@ class NotificationService:
             )
             .order_by(Subscription.next_billing_date.asc())
         )
-        return list(result.scalars().all())
+        return await annotate_monthly_krw(list(result.scalars().all()))

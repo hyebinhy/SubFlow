@@ -12,6 +12,7 @@ from app.models.service_plan import ServicePlan
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.subscription_history import HistoryEventType, SubscriptionHistory
 from app.schemas.subscription import SubscriptionCreateRequest, SubscriptionFromCatalogRequest, SubscriptionUpdateRequest
+from app.utils.cost import to_monthly_cost_krw
 from app.utils.exchange_rate import get_exchange_rates
 
 EAGER_LOADS = [
@@ -20,6 +21,22 @@ EAGER_LOADS = [
     selectinload(Subscription.service).selectinload(Service.plans),
     selectinload(Subscription.plan),
 ]
+
+
+async def annotate_monthly_krw(subs: list[Subscription]) -> list[Subscription]:
+    """응답에 실어 보낼 KRW 환산값을 ORM 인스턴스에 붙인다.
+
+    SubscriptionResponse는 from_attributes로 직렬화되므로 인스턴스에 얹어 두면
+    그대로 나간다. 환율은 1시간 캐시라 구독 수만큼 불러도 요청은 한 번뿐이다.
+    - monthly_cost_krw: 총액(analytics/overview)과 같은 기준을 쓰려고
+      personal_cost(분담 반영)를 월 단위 KRW로 환산한 값
+    - exchange_rate_krw: 클라이언트가 화면의 임의 금액을 환산해 병기하도록
+    """
+    rates = await get_exchange_rates()
+    for s in subs:
+        s.monthly_cost_krw = await to_monthly_cost_krw(s.personal_cost, s.billing_cycle, s.currency)
+        s.exchange_rate_krw = None if s.currency == "KRW" else rates.get(s.currency.upper())
+    return subs
 
 
 class SubscriptionService:
@@ -67,7 +84,7 @@ class SubscriptionService:
             query = query.order_by(sort_column.desc())
 
         result = await self.db.execute(query)
-        return list(result.scalars().all())
+        return await annotate_monthly_krw(list(result.scalars().all()))
 
     async def get_by_id(self, subscription_id: UUID, user_id: UUID) -> Subscription:
         result = await self.db.execute(
@@ -77,7 +94,7 @@ class SubscriptionService:
         subscription = result.scalar_one_or_none()
         if not subscription:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscription not found")
-        return subscription
+        return (await annotate_monthly_krw([subscription]))[0]
 
     async def create_from_catalog(self, user_id: UUID, data: SubscriptionFromCatalogRequest) -> Subscription:
         # Fetch service and plan
@@ -132,7 +149,7 @@ class SubscriptionService:
         result = await self.db.execute(
             select(Subscription).options(*EAGER_LOADS).where(Subscription.id == subscription.id)
         )
-        return result.scalar_one()
+        return (await annotate_monthly_krw([result.scalar_one()]))[0]
 
     async def create(self, user_id: UUID, data: SubscriptionCreateRequest) -> Subscription:
         subscription = Subscription(user_id=user_id, **data.model_dump())
@@ -153,7 +170,7 @@ class SubscriptionService:
         result = await self.db.execute(
             select(Subscription).options(*EAGER_LOADS).where(Subscription.id == subscription.id)
         )
-        return result.scalar_one()
+        return (await annotate_monthly_krw([result.scalar_one()]))[0]
 
     async def update(self, subscription_id: UUID, user_id: UUID, data: SubscriptionUpdateRequest) -> Subscription:
         subscription = await self.get_by_id(subscription_id, user_id)
@@ -211,7 +228,7 @@ class SubscriptionService:
         result = await self.db.execute(
             select(Subscription).options(*EAGER_LOADS).where(Subscription.id == subscription.id)
         )
-        return result.scalar_one()
+        return (await annotate_monthly_krw([result.scalar_one()]))[0]
 
     async def apply_suggestion(
         self,
@@ -287,7 +304,7 @@ class SubscriptionService:
         result = await self.db.execute(
             select(Subscription).options(*EAGER_LOADS).where(Subscription.id == subscription.id)
         )
-        return result.scalar_one()
+        return (await annotate_monthly_krw([result.scalar_one()]))[0]
 
     async def delete(self, subscription_id: UUID, user_id: UUID) -> None:
         subscription = await self.get_by_id(subscription_id, user_id)
@@ -319,4 +336,4 @@ class SubscriptionService:
             )
             .order_by(Subscription.next_billing_date.asc())
         )
-        return list(result.scalars().all())
+        return await annotate_monthly_krw(list(result.scalars().all()))

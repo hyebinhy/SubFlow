@@ -106,6 +106,15 @@ class SubscriptionResponse(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
+    # 분담 인원까지 반영한 '내 몫'을 월 단위 KRW로 환산한 값.
+    # 대시보드 총액(analytics/overview.total_monthly_cost)과 같은 기준이라
+    # 클라이언트가 두 값을 그대로 나누면 지출 비중이 나온다. 통화가 섞이거나
+    # 연간 결제인 구독을 클라이언트가 직접 환산하지 않도록 서버가 계산한다.
+    monthly_cost_krw: Decimal | None = None
+    # 이 구독 통화의 현재 환율 (1 통화 = ? KRW). KRW 구독은 None.
+    # 클라이언트가 '화면에 띄운 금액'을 그대로 환산해 병기할 수 있게 준다
+    # (월 구독료든 연간 요금제든 표시 중인 값에 곱하기만 하면 된다).
+    exchange_rate_krw: Decimal | None = None
 
     model_config = {"from_attributes": True}
 

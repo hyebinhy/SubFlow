@@ -10,6 +10,9 @@ import httpx
 
 _cache: dict[str, tuple[float, dict[str, Decimal]]] = {}
 _CACHE_TTL = 3600  # 1 hour
+# Frankfurter는 ECB 고시 환율이라 '영업일 1회' 갱신된다(실시간 시세가 아니다).
+# 응답의 date를 그대로 보관해 UI가 언제 기준인지 밝힐 수 있게 한다.
+_as_of: str | None = None
 
 FRANKFURTER_URL = "https://api.frankfurter.dev/v1/latest"
 BASE_CURRENCY = "KRW"
@@ -26,6 +29,7 @@ _FALLBACK_RATES: dict[str, Decimal] = {
 
 async def _fetch_rates() -> dict[str, Decimal]:
     """Fetch exchange rates from Frankfurter API. Returns rates as 1 FOREIGN = X KRW."""
+    global _as_of
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             # Get rates with KRW as target from USD base
@@ -36,6 +40,7 @@ async def _fetch_rates() -> dict[str, Decimal]:
             resp.raise_for_status()
             data = resp.json()
             usd_to_krw = Decimal(str(data["rates"]["KRW"]))
+            _as_of = data.get("date")
 
             # Now get all rates relative to USD
             resp2 = await client.get(
@@ -74,6 +79,12 @@ async def get_exchange_rates() -> dict[str, Decimal]:
     rates = await _fetch_rates()
     _cache[cache_key] = (now, rates)
     return rates
+
+
+async def get_rates_as_of() -> str | None:
+    """환율 기준일(YYYY-MM-DD). 아직 한 번도 못 받았으면 None(폴백 환율 사용 중)."""
+    await get_exchange_rates()  # 캐시 워밍 겸
+    return _as_of
 
 
 async def to_krw(amount: Decimal, currency: str) -> Decimal:

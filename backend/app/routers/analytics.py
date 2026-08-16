@@ -10,6 +10,7 @@ from app.schemas.analytics import (
     CategoryBreakdown,
     DashboardOverview,
     ExchangeRateAlertResponse,
+    ExchangeRatesResponse,
     OverlapDetectionResponse,
     PriceChangeAlertResponse,
     SavingsSuggestionsResponse,
@@ -17,6 +18,7 @@ from app.schemas.analytics import (
     TrialTrackingResponse,
 )
 from app.services.analytics_service import AnalyticsService
+from app.utils.exchange_rate import get_exchange_rates, get_rates_as_of
 
 router = APIRouter()
 
@@ -67,6 +69,15 @@ async def get_exchange_rate_alerts(
 ):
     service = AnalyticsService(db)
     return await service.get_exchange_rate_alerts(current_user.id)
+
+
+@router.get("/exchange-rates", response_model=ExchangeRatesResponse)
+async def get_exchange_rates_table(
+    current_user: User = Depends(get_current_user),
+):
+    """통화별 원화 환율 표. 카탈로그처럼 구독과 무관한 화면에서 쓴다."""
+    rates = await get_exchange_rates()
+    return ExchangeRatesResponse(rates=rates, as_of=await get_rates_as_of())
 
 
 @router.get("/trials", response_model=TrialTrackingResponse)

@@ -76,6 +76,16 @@ class ExchangeRateAlertItem(BaseModel):
     extra_cost_krw: Decimal
 
 
+class ExchangeRatesResponse(BaseModel):
+    """통화별 원화 환율 표. 1 <통화> = <값> KRW."""
+
+    base: str = "KRW"
+    rates: dict[str, Decimal]
+    # 환율 기준일. Frankfurter(ECB 고시)는 영업일 1회 갱신이라 오늘 날짜가
+    # 아닐 수 있다 — 화면에 "언제 기준"인지 밝히라고 같이 내려준다.
+    as_of: str | None = None
+
+
 class ExchangeRateAlertResponse(BaseModel):
     alerts: list[ExchangeRateAlertItem]
     current_usd_krw: Decimal | None = None

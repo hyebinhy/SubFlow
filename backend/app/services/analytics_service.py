@@ -33,25 +33,8 @@ from app.schemas.analytics import (
     PriceChangeAlertItem,
     PriceChangeAlertResponse,
 )
+from app.utils.cost import to_monthly_cost, to_monthly_cost_krw
 from app.utils.exchange_rate import get_exchange_rates, to_krw
-
-
-def to_monthly_cost(cost: Decimal, cycle: BillingCycle) -> Decimal:
-    match cycle:
-        case BillingCycle.WEEKLY:
-            return cost * Decimal("4.33")
-        case BillingCycle.MONTHLY:
-            return cost
-        case BillingCycle.QUARTERLY:
-            return cost / 3
-        case BillingCycle.YEARLY:
-            return cost / 12
-
-
-async def to_monthly_cost_krw(cost: Decimal, cycle: BillingCycle, currency: str) -> Decimal:
-    """Convert cost to monthly KRW amount."""
-    monthly = to_monthly_cost(cost, cycle)
-    return await to_krw(monthly, currency)
 
 
 class AnalyticsService:
