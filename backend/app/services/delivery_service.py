@@ -128,7 +128,9 @@ async def deliver_pending(db: AsyncSession) -> int:
 
         if ns.email_notifications and settings.SMTP_HOST:
             user = await db.get(User, ns.user_id)
-            if user and user.email:
+            # 확인되지 않은 주소로는 보내지 않는다. 오타로 가입한 경우 남의 메일함에
+            # 구독 내역이 들어가고, 반송이 쌓이면 발신 도메인 평판도 깎인다.
+            if user and user.email and user.email_verified:
                 if await send_email(user.email, f"[SubFlow] {title}", _email_body(pending)):
                     attempted = True
 

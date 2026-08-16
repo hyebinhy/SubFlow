@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""  # (미사용) 과거 Claude 요약용 슬롯
     OPENAI_API_KEY: str = ""  # 설정 시 AI 뉴스 제목·기사 요약을 OpenAI로 생성 (미설정이면 원문/폴백 유지)
 
-    # 이메일 발송 (SMTP) — 미설정 시 이메일 발송은 no-op
+    # 이메일 발송 (SMTP) — SMTP_HOST가 비면 발송은 no-op이고 링크만 로그에 남는다.
+    # Resend 사용 시: HOST=smtp.resend.com, PORT=587, USER=resend,
+    #                PASSWORD=<API 키>, FROM은 인증한 도메인 주소여야 한다.
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
@@ -42,6 +44,8 @@ class Settings(BaseSettings):
         "http://localhost:8082,http://127.0.0.1:8082"
     )
     APP_NAME: str = "Subscription Manager"
+    # 메일로 보내는 링크(비밀번호 재설정 등)의 기준 주소. 웹앱이 서비스되는 곳.
+    APP_BASE_URL: str = "http://localhost:3000"
     DEBUG: bool = False
     # 리버스 프록시 뒤에 배포할 때만 True. rate limit이 X-Forwarded-For의 실제 클라이언트 IP를 사용.
     TRUST_PROXY: bool = False
