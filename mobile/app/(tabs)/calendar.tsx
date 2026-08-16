@@ -10,7 +10,7 @@ import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useCalendarEvents, useTimeline } from '../../src/hooks/useApi';
-import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, Shadow, TabBarSpace } from '../../src/constants/theme';
 
 const DAYS_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   headerIconBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' },
   headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl },
+  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl, paddingBottom: TabBarSpace },
   pageHeader: { paddingHorizontal: Spacing.sm, marginBottom: Spacing.xl },
   subTitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.7)', fontWeight: FontWeight.medium, marginBottom: 4 },
   mainTitle: { fontSize: 42, fontWeight: FontWeight.heavy, color: '#FFF', letterSpacing: -1 },

@@ -11,13 +11,14 @@ import {
   Linking,
   Animated,
   Alert,
+  PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { subscriptionAPI } from '../../src/services/api';
+import { subscriptionAPI, analyticsAPI } from '../../src/services/api';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
@@ -28,6 +29,7 @@ import {
   FontWeight,
   BorderRadius,
   Shadow,
+  TabBarSpace,
 } from '../../src/constants/theme';
 
 interface Category {
@@ -77,6 +79,36 @@ function formatPlanPrice(price: string, cycle: 'mo' | 'yr' | 'none' | undefined,
     ? (lang === 'ko' ? '/월' : '/mo')
     : (lang === 'ko' ? '/연' : '/yr');
   return `${price}${suffix}`;
+}
+
+// 카드의 가격 범위는 두 줄로 넘어가면 숫자 중간에서 끊겨 읽을 수 없다.
+// 반복되는 통화 기호를 떼서 한 줄에 들어갈 확률을 높인다.
+//   '₩5,500~₩17,000' → '₩5,500~17,000',  '$10~$39' → '$10~39'
+// 통화가 섞였거나('₩0~$20') 범위가 아닌 값('Pay-as-you-go')은 그대로 둔다.
+function compactRange(range: string): string {
+  const m = range.match(/^([₩$])([\d.,]+)\s*~\s*\1([\d.,]+)$/);
+  return m ? `${m[1]}${m[2]}~${m[3]}` : range;
+}
+
+const SYMBOL_TO_CODE: Record<string, string> = { $: 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY' };
+
+/**
+ * 가격 범위 문자열의 외화를 원화로 환산한다.
+ *   '$10~$39' → '₩14,113~₩55,040',  '$20' → '₩28,225'
+ * 원화 표기이거나 환율이 없거나 숫자가 아닌 값('Pay-as-you-go')은 그대로 둔다.
+ */
+function toKrwRange(range: string, rates: Record<string, number>): string {
+  const symbol = range.trim()[0];
+  const code = SYMBOL_TO_CODE[symbol];
+  const rate = code ? rates[code] : undefined;
+  if (!rate) return range;
+
+  const won = (n: string) => `₩${Math.round(parseFloat(n.replace(/,/g, '')) * rate).toLocaleString()}`;
+  const pair = range.match(/^\D([\d.,]+)\s*~\s*\D([\d.,]+)$/);
+  if (pair) return `${won(pair[1])}~${won(pair[2])}`;
+  const single = range.match(/^\D([\d.,]+)$/);
+  if (single) return won(single[1]);
+  return range;
 }
 
 const ALL_SERVICES: Service[] = [
@@ -193,6 +225,14 @@ export default function CatalogScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(600)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  // 시트를 아래로 끌어 닫기. 시트 안이 ScrollView라, 스크롤이 맨 위일 때만
+  // 제스처를 가로채야 목록 스크롤과 싸우지 않는다.
+  const sheetScrollY = useRef(0);
+
+  // 원화 환산 토글 + 환율표 (카탈로그 가격은 서비스 공시가라 구독 API와 무관)
+  const [showKrw, setShowKrw] = useState(false);
+  const [rates, setRates] = useState<Record<string, number>>({});
+  const [ratesAsOf, setRatesAsOf] = useState<string | null>(null);
 
   // 구독 추가 폼 상태
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -254,6 +294,48 @@ export default function CatalogScreen() {
       setSelectedService(null);
     });
   };
+
+  // 원화 환산 토글. 환율은 처음 켤 때 한 번만 받아 온다(서버도 1시간 캐시).
+  const toggleKrw = async () => {
+    if (!showKrw && Object.keys(rates).length === 0) {
+      try {
+        const res = await analyticsAPI.getExchangeRates();
+        const raw = (res.data?.rates ?? {}) as Record<string, string | number>;
+        const parsed: Record<string, number> = {};
+        Object.keys(raw).forEach((k) => { parsed[k] = Number(raw[k]); });
+        setRates(parsed);
+        setRatesAsOf(res.data?.as_of ?? null);
+      } catch {
+        Alert.alert(
+          language === 'ko' ? '환율을 가져오지 못했습니다' : 'Could not load exchange rates',
+          language === 'ko' ? '잠시 후 다시 시도해주세요.' : 'Please try again later.',
+        );
+        return;
+      }
+    }
+    setShowKrw((v) => !v);
+  };
+
+  // 시트 드래그 — 손잡이만 잡히던 것을 시트 전체로 넓힌다.
+  // 아래로 120px 넘게 끌거나 빠르게 튕기면 닫고, 아니면 제자리로 되돌린다.
+  const sheetPan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) =>
+        sheetScrollY.current <= 0 && g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderMove: (_e, g) => {
+        if (g.dy > 0) slideAnim.setValue(g.dy);
+      },
+      onPanResponderRelease: (_e, g) => {
+        if (g.dy > 120 || g.vy > 0.8) {
+          closeModal();
+        } else {
+          Animated.spring(slideAnim, {
+            toValue: 0, damping: 25, stiffness: 300, useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   const handleDateSelect = (day: number) => {
     const mm = String(calMonth + 1).padStart(2, '0');
@@ -443,8 +525,31 @@ export default function CatalogScreen() {
                    <Text style={styles.cardTitle}>
                      {selectedCategory === 'All' ? t('catalog.allServices') : t((`category.${selectedCategory}`) as any)}
                    </Text>
-                   <Text style={styles.countText}>{filtered.length} {t('catalog.services')}</Text>
+                   <View style={styles.cardHeaderRight}>
+                     {/* 외화 요금을 원화로 환산해 보는 토글 */}
+                     <TouchableOpacity
+                       style={[styles.krwToggle, showKrw && styles.krwToggleActive]}
+                       onPress={toggleKrw}
+                       activeOpacity={0.7}
+                     >
+                       <Ionicons
+                         name="swap-horizontal"
+                         size={13}
+                         color={showKrw ? Colors.textWhite : Colors.textSecondary}
+                       />
+                       <Text style={[styles.krwToggleText, showKrw && styles.krwToggleTextActive]}>
+                         {showKrw ? (language === 'ko' ? '원화' : 'KRW') : (language === 'ko' ? '원화로' : 'To KRW')}
+                       </Text>
+                     </TouchableOpacity>
+                     <Text style={styles.countText}>{filtered.length} {t('catalog.services')}</Text>
+                   </View>
                 </View>
+                {/* 환율은 ECB 고시라 영업일 1회 갱신 — 언제 기준인지 밝힌다 */}
+                {showKrw && ratesAsOf && (
+                  <Text style={styles.ratesNote}>
+                    {language === 'ko' ? `${ratesAsOf} 고시 환율 기준` : `At ${ratesAsOf} reference rate`}
+                  </Text>
+                )}
 
                 {filtered.length > 0 ? (
                   <View style={styles.grid}>
@@ -458,7 +563,18 @@ export default function CatalogScreen() {
                            </View>
                            <Text style={styles.serviceName} numberOfLines={1}>{service.name}</Text>
                            <Text style={styles.serviceDesc} numberOfLines={1}>{service.description}</Text>
-                           <Text style={styles.servicePrice}>{service.priceRange}</Text>
+                           {/* 한 줄 고정 + 모자라면 글자를 줄인다. 줄바꿈으로 숫자가
+                               끊기는 것보다 살짝 작아지는 편이 낫다. */}
+                           <Text
+                             style={styles.servicePrice}
+                             numberOfLines={1}
+                             adjustsFontSizeToFit
+                             minimumFontScale={0.75}
+                           >
+                             {showKrw
+                               ? compactRange(toKrwRange(service.priceRange, rates))
+                               : compactRange(service.priceRange)}
+                           </Text>
                         </TouchableOpacity>
                      ))}
                   </View>
@@ -482,9 +598,18 @@ export default function CatalogScreen() {
             <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
           </Animated.View>
 
-          <Animated.View style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}>
+          <Animated.View
+            style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}
+            {...sheetPan.panHandlers}
+          >
             {selectedService && (
-              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                contentContainerStyle={{ paddingBottom: TabBarSpace }}
+                onScroll={(e) => { sheetScrollY.current = e.nativeEvent.contentOffset.y; }}
+                scrollEventThrottle={16}
+              >
                 <View style={styles.modalHandle} />
 
                 {/* 서비스 헤더 */}
@@ -502,9 +627,33 @@ export default function CatalogScreen() {
                 {/* 요금제 선택 */}
                 {selectedService.plans && selectedService.plans.length > 0 && (
                   <View style={styles.modalPlansSection}>
-                    <Text style={styles.modalSectionTitle}>
-                      {language === 'ko' ? '요금제 선택' : 'Select Plan'}
-                    </Text>
+                    <View style={styles.modalPlansHeader}>
+                      <Text style={styles.modalSectionTitle}>
+                        {language === 'ko' ? '요금제 선택' : 'Select Plan'}
+                      </Text>
+                      {/* 외화 요금제일 때만 환산 버튼을 띄운다 — 여기서 결정하니까 여기 둔다 */}
+                      {selectedService.plans.some((p) => SYMBOL_TO_CODE[p.price.trim()[0]]) && (
+                        <TouchableOpacity
+                          style={[styles.krwToggle, showKrw && styles.krwToggleActive]}
+                          onPress={toggleKrw}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons
+                            name="swap-horizontal"
+                            size={13}
+                            color={showKrw ? Colors.textWhite : Colors.textSecondary}
+                          />
+                          <Text style={[styles.krwToggleText, showKrw && styles.krwToggleTextActive]}>
+                            {showKrw ? (language === 'ko' ? '원화' : 'KRW') : (language === 'ko' ? '원화로' : 'To KRW')}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    {showKrw && ratesAsOf && (
+                      <Text style={styles.ratesNoteModal}>
+                        {language === 'ko' ? `${ratesAsOf} 고시 환율 기준` : `At ${ratesAsOf} reference rate`}
+                      </Text>
+                    )}
                     {selectedService.plans.map((plan, i) => {
                       const isSelected = selectedPlan?.name === plan.name;
                       return (
@@ -519,7 +668,11 @@ export default function CatalogScreen() {
                           </View>
                           <Text style={[styles.modalPlanName, isSelected && { color: Colors.primary }]}>{plan.name}</Text>
                           <Text style={[styles.modalPlanPrice, isSelected && { color: Colors.primary }]}>
-                            {formatPlanPrice(plan.price, plan.cycle, language)}
+                            {formatPlanPrice(
+                              showKrw ? toKrwRange(plan.price, rates) : plan.price,
+                              plan.cycle,
+                              language,
+                            )}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -635,7 +788,7 @@ const styles = StyleSheet.create({
   },
   headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl },
+  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl, paddingBottom: TabBarSpace },
   pageHeader: { paddingHorizontal: Spacing.sm, marginBottom: Spacing.xl },
   subTitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.7)', fontWeight: FontWeight.medium, marginBottom: 4 },
   mainTitle: { fontSize: 42, fontWeight: FontWeight.heavy, color: '#FFF', letterSpacing: -1 },
@@ -659,6 +812,25 @@ const styles = StyleSheet.create({
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xl },
   cardTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   countText: { fontSize: FontSize.xs, color: Colors.textTertiary, fontWeight: FontWeight.medium },
+  cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  krwToggle: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  krwToggleActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  krwToggleText: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  krwToggleTextActive: { color: Colors.textWhite },
+  ratesNote: {
+    fontSize: 10, color: Colors.textTertiary,
+    marginTop: -Spacing.md, marginBottom: Spacing.md,
+  },
+  modalPlansHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  ratesNoteModal: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.lg },
   serviceCard: {
     width: '46%', backgroundColor: Colors.surfaceLight, borderRadius: 32, padding: Spacing.lg, gap: 4,
@@ -682,7 +854,9 @@ const styles = StyleSheet.create({
   modalSheet: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: '#FFF', borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    paddingHorizontal: Spacing.xxl, paddingBottom: 100, maxHeight: '85%',
+    // 아래 여백은 시트가 아니라 ScrollView 콘텐츠가 갖는다 — 그래야 마지막
+    // 버튼을 떠 있는 탭바 위로 '스크롤해서' 올릴 수 있다.
+    paddingHorizontal: Spacing.xxl, maxHeight: '85%',
   },
   modalHandle: {
     width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderLight,

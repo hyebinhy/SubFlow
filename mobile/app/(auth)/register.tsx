@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
+  Modal, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,14 +13,41 @@ import { GradientButton } from '../../src/components/GradientButton';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
 
+// 웹 회원가입과 같은 목록·순서. daum.net과 hanmail.net은 같은 메일함이지만
+// 가입 시기에 따라 주소가 달라 둘 다 둔다.
+const EMAIL_DOMAINS = [
+  'naver.com', 'gmail.com', 'daum.net', 'hanmail.net',
+  'kakao.com', 'nate.com', 'outlook.com', 'hotmail.com',
+  'icloud.com', 'yahoo.com', 'korea.com', 'empas.com',
+];
+
 export default function RegisterScreen() {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+  // 이메일은 앞부분과 도메인을 나눠 받는다(도메인은 드롭다운, 없으면 직접 입력)
+  const [emailLocal, setEmailLocal] = useState('');
+  const [emailDomain, setEmailDomain] = useState('');
+  const [domainPickerVisible, setDomainPickerVisible] = useState(false);
+  const [customDomain, setCustomDomain] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
+
+  const email = emailLocal && emailDomain ? `${emailLocal}@${emailDomain}` : '';
+
+  // 앞칸에 'me@naver.com'을 통째로 붙여넣는 경우가 흔하다 — 알아서 쪼갠다.
+  const handleLocalChange = (value: string) => {
+    if (value.includes('@')) {
+      const [local, ...rest] = value.split('@');
+      const domain = rest.join('@');
+      setEmailLocal(local);
+      setEmailDomain(domain);
+      if (domain && !EMAIL_DOMAINS.includes(domain)) setCustomDomain(true);
+      return;
+    }
+    setEmailLocal(value);
+  };
 
   const handleRegister = async () => {
     if (!username || !email || !password) return;
@@ -72,16 +100,50 @@ export default function RegisterScreen() {
 
               <View style={styles.fieldContainer}>
                 <Text style={styles.label}>이메일</Text>
-                <View style={styles.inputWrap}>
-                  <TextInput 
-                    style={styles.input} 
-                    placeholder="example@mail.com" 
-                    placeholderTextColor={Colors.textTertiary}
-                    value={email} 
-                    onChangeText={setEmail} 
-                    keyboardType="email-address" 
-                    autoCapitalize="none" 
-                  />
+                <View style={styles.emailRow}>
+                  <View style={[styles.inputWrap, styles.emailLocalWrap]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="email"
+                      placeholderTextColor={Colors.textTertiary}
+                      value={emailLocal}
+                      onChangeText={handleLocalChange}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <Text style={styles.emailAt}>@</Text>
+                  {customDomain ? (
+                    <View style={[styles.inputWrap, styles.emailDomainWrap]}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="직접 입력"
+                        placeholderTextColor={Colors.textTertiary}
+                        value={emailDomain}
+                        onChangeText={(v) => setEmailDomain(v.replace('@', ''))}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoFocus
+                      />
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.inputWrap, styles.emailDomainWrap]}
+                      onPress={() => setDomainPickerVisible(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.input,
+                          !emailDomain && { color: Colors.textTertiary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {emailDomain || '선택'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color={Colors.textTertiary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
 
@@ -140,6 +202,63 @@ export default function RegisterScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* 도메인 선택 시트 */}
+      <Modal
+        visible={domainPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDomainPickerVisible(false)}
+      >
+        <Pressable
+          style={styles.pickerOverlay}
+          onPress={() => setDomainPickerVisible(false)}
+        >
+          <Pressable style={styles.pickerSheet} onPress={() => {}}>
+            <View style={styles.pickerHandle} />
+            <Text style={styles.pickerTitle}>이메일 도메인</Text>
+            <ScrollView style={styles.pickerList} showsVerticalScrollIndicator={false}>
+              {EMAIL_DOMAINS.map((d) => (
+                <TouchableOpacity
+                  key={d}
+                  style={styles.pickerRow}
+                  onPress={() => {
+                    setEmailDomain(d);
+                    setCustomDomain(false);
+                    setDomainPickerVisible(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.pickerRowText,
+                      emailDomain === d && { color: Colors.primary, fontWeight: FontWeight.bold },
+                    ]}
+                  >
+                    @{d}
+                  </Text>
+                  {emailDomain === d && (
+                    <Ionicons name="checkmark" size={18} color={Colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+              {/* 목록에 없는 주소용 */}
+              <TouchableOpacity
+                style={styles.pickerRow}
+                onPress={() => {
+                  setEmailDomain('');
+                  setCustomDomain(true);
+                  setDomainPickerVisible(false);
+                }}
+              >
+                <Text style={[styles.pickerRowText, { color: Colors.primary }]}>
+                  직접 입력
+                </Text>
+                <Ionicons name="create-outline" size={18} color={Colors.primary} />
+              </TouchableOpacity>
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -189,11 +308,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg, 
     height: 52,
   },
-  input: { 
-    flex: 1, 
-    fontSize: FontSize.md, 
+  input: {
+    flex: 1,
+    fontSize: FontSize.md,
     color: Colors.textPrimary,
   },
+  // ── 이메일: 앞부분 입력 + @ + 도메인 드롭다운 ──
+  emailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  emailLocalWrap: { flex: 1, minWidth: 0 },
+  emailDomainWrap: { flex: 1, minWidth: 0 },
+  emailAt: { fontSize: FontSize.md, color: Colors.textTertiary },
+  pickerOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
+  },
+  pickerSheet: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: BorderRadius.xxxl, borderTopRightRadius: BorderRadius.xxxl,
+    paddingHorizontal: Spacing.xxl, paddingBottom: Spacing.xxxl, maxHeight: '70%',
+  },
+  pickerHandle: {
+    alignSelf: 'center', width: 40, height: 4, borderRadius: 2,
+    backgroundColor: Colors.border, marginTop: Spacing.md, marginBottom: Spacing.lg,
+  },
+  pickerTitle: {
+    fontSize: FontSize.lg, fontWeight: FontWeight.bold,
+    color: Colors.textPrimary, marginBottom: Spacing.sm,
+  },
+  pickerList: { flexGrow: 0 },
+  pickerRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: Spacing.lg, borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  pickerRowText: { fontSize: FontSize.md, color: Colors.textPrimary },
   footerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',

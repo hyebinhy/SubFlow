@@ -62,6 +62,11 @@ export const Spacing = {
   xxxl: 32,
 };
 
+// 탭바는 화면 위에 떠 있다(position: absolute). 스크롤 콘텐츠가 그 아래로
+// 흘러 들어가 잘려 보이지 않도록 각 탭 화면이 남겨야 하는 아래 여백.
+// 탭바 높이(68) + 하단 안전영역이 가장 큰 기기의 여백(34+8) + 숨 쉴 틈(20).
+export const TabBarSpace = 130;
+
 export const BorderRadius = {
   sm: 8,
   md: 12,

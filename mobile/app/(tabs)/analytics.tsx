@@ -13,7 +13,7 @@ import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { subscriptionAPI } from '../../src/services/api';
-import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, Shadow, TabBarSpace } from '../../src/constants/theme';
 
 // ── 월별 추이 바 차트 (실제 데이터 + 이번 달 강조 + 라벨) ──
 function TrendBarChart({ data }: { data: { month: string; amount: number; isForecast?: boolean }[] }) {
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
+  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: TabBarSpace },
   card: {
     backgroundColor: Colors.surface, borderRadius: 40, padding: Spacing.xxl,
     marginBottom: Spacing.lg, ...Shadow.md,

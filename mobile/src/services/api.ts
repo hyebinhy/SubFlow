@@ -90,6 +90,7 @@ export const analyticsAPI = {
   getSpendingTrend: (months = 6) => api.get(`/analytics/spending-trend?months=${months}`),
   getOverlaps: () => api.get('/analytics/overlaps'),
   getExchangeRateAlerts: () => api.get('/analytics/exchange-rate-alerts'),
+  getExchangeRates: () => api.get('/analytics/exchange-rates'),
   getTrials: () => api.get('/analytics/trials'),
   getSavingsSuggestions: () => api.get('/analytics/savings-suggestions'),
   getPriceChanges: () => api.get('/analytics/price-changes'),

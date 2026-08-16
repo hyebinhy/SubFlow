@@ -13,7 +13,7 @@ import { notificationAPI } from '../../src/services/api';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, TabBarSpace } from '../../src/constants/theme';
 
 interface SettingRowProps {
   icon: string;
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center', marginLeft: -6 },
   pageTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy, color: Colors.textWhite },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.xl, gap: Spacing.md },
+  content: { paddingHorizontal: Spacing.xl, gap: Spacing.md, paddingBottom: TabBarSpace },
   profileCard: { marginBottom: Spacing.sm },
   profileRow: { flexDirection: 'row', alignItems: 'center' },
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.primaryLight, justifyContent: 'center', alignItems: 'center' },

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Animated, Pressable, Alert, Linking, Share,
+  Animated, Pressable, Alert, Linking, Share, PanResponder, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +15,7 @@ import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { useSubscriptions, useAnalyticsOverview } from '../../src/hooks/useApi';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
-import { Colors, Spacing, FontSize, FontWeight, Shadow } from '../../src/constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, Shadow, TabBarSpace } from '../../src/constants/theme';
 
 type FilterType = 'all' | 'active' | 'paused' | 'cancelled';
 
@@ -37,6 +37,7 @@ type Sub = {
   category: string;
   cancelUrl?: string;
   memberCount: number;
+  rateKrw?: number; // 이 통화의 현재 환율 (1 통화 = ? KRW). 원화면 없음
 };
 
 // 통화별 기호 표시 (홈 화면과 동일 규칙) — 외화 구독은 ₩가 아니라 실제 통화로 표기
@@ -45,6 +46,12 @@ function formatPrice(amount: number, currency: string = 'KRW') {
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency + ' ';
   if (currency === 'KRW' || currency === 'JPY') return `${symbol}${Math.round(amount).toLocaleString()}`;
   return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** 외화 금액의 원화 환산 병기 문자열. 원화 구독이거나 환율이 없으면 빈 문자열. */
+function krwHint(amount: number, currency: string, rate?: number) {
+  if (currency === 'KRW' || !rate || !amount) return '';
+  return `≈ ₩${Math.round(amount * rate).toLocaleString()}`;
 }
 
 // 캘린더 헬퍼
@@ -95,6 +102,7 @@ export default function SubscriptionsScreen() {
     category: s.category?.name ?? s.category_name ?? '',
     cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
     currency: s.currency ?? 'KRW',
+    rateKrw: s.exchange_rate_krw != null ? Number(s.exchange_rate_krw) : undefined,
     memberCount: Math.max(1, Number(s.member_count ?? 1)),
   }));
 
@@ -149,6 +157,24 @@ export default function SubscriptionsScreen() {
       Animated.timing(slideAnim, { toValue: 600, duration: 250, useNativeDriver: true }),
     ]).start(() => { setModalVisible(false); setSelectedSub(null); setPlanPickerVisible(false); setDatePickerVisible(false); });
   };
+
+  // 시트를 아래로 끌어 닫기. 안쪽이 ScrollView라 스크롤이 맨 위일 때만
+  // 제스처를 가로채야 목록 스크롤과 싸우지 않는다.
+  const sheetScrollY = useRef(0);
+  const sheetPan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) =>
+        sheetScrollY.current <= 0 && g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderMove: (_e, g) => { if (g.dy > 0) slideAnim.setValue(g.dy); },
+      onPanResponderRelease: (_e, g) => {
+        if (g.dy > 120 || g.vy > 0.8) {
+          closeModal();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, damping: 25, stiffness: 300, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
 
   // 캘린더 데이터
   const calDaysInMonth = getDaysInMonth(calYear, calMonth);
@@ -309,6 +335,10 @@ export default function SubscriptionsScreen() {
                   </View>
                   <View style={styles.subRight}>
                     <Text style={styles.subAmount}>{formatPrice(sub.amount, sub.currency)}</Text>
+                    {/* 외화 구독은 현재 환율 기준 원화를 아래에 병기 */}
+                    {krwHint(sub.amount, sub.currency, sub.rateKrw) !== '' && (
+                      <Text style={styles.subKrw}>{krwHint(sub.amount, sub.currency, sub.rateKrw)}</Text>
+                    )}
                     <Text style={styles.subDate}>{sub.nextDate}</Text>
                   </View>
                 </TouchableOpacity>
@@ -329,9 +359,21 @@ export default function SubscriptionsScreen() {
           <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
             <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
           </Animated.View>
-          <Animated.View style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}>
+          <Animated.View
+            style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}
+            {...sheetPan.panHandlers}
+          >
             <View style={styles.modalHandle} />
-            <ScrollView showsVerticalScrollIndicator={false} bounces={false} style={{ maxHeight: 600 }}>
+            {/* 높이는 화면 비율로 잡는다 — 600 고정이면 작은 기기에서 시트가 화면을 넘는다.
+                아래 여백(TabBarSpace)이 있어야 마지막 버튼이 떠 있는 탭바에 가리지 않는다. */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              style={{ maxHeight: Dimensions.get('window').height * 0.7 }}
+              contentContainerStyle={{ paddingBottom: TabBarSpace }}
+              onScroll={(e) => { sheetScrollY.current = e.nativeEvent.contentOffset.y; }}
+              scrollEventThrottle={16}
+            >
 
             {/* 서비스 정보 */}
             <View style={styles.modalHeader}>
@@ -363,6 +405,11 @@ export default function SubscriptionsScreen() {
                 <Text style={styles.modalInfoValue}>
                   {formatPrice(selectedPlan ? selectedPlan.price : selectedSub.amount, selectedSub.currency)}
                 </Text>
+                {krwHint(selectedPlan ? selectedPlan.price : selectedSub.amount, selectedSub.currency, selectedSub.rateKrw) !== '' && (
+                  <Text style={styles.subKrw}>
+                    {krwHint(selectedPlan ? selectedPlan.price : selectedSub.amount, selectedSub.currency, selectedSub.rateKrw)}
+                  </Text>
+                )}
                 {selectedPlan && (
                   <Text style={{ fontSize: FontSize.xs, color: Colors.primary, marginTop: 2 }}>{selectedPlan.name}</Text>
                 )}
@@ -576,7 +623,7 @@ const styles = StyleSheet.create({
   addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' },
   headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surface, justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl },
+  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl, paddingBottom: TabBarSpace },
   pageHeader: { paddingHorizontal: Spacing.sm, marginBottom: Spacing.xl },
   subTitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.7)', fontWeight: FontWeight.medium, marginBottom: 4 },
   mainTitle: { fontSize: 42, fontWeight: FontWeight.heavy, color: Colors.textWhite, letterSpacing: -1 },
@@ -616,11 +663,14 @@ const styles = StyleSheet.create({
   stepperUnit: { fontSize: FontSize.sm, color: Colors.textTertiary },
   memberSplitHint: { fontSize: FontSize.xs, color: Colors.primary, marginTop: 8 },
   subAmount: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  subKrw: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
   subDate: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4 },
   emptyText: { textAlign: 'center', marginTop: 40, color: Colors.textTertiary, fontSize: FontSize.sm },
   // ── Modal ──
   modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
-  modalSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: Spacing.xxl, paddingBottom: 100 },
+  // 아래 여백은 시트가 아니라 ScrollView 콘텐츠가 갖는다 — 그래야 마지막 버튼을
+  // 탭바 위로 '스크롤해서' 올릴 수 있다(시트 패딩이면 잘린 채로 고정된다).
+  modalSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: Spacing.xxl },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderLight, alignSelf: 'center', marginTop: 12, marginBottom: Spacing.xl },
   modalHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg, marginBottom: Spacing.xl },
   modalHeaderInfo: { flex: 1 },

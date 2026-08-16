@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../src/constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow, TabBarSpace } from '../../src/constants/theme';
 import { OnboardingModal } from '../../src/components/OnboardingModal';
 
 const { width } = Dimensions.get('window');
@@ -35,7 +35,9 @@ const SNAP_INTERVAL = ITEM_WIDTH + GAP;
 interface Subscription {
   id: string;
   name: string;
-  amount: number;
+  amount: number;      // 표시용 — 구독 자체의 통화·결제주기 그대로
+  monthlyKrw: number;  // 계산용 — 월 단위 KRW로 환산한 내 몫 (서버가 준다)
+  rateKrw?: number;    // 이 통화의 현재 환율 (1 통화 = ? KRW). 원화면 없음
   currency: string;
   startDate: string; // YYYY-MM-DD
   priceNews?: string;
@@ -52,6 +54,12 @@ function formatPrice(amount: number, currency: string = 'KRW') {
     return `${symbol}${Math.round(amount).toLocaleString()}`;
   }
   return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** 외화 금액의 원화 환산 병기 문자열. 원화 구독이거나 환율이 없으면 빈 문자열. */
+function krwHint(amount: number, currency: string, rate?: number) {
+  if (currency === 'KRW' || !rate || !amount) return '';
+  return `≈ ₩${Math.round(amount * rate).toLocaleString()}`;
 }
 
 function getDurationText(startDateStr: string) {
@@ -74,7 +82,9 @@ function getDurationText(startDateStr: string) {
 
 // ── 구독 지출 비중 바코드 차트 ──
 function SpendShareChart({ subs, activeIndex }: { subs: Subscription[]; activeIndex: number }) {
-  const total = subs.reduce((s, sub) => s + sub.amount, 0);
+  // 비중 차트도 통화·주기를 맞춘 monthlyKrw로 계산해야 한다.
+  // 원본 금액으로 더하면 달러 구독이 막대 하나로 뭉개진다.
+  const total = subs.reduce((s, sub) => s + sub.monthlyKrw, 0);
   if (total === 0 || subs.length === 0) return null;
 
   // 구독당 최소 3개 바 보장, 비중에 비례해 추가 할당
@@ -82,7 +92,7 @@ function SpendShareChart({ subs, activeIndex }: { subs: Subscription[]; activeIn
   const expanded: { height: number; isActive: boolean }[] = [];
 
   subs.forEach((sub, i) => {
-    const pct = (sub.amount / total) * 100;
+    const pct = (sub.monthlyKrw / total) * 100;
     const barCount = Math.max(Math.round(pct / 100 * 40), MIN_BARS);
     const baseHeight = Math.max(pct * 0.4 + 8, 12);
     const isActive = i === activeIndex;
@@ -214,16 +224,21 @@ export default function HomeScreen() {
       id: String(s.id ?? idx + 1),
       name: s.service_name ?? s.name ?? 'Unknown',
       amount: Number(s.cost ?? s.billing_amount ?? s.amount ?? 0),
+      // 지출 비중용 금액. 총액(total_monthly_cost)과 같은 기준(월 단위 KRW)이라야
+      // 나눗셈이 성립한다 — 예전엔 $20을 원화 총액으로 나눠 0.0%가 나왔다.
+      // 서버가 안 내려주는 구버전이면 원래 금액으로 떨어뜨린다(원화면 결과 동일).
+      monthlyKrw: Number(s.monthly_cost_krw ?? s.cost ?? s.amount ?? 0),
+      rateKrw: s.exchange_rate_krw != null ? Number(s.exchange_rate_krw) : undefined,
       currency: s.currency ?? 'KRW',
       startDate: s.start_date ?? s.started_at ?? s.created_at ?? '2024-01-01',
     }));
 
   const hasSubs = subs.length > 0;
-  const EMPTY_SUB: Subscription = { id: '', name: '', amount: 0, currency: 'KRW', startDate: '' };
+  const EMPTY_SUB: Subscription = { id: '', name: '', amount: 0, monthlyKrw: 0, currency: 'KRW', startDate: '' };
   // 통화가 섞이면 단순 합산이 부정확하므로 백엔드가 KRW로 환산한 월 총액을 사용 (예산도 KRW라 비교 일관)
-  const totalMonthlySpend = Number((overviewQuery.data as any)?.total_monthly_cost ?? subs.reduce((sum, s) => sum + s.amount, 0));
+  const totalMonthlySpend = Number((overviewQuery.data as any)?.total_monthly_cost ?? subs.reduce((sum, s) => sum + s.monthlyKrw, 0));
   const activeSub = subs[Math.min(activeIndex, subs.length - 1)] ?? subs[0] ?? EMPTY_SUB;
-  const spendPercent = totalMonthlySpend > 0 ? ((activeSub.amount / totalMonthlySpend) * 100).toFixed(1) : '0';
+  const spendPercent = totalMonthlySpend > 0 ? ((activeSub.monthlyKrw / totalMonthlySpend) * 100).toFixed(1) : '0';
 
   // ── 예산 계산 ──
   const budget = monthlyBudget ?? 0;
@@ -408,6 +423,12 @@ export default function HomeScreen() {
                       <View style={[styles.floatingRevenue, styles.glassPill]}>
                         <Text style={styles.revenueLabel}>{t('home.monthlyPrice')}</Text>
                         <Text style={styles.revenueValue}>{formatPrice(item.amount, item.currency)}</Text>
+                        {/* 외화 구독은 현재 환율 기준 원화를 함께 보여준다 */}
+                        {krwHint(item.amount, item.currency, item.rateKrw) !== '' && (
+                          <Text style={styles.revenueKrw}>
+                            {krwHint(item.amount, item.currency, item.rateKrw)}
+                          </Text>
+                        )}
                         <Ionicons name="arrow-up-circle" size={14} color={Colors.success} style={{ marginLeft: 4 }} />
                       </View>
                     </View>
@@ -515,7 +536,12 @@ export default function HomeScreen() {
                     <ServiceLogo name={sub.name} size={32} />
                     <View style={styles.upcomingInfo}>
                       <Text style={styles.upcomingName}>{sub.name}</Text>
-                      <Text style={styles.upcomingDate}>{formatPrice(sub.amount, sub.currency)}</Text>
+                      <Text style={styles.upcomingDate}>
+                        {formatPrice(sub.amount, sub.currency)}
+                        {krwHint(sub.amount, sub.currency, sub.rateKrw) !== ''
+                          ? `  ${krwHint(sub.amount, sub.currency, sub.rateKrw)}`
+                          : ''}
+                      </Text>
                     </View>
                     <Text style={styles.upcomingPct}>{dateStr}</Text>
                   </View>
@@ -750,6 +776,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xl,
+    paddingBottom: TabBarSpace,
   },
   // ── Title Area ──
   titleArea: {
@@ -1026,6 +1053,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
+  },
+  revenueKrw: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    marginLeft: 6,
   },
   mainWhiteCard: {
     borderRadius: 40,
