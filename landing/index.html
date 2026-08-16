@@ -455,10 +455,58 @@
       display: flex; flex-direction: column;
       background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
       padding: 0 var(--m-pad) clamp(36px, 6vh, 64px); }
-    /* 데스크톱 .stage는 히어로 전용 배치라 여기서는 폭만 잡아 다시 쓴다.
-       폰은 노트북 오른쪽 아래에 겹쳐 서므로 아래 여백을 남겨 둔다. */
-    .m-stage { position: relative; padding-right: 6px;
-      margin: clamp(104px, 21vh, 220px) 0 auto; }
+    /* 기기 무대 — 노트북은 좁은 화면에서 손톱만 해져 읽히지 않는다.
+       데스크톱 히어로에서 폰만 떼어 와 화면 가운데에 크게 세운다. */
+    .m-stage { position: relative; display: flex; justify-content: center;
+      margin: clamp(30px, 7vh, 78px) 0 auto; perspective: 1000px;
+      /* 남는 공간이 0인 화면에서도 카피와 붙지 않게 최소 간격을 둔다 */
+      padding-bottom: clamp(16px, 2.6vh, 28px); }
+    /* 위 여백도 주소창을 뺀 실제 높이(svh) 기준이어야 한 화면 계산이 맞다 */
+    .m-stage { margin-top: clamp(30px, 7svh, 78px); }
+    /* 기기 뒤 브랜드 글로우 — 흰 바탕에서 폰이 떠 보이도록.
+       상자가 무대(=화면 폭)를 넘으면 안 된다. 넘기면 문서가 가로로 넓어지고,
+       모바일 브라우저는 그만큼 레이아웃 뷰포트를 늘려버려서 position:fixed인
+       모달까지 화면보다 넓게 잡힌다(오른쪽이 잘려 나간다).
+       번짐은 blur로 낸다 — filter는 레이아웃 폭을 늘리지 않는다. */
+    .m-stage .glow { position: absolute; z-index: 0; left: 50%; top: 46%;
+      width: 100%; height: 74%; transform: translate(-50%, -50%);
+      background: radial-gradient(closest-side, var(--brand-glow), transparent 72%);
+      filter: blur(38px); opacity: .6; pointer-events: none; }
+    /* 부유 애니메이션 전용 래퍼 — 스크롤 스크럽(폰)과 속성이 겹치지 않게 분리 */
+    .m-phone-float { position: relative; z-index: 1; will-change: transform; }
+
+    /* 폰 확대: 전역 .phone은 노트북 옆 소품 크기라 여기서 다시 잡는다.
+       세로가 기준이다(가로만 보면 작은 폰에서 히어로가 한 화면을 넘는다). */
+    /* 모서리는 폭에 '비례'해야 한다. 고정 px으로 두면 폰 폭이 기기마다
+       달라지므로 어떤 화면에선 비눗방울처럼, 어떤 화면에선 각지게 보인다.
+       아래 폭 식에 0.22를 곱한 값이다 — min()의 각 항에 같은 비율을 곱하면
+       결과도 그 비율이 된다. */
+    .m-hero .phone { position: relative; right: auto; bottom: auto;
+      width: min(64vw, 290px); padding: 4px; border-radius: min(14.1vw, 61.6px);
+      transform-origin: 50% 60%;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.42),
+        0 0 0 1px rgba(10,12,16,.6),
+        0 54px 72px -34px rgba(20,33,58,.55),
+        0 16px 30px -18px rgba(20,33,58,.4); }
+    /* svh를 아는 브라우저에서만 세로 상한을 건다(모르는 곳은 위 선언이 남는다) */
+    .m-hero .phone { width: min(64vw, 22.5svh, 280px);
+      border-radius: min(14.1vw, 4.95svh, 61.6px); }
+    /* 화면 반경 = 바깥 반경 - 패딩(4px). 그래야 테두리 두께가 모서리에서도 같다 */
+    .m-hero .phone-screen { border-radius: calc(min(14.1vw, 61.6px) - 4px); }
+    .m-hero .phone-screen { border-radius: calc(min(14.1vw, 4.95svh, 61.6px) - 4px); }
+    /* 커진 만큼 다이내믹 아일랜드·렌즈·버튼도 같은 비율로 키운다 */
+    .m-hero .phone::before { top: 12px; width: 30%; height: 11px; }
+    .m-hero .phone-cam { top: 14.5px; width: 7px; height: 7px; }
+    .m-hero .phone::after { bottom: -18px; width: 86%; height: 24px; filter: blur(10px); }
+    .m-hero .phone-btn { width: 2.5px; }
+    .m-hero .phone-btn.mute { left: -2px; height: 20px; }
+    .m-hero .phone-btn.vol-up { left: -2px; height: 36px; }
+    .m-hero .phone-btn.vol-down { left: -2px; height: 36px; }
+    .m-hero .phone-btn.power { right: -2px; height: 58px; }
+    /* 히어로 등장은 폭이 큰 만큼 조금 더 깊게 */
+    #m.rise-ready .m-stage[data-rise] { transform: translateY(34px) scale(.95);
+      transition-duration: .82s; }
     .m-hero .eyebrow { display: block; margin-bottom: 20px; }
     .m-hero-title { font-family: var(--head); font-weight: 400;
       font-size: clamp(38px, 12vw, 56px); line-height: 1.14; letter-spacing: -.035em;
@@ -577,6 +625,25 @@
     .m-modal-foot .dim { color: var(--ink-faint); text-align: right; font-weight: 500; }
     body.m-locked { overflow: hidden; }
 
+    /* ── 흰색 → 검정 스크롤 전환 ──
+       기본값은 위의 하드코딩된 다크 팔레트다 — 스크립트가 없으면 지금 이대로,
+       섹션이 딱딱 끊기며 바뀐다(퇴화 안전).
+       스크립트가 전환을 걸 수 있을 때만 #m에 .tintable이 붙어, 다크 섹션도
+       테마 변수를 쓰게 된다. 그래야 라이트 섹션과 같은 색을 공유해서
+       페이지 전체가 하나의 화면처럼 함께 물든다. */
+    #m.tintable .m-dark { background: var(--bg); color: var(--ink); }
+    #m.tintable .m-dark .m-display { color: var(--ink); }
+    #m.tintable .m-dark .m-display .dim { color: var(--ink-faint); }
+    #m.tintable .m-hr { border-top-color: var(--line); }
+    #m.tintable .m-label { color: var(--ink-faint); }
+    #m.tintable .m-persona p { color: var(--ink-soft); }
+    #m.tintable .m-pill { background: var(--surface); }
+    #m.tintable .m-pill-body { background: var(--surface-2); color: var(--ink-soft); }
+    #m.tintable .m-dots span { background: var(--line-strong); }
+    #m.tintable .m-foot { background: var(--bg); color: var(--ink); }
+    #m.tintable .m-foot-h,
+    #m.tintable .m-foot-credit .dim { color: var(--ink-faint); }
+
     /* ── 스크롤 등장 ──
        모바일에서는 GSAP을 끄므로 IntersectionObserver + CSS 전환으로 처리한다.
        JS가 없거나 실패해도 .rise-ready가 안 붙어 전부 그냥 보인다(퇴화 안전). */
@@ -587,6 +654,19 @@
     #m.rise-ready [data-rise-d="1"] { transition-delay: .07s; }
     #m.rise-ready [data-rise-d="2"] { transition-delay: .14s; }
     #m.rise-ready [data-rise-d="3"] { transition-delay: .21s; }
+  }
+
+  /* 세로가 짧은 기기(구형 4.7~5인치)에서는 폰을 조금 더 줄여야
+     히어로가 한 화면 안에 들어온다 */
+  @media (max-width: 760px) and (max-height: 700px) {
+    .m-hero .phone { width: min(60vw, 260px); }
+    /* 가로로 눕힌 화면에서는 svh가 너무 작아지므로 140px를 바닥으로 둔다 */
+    .m-hero .phone { width: min(60vw, max(140px, 21svh), 260px); }
+    /* 여기서도 모서리는 폭의 22% (위와 같은 식에 0.22를 곱한 값) */
+    .m-hero .phone { border-radius: min(13.2vw, 57.2px); }
+    .m-hero .phone { border-radius: min(13.2vw, max(30.8px, 4.62svh), 57.2px); }
+    .m-hero .phone-screen { border-radius: calc(min(13.2vw, 57.2px) - 4px); }
+    .m-hero .phone-screen { border-radius: calc(min(13.2vw, max(30.8px, 4.62svh), 57.2px) - 4px); }
   }
 
   @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
@@ -609,23 +689,17 @@
     <img class="m-emblem" src="./brand/subflow-mark-black.png" alt="SubFlow" />
   </header>
 
-  <!-- 히어로 — 기기 목업은 데스크톱과 같은 마크업을 쓴다(.laptop/.phone CSS가 전역) -->
+  <!-- 히어로 — 데스크톱 히어로에서 폰만 떼어 와 주인공으로 세운다(.phone CSS가 전역) -->
   <section class="m-hero">
     <div class="m-stage" data-rise>
-      <div class="stage-inner">
-        <div class="laptop">
-          <div class="laptop-screen">
-            <div class="laptop-bezel">
-              <img class="shot" src="./shots/web.png" alt="SubFlow 웹 대시보드" />
-            </div>
-          </div>
-          <div class="laptop-base">
-            <div class="kb-well"></div>
-            <div class="deck-pad"></div>
-          </div>
-        </div>
-        <div class="phone">
+      <span class="glow" aria-hidden="true"></span>
+      <div class="m-phone-float" id="mPhoneFloat">
+        <div class="phone" id="mPhone">
           <span class="phone-cam" aria-hidden="true"></span>
+          <span class="phone-btn mute" aria-hidden="true"></span>
+          <span class="phone-btn vol-up" aria-hidden="true"></span>
+          <span class="phone-btn vol-down" aria-hidden="true"></span>
+          <span class="phone-btn power" aria-hidden="true"></span>
           <div class="phone-screen">
             <img class="shot" src="./shots/mobile.png" alt="SubFlow 모바일 앱" />
           </div>
@@ -1240,6 +1314,16 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/ScrollTrigger.min.js"></script>
 <script>
+// ── 라이트/다크 팔레트 ───────────────────────────────────────────────────
+// 흰색 → 검정 전환에 쓰는 두 벌의 색. 데스크톱(About 핀 구간)과 모바일
+// (선언문 진입 구간)이 같은 값을 써야 하므로 양쪽 바깥에 둔다.
+var L = { bg:'#ffffff', bg2:'#f5f8fc', surface:'#ffffff', surface2:'#eef4fb',
+          ink:'#0d1526', soft:'#55617a', faint:'#8593ab',
+          line:'rgba(0,0,0,0.10)', lineStrong:'rgba(0,0,0,0.18)' };
+var D = { bg:'#08090d', bg2:'#0e1016', surface:'#14171f', surface2:'#1a1e28',
+          ink:'#f3f5f9', soft:'#a6b0c2', faint:'#6a7488',
+          line:'rgba(255,255,255,0.09)', lineStrong:'rgba(255,255,255,0.16)' };
+
 // ── 모바일 레이아웃 동작 ─────────────────────────────────────────────────
 // 상단 가운데 버튼 모달과 가로 슬라이드 인디케이터. 데스크톱에서는 마크업이
 // 숨겨져 있어 아무 일도 하지 않는다.
@@ -1296,6 +1380,79 @@
         });
       });
     }
+  }
+
+  // ── 히어로 폰: 부유 + 스크롤 연동 ──────────────────────────────────
+  // 등장(페이드·상승)은 위의 data-rise가 CSS로 처리한다. 여기서는 GSAP이
+  // 있을 때만 얹는 장식이라, CDN이 막히거나 모션을 줄이는 설정이면 그냥
+  // 가만히 서 있는 폰으로 남는다.
+  var phone = document.getElementById('mPhone');
+  var pfloat = document.getElementById('mPhoneFloat');
+  var mq = window.matchMedia;
+  // 데스크톱에서는 #m이 display:none이라 잴 것이 없다 — 아예 걸지 않는다.
+  var narrow = mq && mq('(max-width: 760px)').matches;
+  var lessMotion = mq && mq('(prefers-reduced-motion: reduce)').matches;
+  if (narrow && phone && pfloat && window.gsap && window.ScrollTrigger && !lessMotion) {
+    gsap.registerPlugin(ScrollTrigger);
+    var glow = document.querySelector('#m .m-stage .glow');
+    var shot = phone.querySelector('.shot');
+
+    // 미세한 부유. 스크럽이 폰의 transform을 통째로 쓰므로 래퍼에 건다.
+    gsap.to(pfloat, { y: -9, duration: 2.8, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+
+    // 히어로를 지나가는 동안 폰이 뒤로 눕고 멀어진다.
+    // (시작값은 타임라인 생성 시점의 현재 상태 = 변형 없음으로 잡힌다)
+    gsap.set(phone, { transformPerspective: 900, transformOrigin: '50% 62%' });
+    gsap.timeline({
+      scrollTrigger: { trigger: '.m-hero', start: 'top top', end: 'bottom top', scrub: .5 },
+      defaults: { ease: 'none' }
+    })
+      .to(phone, { yPercent: -13, scale: .84, rotateX: -13, rotateY: 9, opacity: .32 }, 0)
+      .to(shot, { yPercent: -3, scale: 1.06 }, 0)
+      .to(glow, { opacity: 0, scale: .8 }, 0);
+  }
+
+  // ── 흰색 → 검정 ────────────────────────────────────────────────────
+  // 데스크톱은 About을 화면에 고정해 두고 그 구간에서 페이지를 물들인다.
+  // 모바일은 핀을 걸지 않고, 선언문(#m-who)이 아래에서 올라오는 한 화면
+  // 동안 스크롤에 맞춰 물들인다. 라이트 섹션과 다크 섹션이 같은 테마 변수를
+  // 쓰므로(.tintable) 화면 전체가 한 덩어리로 함께 어두워진다.
+  var who = document.getElementById('m-who');
+  if (narrow && who && window.gsap && window.ScrollTrigger && !lessMotion) {
+    gsap.registerPlugin(ScrollTrigger);
+    var ipc = gsap.utils.interpolate;
+    var rs = document.documentElement.style;
+    // 글자는 배경을 '통과'한다 — 전반부에 배경색과 같아져 한 번 사라졌다가,
+    // 후반부에 밝은 색으로 다시 떠오른다(데스크톱과 같은 연출).
+    // 중간 회색 배경에서는 어떤 글자색도 대비가 1.1:1 수준이라, 어정쩡하게
+    // 흐린 글자를 남기느니 확실히 지웠다가 되살리는 편이 의도적으로 보인다.
+    var VANISH = 0.5;
+    var tint = { p: 0 };
+    function inkAtM(p, lv, dv, bg) {
+      return p < VANISH ? ipc(lv, bg, p / VANISH)
+                        : ipc(bg, dv, (p - VANISH) / (1 - VANISH));
+    }
+    function paintTheme() {
+      var p = tint.p;
+      var bg = ipc(L.bg, D.bg, p);
+      rs.setProperty('--bg', bg);
+      rs.setProperty('--bg-2', ipc(L.bg2, D.bg2, p));
+      rs.setProperty('--surface', ipc(L.surface, D.surface, p));
+      rs.setProperty('--surface-2', ipc(L.surface2, D.surface2, p));
+      rs.setProperty('--ink', inkAtM(p, L.ink, D.ink, bg));
+      rs.setProperty('--ink-soft', inkAtM(p, L.soft, D.soft, bg));
+      rs.setProperty('--ink-faint', inkAtM(p, L.faint, D.faint, bg));
+      rs.setProperty('--line', ipc(L.line, D.line, p));
+      rs.setProperty('--line-strong', ipc(L.lineStrong, D.lineStrong, p));
+    }
+    root.classList.add('tintable');
+    paintTheme();
+    // power2.inOut — 글자가 사라져 있는 중간 구간을 가장 빠르게 지나간다.
+    // (핀을 걸지 않으므로 그 구간이 스크롤에서 길게 남으면 고장처럼 보인다)
+    gsap.to(tint, {
+      p: 1, ease: 'power2.inOut', onUpdate: paintTheme,
+      scrollTrigger: { trigger: who, start: 'top bottom', end: 'top 22%', scrub: .55 }
+    });
   }
 
   var track = document.getElementById('mTrack');
@@ -1450,12 +1607,7 @@
 
   // ===== 전역: 히어로 이후부터 페이지를 내려갈수록 흰색 → 검정으로 물듦 =====
   // 히어로 구간은 라이트(흰색) 유지, Specifications부터 Footer까지 다크로 전환.
-  var L = { bg:'#ffffff', bg2:'#f5f8fc', surface:'#ffffff', surface2:'#eef4fb',
-            ink:'#0d1526', soft:'#55617a', faint:'#8593ab',
-            line:'rgba(0,0,0,0.10)', lineStrong:'rgba(0,0,0,0.18)' };
-  var D = { bg:'#08090d', bg2:'#0e1016', surface:'#14171f', surface2:'#1a1e28',
-            ink:'#f3f5f9', soft:'#a6b0c2', faint:'#6a7488',
-            line:'rgba(255,255,255,0.09)', lineStrong:'rgba(255,255,255,0.16)' };
+  // 팔레트 L/D는 이 스크립트 맨 위(모바일과 공용)에 있다.
   var themeProg = { p: 0 };
   var rootStyle = document.documentElement.style;
   var ip = gsap.utils.interpolate;
