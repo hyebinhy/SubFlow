@@ -61,6 +61,8 @@ export const authAPI = {
   register: (email: string, password: string, username: string) =>
     api.post('/auth/register', { email, password, username }),
   getMe: () => api.get('/auth/me'),
+  // 계정 삭제 — 본문에 비밀번호를 실어 보낸다 (axios는 delete에 data 지원)
+  deleteAccount: (password: string) => api.delete('/auth/me', { data: { password } }),
 };
 
 // ── Subscriptions ──

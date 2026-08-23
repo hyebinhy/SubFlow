@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -19,7 +19,11 @@ from app.core.security import (
     peek_token_subject,
     verify_password,
 )
+from app.models.notification import Notification
 from app.models.notification_setting import NotificationSetting
+from app.models.payment_history import PaymentHistory
+from app.models.subscription import Subscription
+from app.models.subscription_history import SubscriptionHistory
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.services.delivery_service import send_email
@@ -53,6 +57,33 @@ class AuthService:
         # 인증 메일은 가입을 막지 않는다 — 실패해도 계정은 이미 만들어졌다.
         await self.send_verification_email(user)
         return user
+
+    # ── 계정 삭제 ────────────────────────────────────────────────────
+    async def delete_account(self, user: User, password: str) -> None:
+        """계정과 딸린 데이터를 전부 지운다 (되돌릴 수 없음).
+
+        Apple 심사 지침 5.1.1(v) — 가입이 가능한 앱은 앱 안에서 계정을
+        삭제할 수 있어야 한다.
+
+        자식 테이블을 명시적으로 지운다. users.id를 참조하는 FK 중
+        ON DELETE CASCADE가 걸린 것은 notifications뿐이라, ORM 캐스케이드에
+        기대면 payment_history·subscription_history에서 FK 위반이 난다.
+        """
+        if not verify_password(password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="비밀번호가 올바르지 않습니다.",
+            )
+
+        # 참조하는 쪽부터 — 구독을 먼저 지우면 결제/변경 이력이 FK로 막힌다.
+        # ORM의 db.delete(user) 대신 전부 SQL DELETE로 처리한다: 전자는 flush 중에
+        # user.subscriptions를 lazy load 하려 들어 async에서 MissingGreenlet이 난다.
+        for model in (PaymentHistory, SubscriptionHistory, Notification,
+                      NotificationSetting, Subscription):
+            await self.db.execute(delete(model).where(model.user_id == user.id))
+
+        await self.db.execute(delete(User).where(User.id == user.id))
+        await self.db.commit()
 
     # ── 이메일 인증 ──────────────────────────────────────────────────
     async def send_verification_email(self, user: User) -> None:

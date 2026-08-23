@@ -5,6 +5,7 @@ from app.core.deps import get_current_user, get_db
 from app.core.limiter import limiter
 from app.models.user import User
 from app.schemas.auth import (
+    DeleteAccountRequest,
     ForgotPasswordRequest,
     LoginRequest,
     RefreshRequest,
@@ -116,3 +117,17 @@ async def update_me(
     if email_changed:
         await AuthService(db).send_verification_email(current_user)
     return current_user
+
+
+@router.delete("/me", response_model=SimpleMessage)
+@limiter.limit("3/minute")
+async def delete_me(
+    request: Request,
+    data: DeleteAccountRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """계정과 모든 데이터를 삭제한다 (복구 불가)."""
+    service = AuthService(db)
+    await service.delete_account(current_user, data.password)
+    return SimpleMessage(message="계정이 삭제되었습니다. 그동안 이용해주셔서 감사합니다.")

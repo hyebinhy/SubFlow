@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Card } from '../../src/components/Card';
 import { GradientButton } from '../../src/components/GradientButton';
-import { notificationAPI } from '../../src/services/api';
+import { authAPI, notificationAPI } from '../../src/services/api';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
@@ -72,6 +72,9 @@ export default function SettingsScreen() {
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(t('settings.logout'), '', [
@@ -85,6 +88,28 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  const openDeleteModal = () => {
+    setDeletePassword('');
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword || deleting) return;
+    setDeleting(true);
+    try {
+      await authAPI.deleteAccount(deletePassword);
+      setDeleteModalVisible(false);
+      // 서버에서 이미 지워졌으니 로컬 토큰만 정리하고 로그인 화면으로
+      await logout();
+      router.replace('/(auth)/login');
+      Alert.alert(t('settings.deleteDone'));
+    } catch {
+      Alert.alert(t('settings.deleteFailed'));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleLanguageToggle = () => {
@@ -291,6 +316,12 @@ export default function SettingsScreen() {
             />
           </View>
 
+          {/* 계정 삭제 — Apple 심사 지침 5.1.1(v) */}
+          <TouchableOpacity style={styles.deleteRow} onPress={openDeleteModal} activeOpacity={0.6}>
+            <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+            <Text style={styles.deleteText}>{t('settings.deleteAccount')}</Text>
+          </TouchableOpacity>
+
           <Text style={styles.version}>SubFlow v1.0.0</Text>
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -324,6 +355,42 @@ export default function SettingsScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={[modalStyles.btn, modalStyles.btnSave]} onPress={saveBudget}>
                 <Text style={modalStyles.btnSaveText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 계정 삭제 확인 모달 */}
+      <Modal transparent animationType="fade" visible={deleteModalVisible} onRequestClose={() => setDeleteModalVisible(false)}>
+        <Pressable style={modalStyles.overlay} onPress={() => setDeleteModalVisible(false)}>
+          <Pressable style={modalStyles.box} onPress={() => {}}>
+            <Text style={modalStyles.title}>{t('settings.deleteAccount')}</Text>
+            <Text style={[modalStyles.subtitle, { color: Colors.dangerText }]}>
+              {t('settings.deleteWarning')}
+            </Text>
+            <Text style={modalStyles.fieldLabel}>{t('settings.deletePasswordLabel')}</Text>
+            <View style={modalStyles.inputRow}>
+              <TextInput
+                style={[modalStyles.input, { fontSize: FontSize.md }]}
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="••••••••"
+                placeholderTextColor={Colors.textTertiary}
+              />
+            </View>
+            <View style={modalStyles.btnRow}>
+              <TouchableOpacity style={[modalStyles.btn, modalStyles.btnCancel]} onPress={() => setDeleteModalVisible(false)}>
+                <Text style={modalStyles.btnCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[modalStyles.btn, modalStyles.btnDelete, (!deletePassword || deleting) && modalStyles.btnDisabled]}
+                onPress={handleDeleteAccount}
+                disabled={!deletePassword || deleting}
+              >
+                <Text style={modalStyles.btnSaveText}>{t('settings.deleteConfirm')}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -380,6 +447,13 @@ const styles = StyleSheet.create({
   langActive: { color: Colors.primary, fontWeight: FontWeight.bold },
   langSep: { color: Colors.borderLight },
   logoutCard: { marginTop: Spacing.lg },
+  deleteRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Spacing.xs, marginTop: Spacing.lg, paddingVertical: Spacing.sm,
+  },
+  deleteText: {
+    fontSize: FontSize.sm, fontWeight: FontWeight.medium, color: Colors.danger,
+  },
   version: { textAlign: 'center', fontSize: FontSize.xs, color: 'rgba(255,255,255,0.5)', marginTop: Spacing.sm },
 });
 
@@ -420,6 +494,12 @@ const modalStyles = StyleSheet.create({
   btn: { flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.md, alignItems: 'center' },
   btnCancel: { backgroundColor: Colors.borderLight },
   btnSave: { backgroundColor: Colors.primary },
+  btnDelete: { backgroundColor: Colors.danger },
+  btnDisabled: { opacity: 0.4 },
+  fieldLabel: {
+    fontSize: FontSize.sm, fontWeight: FontWeight.medium,
+    color: Colors.textSecondary, marginBottom: Spacing.sm,
+  },
   btnCancelText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textSecondary },
   btnSaveText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textWhite },
   currencyRow: {

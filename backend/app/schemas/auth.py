@@ -49,5 +49,12 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
+class DeleteAccountRequest(BaseModel):
+    """계정 삭제는 되돌릴 수 없으므로 비밀번호를 한 번 더 받는다
+    — 잠금 해제된 폰을 잠깐 집어든 사람이 지울 수 없게."""
+
+    password: str
+
+
 class SimpleMessage(BaseModel):
     message: str

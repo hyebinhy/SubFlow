@@ -136,6 +136,25 @@ const translations = {
   'settings.privacy': { en: 'Privacy Policy', ko: '개인정보 처리방침' },
   'settings.terms': { en: 'Terms of Service', ko: '이용약관' },
   'settings.logout': { en: 'Logout', ko: '로그아웃' },
+  'settings.deleteAccount': { en: 'Delete Account', ko: '계정 삭제' },
+  'settings.deleteAccountDesc': {
+    en: 'Permanently erase your account and all data',
+    ko: '계정과 모든 데이터를 영구 삭제합니다',
+  },
+  'settings.deleteWarning': {
+    en: 'Your subscriptions, payment history, and notification settings will be permanently deleted. This cannot be undone.',
+    ko: '등록한 구독, 결제 내역, 알림 설정이 모두 영구 삭제됩니다. 되돌릴 수 없습니다.',
+  },
+  'settings.deletePasswordLabel': {
+    en: 'Enter your password to confirm',
+    ko: '확인을 위해 비밀번호를 입력하세요',
+  },
+  'settings.deleteConfirm': { en: 'Delete permanently', ko: '영구 삭제' },
+  'settings.deleteFailed': {
+    en: 'Could not delete the account. Check your password and try again.',
+    ko: '계정을 삭제하지 못했습니다. 비밀번호를 확인하고 다시 시도해주세요.',
+  },
+  'settings.deleteDone': { en: 'Your account has been deleted.', ko: '계정이 삭제되었습니다.' },
 
   // ── Categories ──
   'category.Entertainment': { en: 'Entertainment', ko: '엔터테인먼트' },
