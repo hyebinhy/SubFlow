@@ -36,9 +36,49 @@ async def send_expo_push(token: str, title: str, body: str) -> bool:
         return False
 
 
+RESEND_API_URL = "https://api.resend.com/emails"
+
+
+def _resend_key() -> str:
+    """Resend를 SMTP로 설정해 뒀으면 그 비밀번호가 곧 API 키다(re_로 시작).
+    별도 환경변수를 새로 받지 않고 있는 값을 그대로 쓴다."""
+    if "resend.com" in settings.SMTP_HOST and settings.SMTP_PASSWORD.startswith("re_"):
+        return settings.SMTP_PASSWORD
+    return ""
+
+
+async def _send_via_resend(to: str, subject: str, body: str, key: str) -> bool:
+    """Resend HTTP API로 발송.
+
+    PaaS(Railway 등)는 스팸 방지로 아웃바운드 25/587 포트를 막는 경우가 많다.
+    실제로 여기서 SMTP가 60초 타임아웃을 다 채워 회원가입 응답을 붙잡았다.
+    HTTPS는 열려 있으므로 같은 키로 REST를 쓴다.
+    """
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            RESEND_API_URL,
+            headers={"Authorization": "Bearer " + key},
+            json={"from": settings.SMTP_FROM, "to": [to],
+                  "subject": subject, "text": body},
+        )
+    if r.status_code >= 400:
+        logger.warning("[delivery] resend %s: %s", r.status_code, r.text[:200])
+        return False
+    return True
+
+
 async def send_email(to: str, subject: str, body: str) -> bool:
-    """SMTP로 이메일 발송. SMTP 미설정 시 False(no-op)."""
-    if not settings.SMTP_HOST or not to:
+    """이메일 발송. 미설정이면 False(no-op)."""
+    if not to:
+        return False
+    key = _resend_key()
+    if key:
+        try:
+            return await _send_via_resend(to, subject, body, key)
+        except Exception as exc:
+            logger.warning("[delivery] resend failed: %s", exc)
+            return False
+    if not settings.SMTP_HOST:
         return False
     try:
         import aiosmtplib
@@ -56,6 +96,7 @@ async def send_email(to: str, subject: str, body: str) -> bool:
             username=settings.SMTP_USER or None,
             password=settings.SMTP_PASSWORD or None,
             start_tls=settings.SMTP_TLS,
+            timeout=10,
         )
         return True
     except Exception as exc:
