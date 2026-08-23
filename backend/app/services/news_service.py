@@ -1,3 +1,4 @@
+import logging
 import time
 import xml.etree.ElementTree as ET
 from urllib.parse import quote
@@ -9,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.news_cache import NewsCache
 from app.services.ai_summary import summarize_article, summarize_titles
+
+logger = logging.getLogger("uvicorn.error")
 
 # 링크별 AI 요약 인메모리 캐시 (동일 기사 재요청 시 API 호출 절약)
 _SUMMARY_CACHE: dict[str, tuple[float, str]] = {}
@@ -63,7 +66,7 @@ async def _fetch_rss(query: str, category: str, max_items: int) -> list[dict]:
             resp.raise_for_status()
         root = ET.fromstring(resp.text)
     except Exception as exc:  # 네트워크/파싱 실패는 조용히 스킵
-        print(f"[news] fetch failed for {category!r}: {exc}")
+        logger.warning("[news] fetch failed for %r: %s", category, exc)
         return []
 
     items: list[dict] = []

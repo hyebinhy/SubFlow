@@ -1,6 +1,9 @@
 import json
+import logging
 
 from app.config import settings
+
+logger = logging.getLogger("uvicorn.error")
 
 # ── 카드 제목 다듬기 (뉴스 수집 시 AI 헤드라인 정리) ──
 _TITLE_PROMPT = (
@@ -57,7 +60,7 @@ async def summarize_titles(titles: list[str]) -> list[str] | None:
         if isinstance(summaries, list) and len(summaries) == len(titles):
             return [str(s).strip() for s in summaries]
     except Exception as exc:  # 실패는 원문 유지로 흡수
-        print(f"[ai_summary] titles skipped: {exc}")
+        logger.warning("[ai_summary] titles skipped: %s", exc)
     finally:
         await client.close()
     return None
@@ -84,7 +87,7 @@ async def summarize_article(title: str, source: str = "", category: str = "") ->
         text = (resp.choices[0].message.content or "").strip()
         return text or None
     except Exception as exc:
-        print(f"[ai_summary] article skipped: {exc}")
+        logger.warning("[ai_summary] article skipped: %s", exc)
         return None
     finally:
         await client.close()

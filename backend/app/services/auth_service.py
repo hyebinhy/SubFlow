@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -27,6 +28,8 @@ from app.models.subscription_history import SubscriptionHistory
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.services.delivery_service import send_email
+
+logger = logging.getLogger("uvicorn.error")
 
 # 존재하지 않는 이메일에도 동일한 시간을 소요시켜 타이밍 기반 사용자 열거를 막는다
 _DUMMY_HASH = hash_password("timing_attack_mitigation_dummy")
@@ -101,7 +104,7 @@ class AuthService:
         )
         sent = await send_email(user.email, "[SubFlow] 이메일 주소를 확인해주세요", body)
         if not sent:
-            print(f"[auth] SMTP 미설정 — 인증 링크: {link}")
+            logger.warning("[auth] SMTP 미설정 - 인증 링크: %s", link)
 
     async def verify_email(self, token: str) -> None:
         invalid = HTTPException(
@@ -194,7 +197,7 @@ class AuthService:
         sent = await send_email(user.email, "[SubFlow] 비밀번호 재설정", body)
         if not sent:
             # SMTP 미설정(개발 환경)에서는 링크를 로그로 남겨 흐름을 확인할 수 있게 한다.
-            print(f"[auth] SMTP 미설정 — 재설정 링크: {link}")
+            logger.warning("[auth] SMTP 미설정 - 재설정 링크: %s", link)
 
     async def reset_password(self, token: str, new_password: str) -> None:
         invalid = HTTPException(

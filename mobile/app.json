@@ -14,7 +14,7 @@
       "backgroundColor": "#C4DCF2"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.subflow.app",
       "buildNumber": "1",
       "infoPlist": {

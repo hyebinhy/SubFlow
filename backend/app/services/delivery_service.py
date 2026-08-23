@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from email.message import EmailMessage
 
@@ -9,6 +10,8 @@ from app.config import settings
 from app.models.notification import Notification
 from app.models.notification_setting import NotificationSetting
 from app.models.user import User
+
+logger = logging.getLogger("uvicorn.error")
 
 EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send"
 
@@ -29,7 +32,7 @@ async def send_expo_push(token: str, title: str, body: str) -> bool:
             resp.raise_for_status()
         return True
     except Exception as exc:
-        print(f"[delivery] expo push failed: {exc}")
+        logger.warning("[delivery] expo push failed: %s", exc)
         return False
 
 
@@ -56,7 +59,7 @@ async def send_email(to: str, subject: str, body: str) -> bool:
         )
         return True
     except Exception as exc:
-        print(f"[delivery] email failed: {exc}")
+        logger.warning("[delivery] email failed: %s", exc)
         return False
 
 
