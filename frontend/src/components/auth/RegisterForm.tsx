@@ -130,11 +130,30 @@ export default function RegisterForm() {
             <label className="block text-sm font-medium text-slate-500">
               {tr("이메일")}
             </label>
+            {/*
+              비밀번호 관리자에는 쪼개진 앞부분이 아니라 완성된 주소가 저장돼야 한다.
+              앞칸에 autoComplete="username"을 걸면 크롬이 'me'만 계정 이름으로 저장해,
+              다음 로그인 때 이메일 칸에 '@' 없는 값이 채워지고 브라우저가 반려한다.
+              보이지 않는 칸에 완성된 주소를 담아 그쪽을 username으로 쓴다.
+              display:none이면 크롬이 무시하므로 화면 밖으로 밀어 둔다.
+            */}
+            <input
+              type="email"
+              name="email"
+              autoComplete="username"
+              value={email}
+              // readOnly로 두면 크롬이 저장 대상에서 빼는 경우가 있어 no-op으로 받는다
+              onChange={() => {}}
+              tabIndex={-1}
+              aria-hidden="true"
+              className="pointer-events-none absolute h-0 w-0 border-0 p-0 opacity-0"
+            />
+
             <div className="mt-1 flex items-center gap-2">
               <input
                 type="text"
                 name="email-local"
-                autoComplete="username"
+                autoComplete="off"
                 value={emailLocal}
                 onChange={(e) => handleLocalChange(e.target.value)}
                 required

@@ -8,6 +8,18 @@ import { useAuthStore } from "../store/authStore";
 import type { NotificationSettings } from "../types/notification";
 import { tr } from "../i18n/translations";
 
+/** 입력값에서 숫자만 남긴다. "150,000" → "150000" */
+const digitsOnly = (v: string) => v.replace(/[^0-9]/g, "");
+
+/**
+ * 입력 중에도 천 단위로 끊어 보여준다. 150000처럼 붙여 놓으면
+ * 자릿수가 한눈에 안 들어와 15만인지 150만인지 헷갈린다.
+ */
+const withCommas = (v: string) => {
+  const n = digitsOnly(v);
+  return n ? Number(n).toLocaleString("ko-KR") : "";
+};
+
 export default function SettingsPage() {
   const { user, setUser } = useAuthStore();
   const [username, setUsername] = useState(user?.username ?? "");
@@ -26,7 +38,7 @@ export default function SettingsPage() {
         setNotifyDays(settings.notify_days_before);
         setEmailNotif(settings.email_notifications);
         setPushNotif(settings.push_notifications);
-        setBudgetMonthly(settings.budget_monthly != null ? String(settings.budget_monthly) : "");
+        setBudgetMonthly(settings.budget_monthly != null ? withCommas(String(settings.budget_monthly)) : "");
       })
       .catch(() => {
         toast.error(tr("알림 설정을 불러오는데 실패했습니다."));
@@ -89,7 +101,8 @@ export default function SettingsPage() {
   const handleBudgetSave = async () => {
     setSaving(true);
     try {
-      const value = budgetMonthly.trim() === "" ? null : Number(budgetMonthly);
+      const digits = digitsOnly(budgetMonthly);
+      const value = digits === "" ? null : Number(digits);
       if (value !== null && (Number.isNaN(value) || value <= 0)) {
         toast.error(tr("올바른 금액을 입력해주세요."));
         setSaving(false);
@@ -97,7 +110,7 @@ export default function SettingsPage() {
       }
       const updated = await notificationApi.updateSettings({ budget_monthly: value });
       setNotifSettings(updated);
-      setBudgetMonthly(updated.budget_monthly != null ? String(updated.budget_monthly) : "");
+      setBudgetMonthly(updated.budget_monthly != null ? withCommas(String(updated.budget_monthly)) : "");
       toast.success(tr("예산이 저장되었습니다."));
     } catch {
       toast.error(tr("예산 저장에 실패했습니다."));
@@ -242,11 +255,11 @@ export default function SettingsPage() {
             <div>
               <label className="block text-sm font-medium text-slate-500">{tr("월 예산")}</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={budgetMonthly}
-                onChange={(e) => setBudgetMonthly(e.target.value)}
-                placeholder={tr("예: 150000")}
-                min="0"
+                onChange={(e) => setBudgetMonthly(withCommas(e.target.value))}
+                placeholder={tr("예: 150,000")}
                 className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>

@@ -212,7 +212,7 @@ const EN: Record<string, string> = {
   "검색 결과가 없습니다.": "No results.",
   "선택 안함": "Not selected",
   "프리미엄 플랜, 가족 공유 등...": "Premium plan, family sharing, etc.",
-  "예: 150000": "e.g. 150000",
+  "예: 150,000": "e.g. 150,000",
   "결제 유형": "Payment type",
   "해지 알림이 필요하신가요?": "Want a cancellation reminder?",
   "함께 쓰는 인원 (비용 분담)": "People sharing (cost split)",
