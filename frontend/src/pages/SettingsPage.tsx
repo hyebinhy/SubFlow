@@ -423,10 +423,13 @@ export default function SettingsPage() {
 
         {/* 회원 탈퇴 — 스토어 심사(Apple 5.1.1(v))가 앱 안에서의 계정 삭제를
             요구하고, 개인정보보호법상으로도 탈퇴 수단이 있어야 한다.
-            모바일에는 있었지만 웹에는 아예 빠져 있었다. */}
-        <section className="glass border-rose-200/60 p-6 xl:col-span-2">
+
+            평소에는 눈에 띌 이유가 없는 기능이라 다른 카드와 같은 회색 톤으로 두고,
+            버튼도 저장 버튼들과 같은 오른쪽 아래에 놓는다. 붉은색은 실제로 지우기
+            직전 확인 단계에만 쓴다 — 항상 빨갛게 두면 경고가 배경음이 된다. */}
+        <section className="glass p-6 xl:col-span-2">
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
               <TriangleAlert className="h-5 w-5" />
             </div>
             <div>
@@ -438,12 +441,14 @@ export default function SettingsPage() {
           </div>
 
           {!deleteOpen ? (
-            <button
-              onClick={() => setDeleteOpen(true)}
-              className="btn-danger-glass px-4 py-2 text-sm font-medium"
-            >
-              {tr("회원 탈퇴")}
-            </button>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setDeleteOpen(true)}
+                className="glass px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-600"
+              >
+                {tr("회원 탈퇴")}
+              </button>
+            </div>
           ) : (
             <div className="rounded-2xl bg-rose-50/60 p-4">
               <p className="text-sm text-rose-700">
@@ -460,7 +465,7 @@ export default function SettingsPage() {
                 placeholder="••••••••"
                 className="glass-input mt-1 block w-full max-w-sm rounded-lg px-3 py-2 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
               />
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex justify-end gap-2">
                 <button
                   onClick={() => { setDeleteOpen(false); setDeletePassword(""); }}
                   className="glass px-4 py-2 text-sm font-medium text-slate-500"
