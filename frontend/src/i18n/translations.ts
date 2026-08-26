@@ -306,6 +306,22 @@ const EN: Record<string, string> = {
   "구독 서비스 관련 소식이에요. 자세한 내용은 원문에서 확인하세요.":
     "News about subscription services. See the source for details.",
 
+  // ── 오류 신고 ──
+  "오류 신고·의견 보내기": "Report a problem",
+  "불편한 점을 알려주시면 직접 확인합니다": "Tell us what went wrong and we'll look into it",
+  "오류": "Bug",
+  "개선 의견": "Idea",
+  "기타": "Other",
+  "어떤 화면에서 무엇을 하다가 생긴 일인지 적어주시면 큰 도움이 됩니다.":
+    "Tell us which screen you were on and what you were doing — it helps a lot.",
+  "보고 있는 화면과 브라우저 정보가 함께 전송됩니다.":
+    "Your current screen and browser details are sent along.",
+  "보내기": "Send",
+  "보내는 중...": "Sending...",
+  "5자 이상 입력해주세요.": "Please enter at least 5 characters.",
+  "보내주셔서 감사합니다. 확인 후 반영하겠습니다.": "Thanks — we'll take a look.",
+  "잠시 후 다시 시도해주세요.": "Please try again in a moment.",
+
   // ── 설정 / 기타 ──
   "계정, 알림, 예산 기준을 한 곳에서 관리합니다.":
     "Manage your account, alerts and budget in one place.",

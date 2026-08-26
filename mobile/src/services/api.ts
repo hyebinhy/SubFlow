@@ -115,6 +115,15 @@ export const servicesAPI = {
   getById: (id: number) => api.get(`/services/${id}`),
 };
 
+// ── Feedback (오류 신고·의견) ──
+export const feedbackAPI = {
+  send: (data: {
+    type: 'bug' | 'suggestion' | 'other';
+    message: string;
+    client?: Record<string, string>;
+  }) => api.post('/feedback', data),
+};
+
 // ── News (카드뉴스: AI 소식 + 구독료 알림) ──
 export const newsAPI = {
   getNews: () => api.get('/news/'),

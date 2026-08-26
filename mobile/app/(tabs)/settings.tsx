@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert,
-  Modal, TextInput, Pressable, Linking,
+  Modal, TextInput, Pressable, Linking, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Card } from '../../src/components/Card';
 import { GradientButton } from '../../src/components/GradientButton';
-import { authAPI, notificationAPI } from '../../src/services/api';
+import { authAPI, notificationAPI, feedbackAPI } from '../../src/services/api';
+import Constants from 'expo-constants';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
@@ -75,6 +76,43 @@ export default function SettingsScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleting, setDeleting] = useState(false);
+
+  // ── 오류 신고 ──
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<'bug' | 'suggestion' | 'other'>('bug');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+
+  const handleSendFeedback = async () => {
+    if (feedbackMessage.trim().length < 5) {
+      Alert.alert(language === 'ko' ? '내용을 조금만 더 적어주세요' : 'Please add a bit more detail');
+      return;
+    }
+    setSendingFeedback(true);
+    try {
+      await feedbackAPI.send({
+        type: feedbackType,
+        message: feedbackMessage.trim(),
+        // "안 돼요" 한 줄만 오면 재현할 수가 없어서 기기·버전이라도 같이 보낸다
+        client: {
+          platform: Platform.OS,
+          osVersion: String(Platform.Version),
+          appVersion: Constants.expoConfig?.version ?? 'unknown',
+          language,
+        },
+      });
+      setFeedbackModalVisible(false);
+      setFeedbackMessage('');
+      Alert.alert(
+        language === 'ko' ? '보내주셔서 감사합니다' : 'Thanks for the report',
+        language === 'ko' ? '확인 후 반영하겠습니다.' : "We'll take a look.",
+      );
+    } catch {
+      Alert.alert(language === 'ko' ? '잠시 후 다시 시도해주세요' : 'Please try again in a moment');
+    } finally {
+      setSendingFeedback(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(t('settings.logout'), '', [
@@ -303,6 +341,13 @@ export default function SettingsScreen() {
               title={t('settings.terms')}
               onPress={() => Linking.openURL('https://mysubflow.app/terms').catch(() => {})}
             />
+            <View style={styles.divider} />
+            <SettingRow
+              icon="bug" iconColor="#FF3B30"
+              title={language === 'ko' ? '오류 신고·의견 보내기' : 'Report a problem'}
+              subtitle={language === 'ko' ? '불편한 점을 알려주시면 직접 확인합니다' : "Tell us what went wrong"}
+              onPress={() => setFeedbackModalVisible(true)}
+            />
           </Card>
 
           {/* 로그아웃 */}
@@ -355,6 +400,74 @@ export default function SettingsScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={[modalStyles.btn, modalStyles.btnSave]} onPress={saveBudget}>
                 <Text style={modalStyles.btnSaveText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 오류 신고 모달 */}
+      <Modal transparent animationType="fade" visible={feedbackModalVisible} onRequestClose={() => setFeedbackModalVisible(false)}>
+        <Pressable style={modalStyles.overlay} onPress={() => setFeedbackModalVisible(false)}>
+          <Pressable style={modalStyles.box} onPress={() => {}}>
+            <Text style={modalStyles.title}>
+              {language === 'ko' ? '오류 신고·의견 보내기' : 'Report a problem'}
+            </Text>
+            <Text style={modalStyles.subtitle}>
+              {language === 'ko'
+                ? '어떤 화면에서 무엇을 하다가 생긴 일인지 적어주시면 큰 도움이 됩니다.'
+                : 'Tell us which screen you were on and what you were doing — it helps a lot.'}
+            </Text>
+
+            <View style={styles.fbTypeRow}>
+              {(['bug', 'suggestion', 'other'] as const).map((ft) => (
+                <TouchableOpacity
+                  key={ft}
+                  style={[styles.fbTypeChip, feedbackType === ft && styles.fbTypeChipActive]}
+                  onPress={() => setFeedbackType(ft)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.fbTypeText, feedbackType === ft && styles.fbTypeTextActive]}>
+                    {ft === 'bug'
+                      ? (language === 'ko' ? '오류' : 'Bug')
+                      : ft === 'suggestion'
+                        ? (language === 'ko' ? '개선 의견' : 'Idea')
+                        : (language === 'ko' ? '기타' : 'Other')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.fbInput}
+              value={feedbackMessage}
+              onChangeText={setFeedbackMessage}
+              multiline
+              maxLength={2000}
+              textAlignVertical="top"
+              placeholder={language === 'ko' ? '내용을 적어주세요' : 'Describe the problem'}
+              placeholderTextColor={Colors.textTertiary}
+            />
+            <Text style={styles.fbNote}>
+              {language === 'ko'
+                ? '기기와 앱 버전 정보가 함께 전송됩니다.'
+                : 'Your device and app version are sent along.'}
+            </Text>
+
+            <View style={modalStyles.btnRow}>
+              <TouchableOpacity style={[modalStyles.btn, modalStyles.btnCancel]} onPress={() => setFeedbackModalVisible(false)}>
+                <Text style={modalStyles.btnCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[modalStyles.btn, modalStyles.btnSave, sendingFeedback && modalStyles.btnDisabled]}
+                onPress={handleSendFeedback}
+                disabled={sendingFeedback}
+              >
+                <Text style={modalStyles.btnSaveText}>
+                  {sendingFeedback
+                    ? (language === 'ko' ? '보내는 중...' : 'Sending...')
+                    : (language === 'ko' ? '보내기' : 'Send')}
+                </Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -447,6 +560,19 @@ const styles = StyleSheet.create({
   langActive: { color: Colors.primary, fontWeight: FontWeight.bold },
   langSep: { color: Colors.borderLight },
   logoutCard: { marginTop: Spacing.lg },
+  fbTypeRow: { flexDirection: 'row', gap: Spacing.xs, marginBottom: Spacing.md },
+  fbTypeChip: {
+    paddingVertical: 7, paddingHorizontal: 14, borderRadius: BorderRadius.full,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  fbTypeChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  fbTypeText: { fontSize: FontSize.xs, fontWeight: FontWeight.medium, color: Colors.textSecondary },
+  fbTypeTextActive: { color: Colors.textWhite },
+  fbInput: {
+    borderWidth: 1.5, borderColor: Colors.border, borderRadius: BorderRadius.md,
+    padding: Spacing.md, minHeight: 110, fontSize: FontSize.sm, color: Colors.textPrimary,
+  },
+  fbNote: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: Spacing.sm, marginBottom: Spacing.md },
   deleteRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Spacing.xs, marginTop: Spacing.lg, paddingVertical: Spacing.sm,

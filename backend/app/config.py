@@ -43,6 +43,8 @@ class Settings(BaseSettings):
         "http://localhost:8081,http://127.0.0.1:8081,"
         "http://localhost:8082,http://127.0.0.1:8082"
     )
+    # 오류 신고·의견을 받을 운영자 주소. 발송은 위 SMTP(Resend) 설정을 그대로 쓴다.
+    FEEDBACK_EMAIL: str = "yge0307@gmail.com"
     APP_NAME: str = "Subscription Manager"
     # 메일로 보내는 링크(비밀번호 재설정 등)의 기준 주소. 웹앱이 서비스되는 곳.
     APP_BASE_URL: str = "http://localhost:3000"

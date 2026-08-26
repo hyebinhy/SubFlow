@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Bell, Mail, Smartphone, User, WalletCards } from "lucide-react";
+import { Bell, LifeBuoy, Mail, Smartphone, User, WalletCards } from "lucide-react";
 import { authApi } from "../api/auth";
 import { notificationApi } from "../api/notifications";
+import { feedbackApi, type FeedbackType } from "../api/feedback";
 import { useAuthStore } from "../store/authStore";
 import type { NotificationSettings } from "../types/notification";
 import { tr } from "../i18n/translations";
@@ -31,6 +32,29 @@ export default function SettingsPage() {
         toast.error(tr("알림 설정을 불러오는데 실패했습니다."));
       });
   }, []);
+
+  // ── 오류 신고 ──
+  const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+
+  const handleFeedbackSend = async () => {
+    if (feedbackMessage.trim().length < 5) {
+      toast.error(tr("5자 이상 입력해주세요."));
+      return;
+    }
+    setSendingFeedback(true);
+    try {
+      await feedbackApi.send(feedbackType, feedbackMessage.trim());
+      // 발송 실패도 서버가 로그로 받아 두므로 사용자에겐 접수됐다고 알린다
+      toast.success(tr("보내주셔서 감사합니다. 확인 후 반영하겠습니다."));
+      setFeedbackMessage("");
+    } catch {
+      toast.error(tr("잠시 후 다시 시도해주세요."));
+    } finally {
+      setSendingFeedback(false);
+    }
+  };
 
   const handleProfileSave = async () => {
     setSaving(true);
@@ -254,6 +278,57 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-400">{tr("앱 연동")}</p>
               <p className="mt-1 text-lg font-bold text-slate-900">{pushNotif ? tr("사용") : tr("미사용")}</p>
             </div>
+          </div>
+        </section>
+
+        <section className="glass p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+              <LifeBuoy className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">{tr("오류 신고·의견 보내기")}</h3>
+              <p className="text-xs text-slate-400">{tr("불편한 점을 알려주시면 직접 확인합니다")}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-1.5">
+            {(["bug", "suggestion", "other"] as FeedbackType[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setFeedbackType(t)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  feedbackType === t
+                    ? "bg-indigo-600 text-white"
+                    : "glass text-slate-500 hover:bg-white/40"
+                }`}
+              >
+                {t === "bug" ? tr("오류") : t === "suggestion" ? tr("개선 의견") : tr("기타")}
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            value={feedbackMessage}
+            onChange={(e) => setFeedbackMessage(e.target.value)}
+            maxLength={2000}
+            rows={4}
+            placeholder={tr("어떤 화면에서 무엇을 하다가 생긴 일인지 적어주시면 큰 도움이 됩니다.")}
+            className="glass-input mt-3 block w-full resize-none rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-xs text-slate-400">
+              {tr("보고 있는 화면과 브라우저 정보가 함께 전송됩니다.")}
+            </p>
+            <button
+              onClick={handleFeedbackSend}
+              disabled={sendingFeedback}
+              className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              {sendingFeedback ? tr("보내는 중...") : tr("보내기")}
+            </button>
           </div>
         </section>
       </div>
