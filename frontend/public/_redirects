@@ -1,0 +1,5 @@
+# Cloudflare Pages SPA 폴백.
+# 라우팅은 전부 브라우저(react-router)가 하므로 /verify-email 같은 경로에는
+# 대응하는 파일이 없다. 이 규칙이 없으면 메일 링크를 눌러 직접 들어온 사람이
+# 404를 본다 — 인증·비밀번호 재설정이 바로 그 경우다.
+/*    /index.html   200
