@@ -564,11 +564,20 @@ export default function SettingsScreen() {
               )}
             </View>
 
-            <Text style={styles.fbNote}>
-              {language === 'ko'
-                ? `함께 전송: ${Platform.OS} · 앱 ${Constants.expoConfig?.version ?? '-'} · ${user?.email ?? ''}`
-                : `Sent along: ${Platform.OS} · app ${Constants.expoConfig?.version ?? '-'} · ${user?.email ?? ''}`}
-            </Text>
+            {/* 값만 늘어놓으면 무슨 뜻인지 알 수 없어 항목 이름을 붙인다 */}
+            <View style={styles.fbMeta}>
+              <Text style={styles.fbMetaLabel}>{language === 'ko' ? '함께 전송되는 정보' : 'Sent along'}</Text>
+              {[
+                [language === 'ko' ? '보낸이' : 'From', user?.email ?? ''],
+                [language === 'ko' ? '기기' : 'Device', Platform.OS],
+                [language === 'ko' ? '앱 버전' : 'App', Constants.expoConfig?.version ?? '-'],
+              ].map(([label, value]) => (
+                <View key={label} style={styles.fbMetaRow}>
+                  <Text style={styles.fbMetaKey}>{label}</Text>
+                  <Text style={styles.fbMetaValue} numberOfLines={1}>{value}</Text>
+                </View>
+              ))}
+            </View>
 
             <View style={modalStyles.btnRow}>
               <TouchableOpacity style={[modalStyles.btn, modalStyles.btnCancel]} onPress={() => setFeedbackModalVisible(false)}>
@@ -688,7 +697,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: Colors.border, borderRadius: BorderRadius.md,
     padding: Spacing.md, minHeight: 110, fontSize: FontSize.sm, color: Colors.textPrimary,
   },
-  fbNote: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: Spacing.sm, marginBottom: Spacing.md },
+  fbMeta: { marginTop: Spacing.md, marginBottom: Spacing.md },
+  fbMetaLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginBottom: 4 },
+  fbMetaRow: { flexDirection: 'row', gap: Spacing.sm },
+  fbMetaKey: { width: 56, fontSize: FontSize.xs, color: Colors.textTertiary },
+  fbMetaValue: { flex: 1, fontSize: FontSize.xs, color: Colors.textSecondary },
   fbShotRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.md },
   fbShotBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

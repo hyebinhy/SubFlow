@@ -410,18 +410,26 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {/* 무엇이 함께 가는지 값을 그대로 보여 준다 — 문구로만 적으면 짐작할 수 없다 */}
+          {/* 무엇이 함께 가는지 값을 그대로 보여 준다 — 문구로만 적으면 짐작할 수 없다.
+              다만 값만 늘어놓으면 "/settings · Chrome · 1707x898"이 무슨 뜻인지
+              알 수 없으므로 항목 이름을 붙인다. */}
           <div className="mt-3 flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs text-slate-400">{tr("아래 정보가 같이 전송됩니다")}</p>
-              <p className="truncate text-xs text-slate-500">
+              <dl className="mt-1 space-y-0.5 text-xs">
                 {[
-                  clientInfo.screen,
-                  clientInfo.browser,
-                  `${clientInfo.viewport}`,
-                  user?.email,
-                ].filter(Boolean).join("  ·  ")}
-              </p>
+                  [tr("보낸이"), user?.email],
+                  [tr("화면"), clientInfo.screen],
+                  [tr("브라우저"), `${clientInfo.browser} · ${clientInfo.viewport}`],
+                ].map(([label, value]) =>
+                  value ? (
+                    <div key={label} className="flex gap-2">
+                      <dt className="w-14 shrink-0 text-slate-400">{label}</dt>
+                      <dd className="truncate text-slate-500">{value}</dd>
+                    </div>
+                  ) : null
+                )}
+              </dl>
             </div>
             <button
               onClick={handleFeedbackSend}

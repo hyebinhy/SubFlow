@@ -315,6 +315,9 @@ const EN: Record<string, string> = {
   "어떤 화면에서 무엇을 하다가 생긴 일인지 적어주시면 큰 도움이 됩니다.":
     "Tell us which screen you were on and what you were doing — it helps a lot.",
   "아래 정보가 같이 전송됩니다": "Sent along with your report",
+  "보낸이": "From",
+  "화면": "Screen",
+  "브라우저": "Browser",
   "휴대폰에서 SubFlow 앱에 로그인하면 이 기기로 알림이 갑니다.":
     "Sign in to the SubFlow app on your phone and notifications will start arriving there.",
   "휴대폰이 연결되어 있습니다.": "Your phone is connected.",
