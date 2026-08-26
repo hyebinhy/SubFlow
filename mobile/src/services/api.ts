@@ -70,8 +70,16 @@ export const subscriptionAPI = {
   getAll: () => api.get('/subscriptions'),
   getById: (id: string) => api.get(`/subscriptions/${id}`),
   create: (data: Record<string, unknown>) => api.post('/subscriptions', data),
-  createFromCatalog: (data: { service_id: number; plan_id: number }) =>
-    api.post('/subscriptions/from-catalog', data),
+  createFromCatalog: (data: {
+    service_id: number;
+    plan_id: number;
+    start_date: string;
+    next_billing_date: string;
+    status?: string;
+    auto_renew?: boolean;
+    is_recurring?: boolean;
+    member_count?: number;
+  }) => api.post('/subscriptions/from-catalog', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/subscriptions/${id}`, data),
   cancel: (id: string) => api.delete(`/subscriptions/${id}`),
   applySuggestion: (id: string, data: { action_type: 'downgrade' | 'cancel' | 'switch_billing'; target_plan_id?: number }) =>

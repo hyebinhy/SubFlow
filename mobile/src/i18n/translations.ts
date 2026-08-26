@@ -163,6 +163,7 @@ const translations = {
   'category.Cloud/Infrastructure': { en: 'Cloud/Infrastructure', ko: '클라우드/인프라' },
   'category.Productivity': { en: 'Productivity', ko: '생산성' },
   'category.Education': { en: 'Education', ko: '교육' },
+  'category.Books': { en: 'Books', ko: '독서' },
   'category.Gaming': { en: 'Gaming', ko: '게임' },
   'category.Health & Fitness': { en: 'Health & Fitness', ko: '건강/피트니스' },
   'category.News & Media': { en: 'News & Media', ko: '뉴스/미디어' },

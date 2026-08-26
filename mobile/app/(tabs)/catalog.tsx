@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Animated,
   Alert,
   PanResponder,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { subscriptionAPI, analyticsAPI } from '../../src/services/api';
+import { useServices, type CatalogService } from '../../src/hooks/useApi';
+import { SERVICE_TAGLINES } from '../../src/constants/serviceTaglines';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
@@ -46,6 +49,7 @@ const CATEGORIES: Category[] = [
   { name: 'Cloud/Infrastructure', icon: 'cloud', color: '#FF9900' },
   { name: 'Productivity', icon: 'briefcase', color: '#D83B01' },
   { name: 'Education', icon: 'school', color: '#0056D2' },
+  { name: 'Books', icon: 'book', color: '#8B5E3C' },
   { name: 'Gaming', icon: 'game-controller', color: '#107C10' },
   { name: 'Health & Fitness', icon: 'fitness', color: '#FC4C02' },
   { name: 'News & Media', icon: 'newspaper', color: '#000000' },
@@ -55,159 +59,97 @@ const CATEGORIES: Category[] = [
 ];
 
 interface Plan {
+  id: number;
   name: string;
-  price: string;
-  cycle?: 'mo' | 'yr' | 'none'; // mo=월간, yr=연간, none=단위없음
+  price: number;
+  currency: string;
+  billingCycle: string;   // MONTHLY | YEARLY | WEEKLY | QUARTERLY
 }
 
 interface Service {
+  id: number;
   name: string;
   category: string;
-  priceRange: string;
   description: string;
   website?: string;
-  plans?: Plan[];
+  cancelUrl?: string;
+  minPrice: number | null;
+  maxPrice: number | null;
+  currency: string | null;
+  plans: Plan[];
 }
 
-// 가격 + 주기를 언어에 맞게 포맷
-function formatPlanPrice(price: string, cycle: 'mo' | 'yr' | 'none' | undefined, lang: string): string {
-  // Free, Pay-as-you-go 등은 단위 없이 그대로
-  if (price === 'Free' || price.includes('Pay-as') || price === '$0' || price === '₩0') return price;
-  const c = cycle ?? 'mo'; // 기본값 월간
-  if (c === 'none') return price;
-  const suffix = c === 'mo'
-    ? (lang === 'ko' ? '/월' : '/mo')
-    : (lang === 'ko' ? '/연' : '/yr');
-  return `${price}${suffix}`;
+const CURRENCY_SYMBOL: Record<string, string> = { KRW: '₩', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
+
+/** 백엔드 서비스 응답을 화면이 쓰는 모양으로 옮긴다. */
+function toService(raw: CatalogService): Service {
+  return {
+    id: raw.id,
+    name: raw.name,
+    category: raw.category?.name ?? '',
+    // 카드 한 줄에 들어갈 짧은 문구가 있으면 그걸 쓰고, 없으면 서버 설명으로 넘어간다
+    description: SERVICE_TAGLINES[raw.name] ?? raw.description ?? '',
+    website: raw.website_url ?? undefined,
+    cancelUrl: raw.cancel_url ?? undefined,
+    minPrice: raw.min_price === null || raw.min_price === undefined ? null : Number(raw.min_price),
+    maxPrice: raw.max_price === null || raw.max_price === undefined ? null : Number(raw.max_price),
+    currency: raw.currency ?? null,
+    plans: (raw.plans ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price),
+      currency: p.currency,
+      billingCycle: String(p.billing_cycle ?? 'MONTHLY').toUpperCase(),
+    })),
+  };
 }
 
-// 카드의 가격 범위는 두 줄로 넘어가면 숫자 중간에서 끊겨 읽을 수 없다.
-// 반복되는 통화 기호를 떼서 한 줄에 들어갈 확률을 높인다.
-//   '₩5,500~₩17,000' → '₩5,500~17,000',  '$10~$39' → '$10~39'
-// 통화가 섞였거나('₩0~$20') 범위가 아닌 값('Pay-as-you-go')은 그대로 둔다.
-function compactRange(range: string): string {
-  const m = range.match(/^([₩$])([\d.,]+)\s*~\s*\1([\d.,]+)$/);
-  return m ? `${m[1]}${m[2]}~${m[3]}` : range;
+/** 금액 하나를 통화에 맞춰 적는다. 원화는 소수점 없이, 외화는 둘째 자리까지. */
+function formatMoney(amount: number, currency: string): string {
+  const symbol = CURRENCY_SYMBOL[currency] ?? '';
+  const n = currency === 'KRW'
+    ? Math.round(amount).toLocaleString()
+    : Number(amount.toFixed(2)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return `${symbol}${n}`;
 }
 
-const SYMBOL_TO_CODE: Record<string, string> = { $: 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY' };
+const CYCLE_SUFFIX: Record<string, { ko: string; en: string }> = {
+  MONTHLY: { ko: '/월', en: '/mo' },
+  YEARLY: { ko: '/연', en: '/yr' },
+  WEEKLY: { ko: '/주', en: '/wk' },
+  QUARTERLY: { ko: '/분기', en: '/qtr' },
+};
+
+/** 환율표로 원화 환산. 원화이거나 환율이 없으면 원래 금액을 그대로 돌려준다. */
+function toKrw(amount: number, currency: string, rates: Record<string, number>): { amount: number; currency: string } {
+  const rate = currency === 'KRW' ? undefined : rates[currency];
+  return rate ? { amount: amount * rate, currency: 'KRW' } : { amount, currency };
+}
+
+/** 요금제 한 줄에 쓰는 "금액/주기". 0원짜리(무료)에는 주기를 붙이지 않는다. */
+function formatPlanPrice(plan: Plan, showKrw: boolean, rates: Record<string, number>, lang: string): string {
+  const m = showKrw ? toKrw(plan.price, plan.currency, rates) : { amount: plan.price, currency: plan.currency };
+  const price = formatMoney(m.amount, m.currency);
+  if (plan.price === 0) return price;
+  const suffix = CYCLE_SUFFIX[plan.billingCycle] ?? CYCLE_SUFFIX.MONTHLY;
+  return `${price}${lang === 'ko' ? suffix.ko : suffix.en}`;
+}
 
 /**
- * 가격 범위 문자열의 외화를 원화로 환산한다.
- *   '$10~$39' → '₩14,113~₩55,040',  '$20' → '₩28,225'
- * 원화 표기이거나 환율이 없거나 숫자가 아닌 값('Pay-as-you-go')은 그대로 둔다.
+ * 카드에 쓰는 가격 범위. 최저가와 최고가가 같으면 한 값만 적고,
+ * 다르면 반복되는 통화 기호를 떼서 한 줄에 들어갈 확률을 높인다.
+ *   5,500~17,000원 → '₩5,500~17,000'
  */
-function toKrwRange(range: string, rates: Record<string, number>): string {
-  const symbol = range.trim()[0];
-  const code = SYMBOL_TO_CODE[symbol];
-  const rate = code ? rates[code] : undefined;
-  if (!rate) return range;
-
-  const won = (n: string) => `₩${Math.round(parseFloat(n.replace(/,/g, '')) * rate).toLocaleString()}`;
-  const pair = range.match(/^\D([\d.,]+)\s*~\s*\D([\d.,]+)$/);
-  if (pair) return `${won(pair[1])}~${won(pair[2])}`;
-  const single = range.match(/^\D([\d.,]+)$/);
-  if (single) return won(single[1]);
-  return range;
+function formatPriceRange(service: Service, showKrw: boolean, rates: Record<string, number>): string {
+  const { minPrice, maxPrice, currency } = service;
+  if (minPrice === null || !currency) return '';
+  const lo = showKrw ? toKrw(minPrice, currency, rates) : { amount: minPrice, currency };
+  if (maxPrice === null || maxPrice === minPrice) return formatMoney(lo.amount, lo.currency);
+  const hi = showKrw ? toKrw(maxPrice, currency, rates) : { amount: maxPrice, currency };
+  const hiText = formatMoney(hi.amount, hi.currency);
+  const symbol = CURRENCY_SYMBOL[hi.currency] ?? '';
+  return `${formatMoney(lo.amount, lo.currency)}~${symbol && hiText.startsWith(symbol) ? hiText.slice(symbol.length) : hiText}`;
 }
-
-const ALL_SERVICES: Service[] = [
-  // Entertainment
-  { name: 'Netflix', category: 'Entertainment', priceRange: '₩5,500~₩17,000', description: 'Movies, Series, Docs', website: 'https://www.netflix.com', plans: [{ name: '광고형 스탠다드', price: '₩5,500' }, { name: '스탠다드', price: '₩13,500' }, { name: '프리미엄', price: '₩17,000' }] },
-  { name: 'YouTube Premium', category: 'Entertainment', priceRange: '₩8,500~₩23,900', description: 'Ad-free YT + Music', website: 'https://www.youtube.com/premium', plans: [{ name: 'Lite', price: '₩8,500' }, { name: '개인', price: '₩14,900' }, { name: '가족', price: '₩23,900' }] },
-  { name: 'Disney+', category: 'Entertainment', priceRange: '₩9,900~₩13,900', description: 'Disney, Marvel, Star Wars', website: 'https://www.disneyplus.com', plans: [{ name: '스탠다드', price: '₩9,900' }, { name: '프리미엄', price: '₩13,900' }] },
-  { name: 'Wavve', category: 'Entertainment', priceRange: '₩7,900~₩13,900', description: 'Korean VOD', website: 'https://www.wavve.com', plans: [{ name: '베이직', price: '₩7,900' }, { name: '스탠다드', price: '₩10,900' }, { name: '프리미엄', price: '₩13,900' }] },
-  { name: 'Tving', category: 'Entertainment', priceRange: '₩7,900~₩17,000', description: 'Original Content', website: 'https://www.tving.com', plans: [{ name: '광고형 스탠다드', price: '₩7,900' }, { name: '스탠다드', price: '₩10,900' }, { name: '프리미엄', price: '₩17,000' }] },
-  { name: 'Watcha', category: 'Entertainment', priceRange: '₩7,900~₩12,900', description: 'Movie Streaming', website: 'https://www.watcha.com', plans: [{ name: '베이직', price: '₩7,900' }, { name: '프리미엄', price: '₩12,900' }] },
-  { name: 'Apple TV+', category: 'Entertainment', priceRange: '₩6,500~₩22,900', description: 'Apple Originals', website: 'https://tv.apple.com', plans: [{ name: '개인', price: '₩6,500' }, { name: 'Apple One 개인', price: '₩12,900' }, { name: 'Apple One 가족', price: '₩22,900' }] },
-  { name: 'Coupang Play', category: 'Entertainment', priceRange: '₩4,990', description: 'Coupang Streaming', website: 'https://www.coupangplay.com', plans: [{ name: '로켓와우 포함', price: '₩4,990' }] },
-  { name: 'Amazon Prime Video', category: 'Entertainment', priceRange: '₩5,900', description: 'Amazon Originals', website: 'https://www.primevideo.com', plans: [{ name: '월간', price: '₩5,900' }] },
-  { name: 'Laftel', category: 'Entertainment', priceRange: '₩5,900~₩9,900', description: 'Anime Streaming', website: 'https://www.laftel.net', plans: [{ name: '스탠다드', price: '₩5,900' }, { name: '프리미엄', price: '₩9,900' }] },
-  { name: 'Paramount+', category: 'Entertainment', priceRange: '₩7,900', description: 'CBS, Paramount', plans: [{ name: '월간', price: '₩7,900' }] },
-  // Music
-  { name: 'Spotify', category: 'Music', priceRange: '₩5,900~₩16,900', description: 'Global Music Streaming', website: 'https://www.spotify.com', plans: [{ name: 'Student', price: '₩5,900' }, { name: 'Individual', price: '₩10,900' }, { name: 'Duo', price: '₩14,900' }, { name: 'Family (6인)', price: '₩16,900' }] },
-  { name: 'Apple Music', category: 'Music', priceRange: '₩5,900~₩16,900', description: 'Lossless Audio', website: 'https://music.apple.com', plans: [{ name: 'Student', price: '₩5,900' }, { name: '개인', price: '₩10,900' }, { name: '가족 (6인)', price: '₩16,900' }] },
-  { name: 'Melon', category: 'Music', priceRange: '₩7,900~₩10,900', description: '#1 Korean Music', website: 'https://www.melon.com', plans: [{ name: 'Essential', price: '₩7,900' }, { name: 'Premium', price: '₩10,900' }] },
-  { name: 'Genie Music', category: 'Music', priceRange: '₩7,500~₩10,900', description: 'KT Music Service', website: 'https://www.genie.co.kr', plans: [{ name: 'Top100', price: '₩7,500' }, { name: '무제한 듣기', price: '₩8,500' }, { name: '무제한+오프라인', price: '₩10,900' }] },
-  { name: 'FLO', category: 'Music', priceRange: '₩7,900~₩10,900', description: 'SKT Music Service', website: 'https://www.music-flo.com', plans: [{ name: '무제한 듣기', price: '₩7,900' }, { name: '무제한+저장', price: '₩10,900' }] },
-  { name: 'YouTube Music', category: 'Music', priceRange: '₩8,500~₩14,900', description: 'YouTube-based Music', website: 'https://music.youtube.com', plans: [{ name: '개인', price: '₩8,500' }, { name: '가족', price: '₩14,900' }] },
-  { name: 'VIBE', category: 'Music', priceRange: '₩7,900~₩10,900', description: 'Naver Music', website: 'https://vibe.naver.com', plans: [{ name: '스트리밍', price: '₩7,900' }, { name: '스트리밍+저장', price: '₩10,900' }] },
-  { name: 'Bugs', category: 'Music', priceRange: '₩7,900~₩10,900', description: 'Hi-Fi Music', website: 'https://music.bugs.co.kr', plans: [{ name: '스트리밍', price: '₩7,900' }, { name: '스트리밍+저장', price: '₩10,900' }] },
-  { name: 'Tidal', category: 'Music', priceRange: '$10.99~$19.99', description: 'HiFi Streaming', website: 'https://tidal.com', plans: [{ name: 'HiFi', price: '$10.99' }, { name: 'HiFi Plus', price: '$19.99' }] },
-  // Developer Tools
-  { name: 'GitHub Copilot', category: 'Developer Tools', priceRange: '$10~$39', description: 'AI Coding Assistant', website: 'https://github.com/features/copilot', plans: [{ name: 'Individual', price: '$10' }, { name: 'Business', price: '$19' }, { name: 'Enterprise', price: '$39' }] },
-  { name: 'JetBrains All Products', category: 'Developer Tools', priceRange: '$16.90~$28.90', description: 'IntelliJ, WebStorm', website: 'https://www.jetbrains.com', plans: [{ name: '개별 IDE', price: '$16.90' }, { name: 'All Products Pack', price: '$28.90' }] },
-  { name: 'ChatGPT Plus', category: 'Developer Tools', priceRange: '$0~$200', description: 'OpenAI GPT-4', website: 'https://chat.openai.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Plus', price: '$20' }, { name: 'Pro', price: '$200' }] },
-  { name: 'Claude Pro', category: 'Developer Tools', priceRange: '$0~$200', description: 'Anthropic Claude', website: 'https://claude.ai', plans: [{ name: 'Free', price: '$0' }, { name: 'Pro', price: '$20' }, { name: 'Max (5x)', price: '$100' }, { name: 'Max (20x)', price: '$200' }] },
-  { name: 'Notion', category: 'Developer Tools', priceRange: '$0~$15', description: 'All-in-one Workspace', website: 'https://www.notion.so', plans: [{ name: 'Free', price: '$0' }, { name: 'Plus', price: '$8' }, { name: 'Business', price: '$15' }] },
-  { name: 'Figma', category: 'Developer Tools', priceRange: '$0~$75', description: 'Design & Prototype', website: 'https://www.figma.com', plans: [{ name: 'Starter (무료)', price: '$0' }, { name: 'Professional', price: '$12' }, { name: 'Organization', price: '$45' }, { name: 'Enterprise', price: '$75' }] },
-  { name: 'Cursor', category: 'Developer Tools', priceRange: '$0~$40', description: 'AI Code Editor', website: 'https://cursor.sh', plans: [{ name: 'Hobby (무료)', price: '$0' }, { name: 'Pro', price: '$20' }, { name: 'Business', price: '$40' }] },
-  { name: 'Midjourney', category: 'Developer Tools', priceRange: '$10~$120', description: 'AI Image Generation', website: 'https://www.midjourney.com', plans: [{ name: 'Basic', price: '$10' }, { name: 'Standard', price: '$30' }, { name: 'Pro', price: '$60' }, { name: 'Mega', price: '$120' }] },
-  { name: 'Perplexity Pro', category: 'Developer Tools', priceRange: '$0~$20', description: 'AI Search Engine', website: 'https://www.perplexity.ai', plans: [{ name: 'Free', price: '$0' }, { name: 'Pro', price: '$20' }] },
-  { name: 'GitLab', category: 'Developer Tools', priceRange: '$0~$99', description: 'DevOps Platform', website: 'https://about.gitlab.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Premium', price: '$29' }, { name: 'Ultimate', price: '$99' }] },
-  { name: 'Replit', category: 'Developer Tools', priceRange: '$0~$25', description: 'Cloud IDE', website: 'https://replit.com', plans: [{ name: 'Starter (무료)', price: '$0' }, { name: 'Replit Core', price: '$25' }] },
-  // Cloud/Infrastructure
-  { name: 'Vercel', category: 'Cloud/Infrastructure', priceRange: '$0~$20', description: 'Frontend Deploy', website: 'https://vercel.com', plans: [{ name: 'Hobby (무료)', price: '$0' }, { name: 'Pro', price: '$20' }] },
-  { name: 'Netlify', category: 'Cloud/Infrastructure', priceRange: '$0~$19', description: 'Static Hosting', website: 'https://www.netlify.com', plans: [{ name: 'Starter (무료)', price: '$0' }, { name: 'Pro', price: '$19' }] },
-  { name: 'AWS', category: 'Cloud/Infrastructure', priceRange: 'Pay-as-you-go', description: 'Amazon Cloud', website: 'https://aws.amazon.com', plans: [{ name: 'Free Tier (12개월)', price: '$0' }, { name: '종량제', price: 'Pay-as-you-go' }] },
-  { name: 'DigitalOcean', category: 'Cloud/Infrastructure', priceRange: '$4~$48', description: 'Cloud Servers', website: 'https://www.digitalocean.com', plans: [{ name: 'Basic Droplet', price: '$4' }, { name: 'General Purpose', price: '$12' }, { name: 'CPU-Optimized', price: '$48' }] },
-  { name: 'Cloudflare', category: 'Cloud/Infrastructure', priceRange: '$0~$20', description: 'CDN / Security', website: 'https://www.cloudflare.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Pro', price: '$20' }] },
-  // Productivity
-  { name: 'Microsoft 365', category: 'Productivity', priceRange: '₩8,900~₩16,400', description: 'Office + OneDrive', website: 'https://www.microsoft.com/microsoft-365', plans: [{ name: 'Personal', price: '₩8,900' }, { name: 'Family (6인)', price: '₩12,900' }, { name: 'Business Basic', price: '₩16,400' }] },
-  { name: 'Google One', category: 'Productivity', priceRange: '₩2,400~₩29,900', description: 'Google Storage', website: 'https://one.google.com', plans: [{ name: '100GB', price: '₩2,400' }, { name: '200GB', price: '₩3,700' }, { name: '2TB', price: '₩11,900' }, { name: '5TB', price: '₩29,900' }] },
-  { name: 'Dropbox', category: 'Productivity', priceRange: '$9.99~$24', description: 'Cloud Storage', website: 'https://www.dropbox.com', plans: [{ name: 'Plus (2TB)', price: '$9.99' }, { name: 'Essentials (3TB)', price: '$18' }, { name: 'Business (9TB)', price: '$24' }] },
-  { name: 'Adobe Creative Cloud', category: 'Productivity', priceRange: '₩11,000~₩86,900', description: 'Photoshop, Illustrator', website: 'https://www.adobe.com', plans: [{ name: 'Photography (PS+LR)', price: '₩11,000' }, { name: '단일 앱', price: '₩30,800' }, { name: 'All Apps', price: '₩86,900' }] },
-  { name: 'Slack', category: 'Productivity', priceRange: '$0~$12.50', description: 'Team Messaging', website: 'https://slack.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Pro', price: '$7.25' }, { name: 'Business+', price: '$12.50' }] },
-  { name: 'Zoom', category: 'Productivity', priceRange: '$0~$21.99', description: 'Video Conferencing', website: 'https://zoom.us', plans: [{ name: 'Basic (무료)', price: '$0' }, { name: 'Pro', price: '$13.33' }, { name: 'Business', price: '$21.99' }] },
-  { name: 'Canva Pro', category: 'Productivity', priceRange: '₩0~₩14,900', description: 'Design Tool', website: 'https://www.canva.com', plans: [{ name: 'Free', price: '₩0' }, { name: 'Pro', price: '₩14,900' }] },
-  { name: 'Todoist', category: 'Productivity', priceRange: '$0~$6', description: 'Task Management', website: 'https://todoist.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Pro', price: '$4' }, { name: 'Business', price: '$6' }] },
-  { name: 'Grammarly', category: 'Productivity', priceRange: '$0~$15', description: 'Grammar Checker', website: 'https://www.grammarly.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Premium', price: '$12' }, { name: 'Business', price: '$15' }] },
-  { name: 'Miro', category: 'Productivity', priceRange: '$0~$16', description: 'Online Whiteboard', website: 'https://miro.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Starter', price: '$8' }, { name: 'Business', price: '$16' }] },
-  { name: 'Linear', category: 'Productivity', priceRange: '$0~$8', description: 'Issue Tracker', website: 'https://linear.app', plans: [{ name: 'Free', price: '$0' }, { name: 'Standard', price: '$8' }] },
-  // Education
-  { name: 'Duolingo Plus', category: 'Education', priceRange: '₩0~₩13,400', description: 'Language Learning', website: 'https://www.duolingo.com', plans: [{ name: '무료', price: '₩0' }, { name: 'Super', price: '₩13,400' }, { name: 'Family (6인)', price: '₩17,900' }] },
-  { name: 'LinkedIn Premium', category: 'Education', priceRange: '$29.99~$59.99', description: 'Career Network', website: 'https://www.linkedin.com/premium', plans: [{ name: 'Career', price: '$29.99' }, { name: 'Business', price: '$59.99' }] },
-  { name: 'Coursera Plus', category: 'Education', priceRange: '$49~$59', description: 'Online Courses', website: 'https://www.coursera.org', plans: [{ name: '단일 강좌', price: '$49' }, { name: 'Coursera Plus', price: '$59' }] },
-  { name: 'Class101', category: 'Education', priceRange: '₩17,900~₩24,900', description: 'Creator Classes', website: 'https://class101.net', plans: [{ name: '연간 (월환산)', price: '₩17,900' }, { name: '월간', price: '₩24,900' }] },
-  { name: '인프런', category: 'Education', priceRange: '₩0~₩25,000', description: 'IT / Programming', website: 'https://www.inflearn.com', plans: [{ name: '무료 강좌', price: '₩0' }, { name: 'Plus 멤버십', price: '₩25,000' }] },
-  { name: '밀리의 서재', category: 'Education', priceRange: '₩9,900', description: 'E-book Subscription', website: 'https://www.millie.co.kr', plans: [{ name: '월간', price: '₩9,900' }, { name: '연간 (월환산)', price: '₩5,900' }] },
-  { name: '리디 셀렉트', category: 'Education', priceRange: '₩6,500~₩13,900', description: 'E-book / Web Novel', website: 'https://ridibooks.com', plans: [{ name: '베이직', price: '₩6,500' }, { name: '프리미엄', price: '₩13,900' }] },
-  // Gaming
-  { name: 'Nintendo Switch Online', category: 'Gaming', priceRange: '₩3,900~₩5,900', description: 'Nintendo Online', website: 'https://www.nintendo.co.kr', plans: [{ name: '개인', price: '₩3,900' }, { name: '가족 (8인)', price: '₩5,900' }] },
-  { name: 'PlayStation Plus', category: 'Gaming', priceRange: '₩6,800~₩16,700', description: 'PS Online + Games', website: 'https://www.playstation.com', plans: [{ name: 'Essential', price: '₩6,800' }, { name: 'Extra', price: '₩11,700' }, { name: 'Premium', price: '₩16,700' }] },
-  { name: 'Xbox Game Pass', category: 'Gaming', priceRange: '₩8,900~₩18,900', description: 'Game Subscription', website: 'https://www.xbox.com/game-pass', plans: [{ name: 'Core', price: '₩8,900' }, { name: 'Standard', price: '₩10,900' }, { name: 'Ultimate', price: '₩18,900' }] },
-  { name: 'Discord Nitro', category: 'Gaming', priceRange: '$2.99~$9.99', description: 'HD Stream, Emoji', website: 'https://discord.com/nitro', plans: [{ name: 'Nitro Basic', price: '$2.99' }, { name: 'Nitro', price: '$9.99' }] },
-  { name: 'EA Play', category: 'Gaming', priceRange: '$4.99~$14.99', description: 'EA Game Library', website: 'https://www.ea.com/ea-play', plans: [{ name: 'EA Play', price: '$4.99' }, { name: 'EA Play Pro', price: '$14.99' }] },
-  { name: 'Steam', category: 'Gaming', priceRange: 'Free', description: 'PC Game Platform', website: 'https://store.steampowered.com', plans: [{ name: '플랫폼 이용', price: 'Free' }] },
-  // Health & Fitness
-  { name: 'Calm', category: 'Health & Fitness', priceRange: '$14.99~$69.99', description: 'Meditation / Sleep', website: 'https://www.calm.com', plans: [{ name: '월간', price: '$14.99', cycle: 'mo' }, { name: '연간', price: '$69.99', cycle: 'yr' }] },
-  { name: 'Headspace', category: 'Health & Fitness', priceRange: '$12.99~$69.99', description: 'Meditation Guide', website: 'https://www.headspace.com', plans: [{ name: '월간', price: '$12.99', cycle: 'mo' }, { name: '연간', price: '$69.99', cycle: 'yr' }] },
-  { name: 'Strava', category: 'Health & Fitness', priceRange: '$0~$11.99', description: 'Run / Cycle Tracker', website: 'https://www.strava.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Subscriber', price: '$11.99' }] },
-  { name: 'Nike Run Club+', category: 'Health & Fitness', priceRange: 'Free', description: 'Running App', website: 'https://www.nike.com/nrc-app', plans: [{ name: 'Free', price: 'Free' }] },
-  { name: 'FatSecret Premium', category: 'Health & Fitness', priceRange: '$0~$6.99', description: 'Diet / Calorie', website: 'https://www.fatsecret.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Premium', price: '$6.99' }] },
-  // News & Media
-  { name: 'The New York Times', category: 'News & Media', priceRange: '$4~$25', description: 'Global News', website: 'https://www.nytimes.com', plans: [{ name: 'Basic Digital', price: '$4' }, { name: 'All Access', price: '$25' }] },
-  { name: 'Medium', category: 'News & Media', priceRange: '$5~$15', description: 'Article Platform', website: 'https://medium.com', plans: [{ name: 'Member', price: '$5' }, { name: 'Friend of Medium', price: '$15' }] },
-  { name: 'The Economist', category: 'News & Media', priceRange: '$20~$29', description: 'Business Magazine', website: 'https://www.economist.com', plans: [{ name: 'Digital', price: '$20' }, { name: 'Digital + Print', price: '$29' }] },
-  { name: '조선일보 디지털', category: 'News & Media', priceRange: '₩9,900', description: 'Korean News', website: 'https://www.chosun.com', plans: [{ name: '월간', price: '₩9,900' }, { name: '연간 (월환산)', price: '₩7,400' }] },
-  { name: '중앙일보 디지털', category: 'News & Media', priceRange: '₩9,900', description: 'Korean News', website: 'https://joongang.co.kr', plans: [{ name: '월간', price: '₩9,900' }, { name: '연간 (월환산)', price: '₩7,900' }] },
-  // Storage
-  { name: 'iCloud+', category: 'Storage', priceRange: '₩1,300~₩78,000', description: 'Apple Cloud', website: 'https://www.apple.com/icloud', plans: [{ name: '50GB', price: '₩1,300' }, { name: '200GB', price: '₩3,900' }, { name: '2TB', price: '₩13,000' }, { name: '6TB', price: '₩39,000' }, { name: '12TB', price: '₩78,000' }] },
-  { name: 'pCloud', category: 'Storage', priceRange: '$4.99~$9.99', description: 'Cloud Storage', website: 'https://www.pcloud.com', plans: [{ name: 'Premium (500GB)', price: '$4.99' }, { name: 'Premium Plus (2TB)', price: '$9.99' }] },
-  { name: 'MEGA', category: 'Storage', priceRange: '$5.49~$32.64', description: 'Encrypted Storage', website: 'https://mega.io', plans: [{ name: 'Pro Lite (400GB)', price: '$5.49' }, { name: 'Pro I (2TB)', price: '$10.93' }, { name: 'Pro II (8TB)', price: '$21.84' }, { name: 'Pro III (16TB)', price: '$32.64' }] },
-  // Security & VPN
-  { name: 'NordVPN', category: 'Security & VPN', priceRange: '$3.09~$14.99', description: 'VPN Service', website: 'https://nordvpn.com', plans: [{ name: 'Basic', price: '$3.09' }, { name: 'Plus', price: '$4.39' }, { name: 'Complete', price: '$5.79' }, { name: '월간', price: '$14.99' }] },
-  { name: 'ExpressVPN', category: 'Security & VPN', priceRange: '$6.67~$12.95', description: 'Fast VPN', website: 'https://www.expressvpn.com', plans: [{ name: '12개월', price: '$6.67' }, { name: '6개월', price: '$9.99' }, { name: '월간', price: '$12.95' }] },
-  { name: 'Surfshark', category: 'Security & VPN', priceRange: '$2.49~$15.45', description: 'Budget VPN', website: 'https://surfshark.com', plans: [{ name: '24개월', price: '$2.49' }, { name: '12개월', price: '$3.99' }, { name: '월간', price: '$15.45' }] },
-  { name: '1Password', category: 'Security & VPN', priceRange: '$2.99~$7.99', description: 'Password Manager', website: 'https://1password.com', plans: [{ name: 'Individual', price: '$2.99' }, { name: 'Families (5인)', price: '$4.99' }, { name: 'Business', price: '$7.99' }] },
-  { name: 'Bitwarden', category: 'Security & VPN', priceRange: '$0~$6', description: 'Open-source Passwords', website: 'https://bitwarden.com', plans: [{ name: 'Free', price: '$0' }, { name: 'Premium', price: '$1' }, { name: 'Families (6인)', price: '$3.33' }, { name: 'Business', price: '$6' }] },
-  // Lifestyle
-  { name: '쿠팡 로켓와우', category: 'Lifestyle', priceRange: '₩4,990', description: 'Free Delivery', website: 'https://www.coupang.com', plans: [{ name: '월간', price: '₩4,990' }] },
-  { name: '네이버 플러스 멤버십', category: 'Lifestyle', priceRange: '₩4,900', description: 'Naver Pay Rewards', website: 'https://nid.naver.com', plans: [{ name: '월간', price: '₩4,900' }] },
-  { name: '배민클럽', category: 'Lifestyle', priceRange: '₩3,900~₩7,890', description: 'Delivery Discount', website: 'https://www.baemin.com', plans: [{ name: '배민클럽', price: '₩3,900' }, { name: '배민클럽+', price: '₩7,890' }] },
-  { name: '카카오톡 이모티콘 플러스', category: 'Lifestyle', priceRange: '₩4,900', description: 'Unlimited Emoticons', website: 'https://emoticon.kakao.com', plans: [{ name: '월간', price: '₩4,900' }] },
-  { name: 'Amazon Prime', category: 'Lifestyle', priceRange: '$14.99~$139', description: 'Free Shipping + Video', website: 'https://www.amazon.com/prime', plans: [{ name: '월간', price: '$14.99', cycle: 'mo' }, { name: '연간', price: '$139', cycle: 'yr' }] },
-];
 
 // 캘린더 헬퍼
 function getDaysInMonth(year: number, month: number) { return new Date(year, month + 1, 0).getDate(); }
@@ -218,6 +160,11 @@ const CAL_MONTHS_KO = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '
 const CAL_MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function CatalogScreen() {
+  // 카탈로그는 백엔드가 원본이다. 앱에 목록을 박아 두면 요금이 바뀔 때마다
+  // 스토어 심사를 새로 받아야 하고, 웹과 값이 갈라진다.
+  const { data: rawServices, loading, error, refetch } = useServices();
+  const services = useMemo(() => (rawServices ?? []).map(toService), [rawServices]);
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -407,7 +354,7 @@ export default function CatalogScreen() {
 
   const handleSubscribe = async () => {
     if (!selectedService) return;
-    if (!selectedPlan && selectedService.plans && selectedService.plans.length > 0) {
+    if (!selectedPlan) {
       Alert.alert(
         language === 'ko' ? '요금제 선택' : 'Select Plan',
         language === 'ko' ? '요금제를 먼저 선택해주세요.' : 'Please select a plan first.',
@@ -417,24 +364,17 @@ export default function CatalogScreen() {
 
     setIsSubmitting(true);
     try {
-      // 가격 파싱: ₩13,500 → 13500, $20 → 20
-      const priceStr = selectedPlan?.price ?? '0';
-      const numericPrice = Number(priceStr.replace(/[^0-9.]/g, '')) || 0;
-      const currency = priceStr.startsWith('$') ? 'USD' : 'KRW';
-      const cycle = selectedPlan?.cycle === 'yr' ? 'yearly' : 'monthly';
-
-      await subscriptionAPI.create({
-        service_name: selectedService.name,
-        plan_name: selectedPlan?.name ?? '',
-        cost: numericPrice,
-        currency,
-        billing_cycle: cycle,
+      // 카탈로그 구독은 서비스·요금제 id만 넘긴다. 금액·통화·결제주기·카테고리·로고를
+      // 서버가 카탈로그에서 직접 읽어 붙이므로 화면에 보이는 문자열을 되파싱할 일이 없고,
+      // service_id/plan_id가 남아 요금 인상 이력·절약 제안이 이 구독을 알아본다.
+      await subscriptionAPI.createFromCatalog({
+        service_id: selectedService.id,
+        plan_id: selectedPlan!.id,
         start_date: startDate,
         next_billing_date: billingDate,
         status: 'active',
         auto_renew: true,
         is_recurring: true,
-        category_name: selectedService.category,
       });
       Alert.alert(
         language === 'ko' ? '구독 추가 완료' : 'Subscription Added',
@@ -453,13 +393,16 @@ export default function CatalogScreen() {
     }
   };
 
-  const filtered = ALL_SERVICES.filter((s) => {
-    const matchCategory = selectedCategory === 'All' || s.category === selectedCategory;
-    const matchSearch = searchQuery === '' ||
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return services.filter((s) => {
+      const matchCategory = selectedCategory === 'All' || s.category === selectedCategory;
+      const matchSearch = q === '' ||
+        s.name.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q);
+      return matchCategory && matchSearch;
+    });
+  }, [services, selectedCategory, searchQuery]);
 
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
@@ -551,10 +494,25 @@ export default function CatalogScreen() {
                   </Text>
                 )}
 
-                {filtered.length > 0 ? (
+                {loading ? (
+                  <View style={styles.empty}>
+                    <ActivityIndicator color={Colors.primary} />
+                  </View>
+                ) : error ? (
+                  <View style={styles.empty}>
+                    <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
+                    <Text style={styles.emptyText}>
+                      {language === 'ko' ? '카탈로그를 불러오지 못했습니다' : 'Could not load the catalog'}
+                    </Text>
+                    <TouchableOpacity style={styles.retryBtn} onPress={refetch} activeOpacity={0.7}>
+                      <Ionicons name="refresh" size={14} color={Colors.primary} />
+                      <Text style={styles.retryText}>{language === 'ko' ? '다시 시도' : 'Retry'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : filtered.length > 0 ? (
                   <View style={styles.grid}>
-                     {filtered.map((service, i) => (
-                        <TouchableOpacity key={i} style={styles.serviceCard} onPress={() => openModal(service)}>
+                     {filtered.map((service) => (
+                        <TouchableOpacity key={service.id} style={styles.serviceCard} onPress={() => openModal(service)}>
                            <View style={styles.serviceCardTop}>
                               <ServiceLogo name={service.name} size={48} />
                               <TouchableOpacity style={styles.addBtnSmall}>
@@ -571,9 +529,7 @@ export default function CatalogScreen() {
                              adjustsFontSizeToFit
                              minimumFontScale={0.75}
                            >
-                             {showKrw
-                               ? compactRange(toKrwRange(service.priceRange, rates))
-                               : compactRange(service.priceRange)}
+                             {formatPriceRange(service, showKrw, rates)}
                            </Text>
                         </TouchableOpacity>
                      ))}
@@ -619,7 +575,9 @@ export default function CatalogScreen() {
                     <Text style={styles.modalName}>{selectedService.name}</Text>
                     <Text style={styles.modalDesc}>{selectedService.description}</Text>
                     <View style={styles.modalCategoryBadge}>
-                      <Text style={styles.modalCategoryText}>{selectedService.category}</Text>
+                      <Text style={styles.modalCategoryText}>
+                        {t((`category.${selectedService.category}`) as any) || selectedService.category}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -632,7 +590,7 @@ export default function CatalogScreen() {
                         {language === 'ko' ? '요금제 선택' : 'Select Plan'}
                       </Text>
                       {/* 외화 요금제일 때만 환산 버튼을 띄운다 — 여기서 결정하니까 여기 둔다 */}
-                      {selectedService.plans.some((p) => SYMBOL_TO_CODE[p.price.trim()[0]]) && (
+                      {selectedService.plans.some((p) => p.currency !== 'KRW') && (
                         <TouchableOpacity
                           style={[styles.krwToggle, showKrw && styles.krwToggleActive]}
                           onPress={toggleKrw}
@@ -668,11 +626,7 @@ export default function CatalogScreen() {
                           </View>
                           <Text style={[styles.modalPlanName, isSelected && { color: Colors.primary }]}>{plan.name}</Text>
                           <Text style={[styles.modalPlanPrice, isSelected && { color: Colors.primary }]}>
-                            {formatPlanPrice(
-                              showKrw ? toKrwRange(plan.price, rates) : plan.price,
-                              plan.cycle,
-                              language,
-                            )}
+                            {formatPlanPrice(plan, showKrw, rates, language)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -721,7 +675,7 @@ export default function CatalogScreen() {
                     <View style={styles.modalSummaryRow}>
                       <Text style={styles.modalSummaryLabel}>{language === 'ko' ? '금액' : 'Price'}</Text>
                       <Text style={[styles.modalSummaryValue, { color: Colors.primary }]}>
-                        {formatPlanPrice(selectedPlan.price, selectedPlan.cycle, language)}
+                        {formatPlanPrice(selectedPlan, showKrw, rates, language)}
                       </Text>
                     </View>
                     <View style={styles.modalSummaryRow}>
@@ -745,6 +699,27 @@ export default function CatalogScreen() {
                     <Text style={styles.modalWebText}>{t('catalog.visitWebsite')}</Text>
                     <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
                   </TouchableOpacity>
+                )}
+
+                {/* 해지 페이지 — 막상 끊으려 할 때 어디로 가야 하는지가 제일 안 보인다.
+                    서비스마다 묻어 둔 곳이 달라, 아는 곳은 바로 열어 준다. */}
+                {selectedService.cancelUrl && (
+                  <TouchableOpacity
+                    style={styles.modalCancelBtn}
+                    onPress={() => Linking.openURL(selectedService.cancelUrl!)}
+                  >
+                    <Ionicons name="close-circle-outline" size={18} color={Colors.textSecondary} />
+                    <Text style={styles.modalCancelText}>
+                      {language === 'ko' ? '구독 해지 페이지' : 'Cancel subscription'}
+                    </Text>
+                    <Ionicons name="arrow-forward" size={14} color={Colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+
+                {/* 링크 묶음과 추가 버튼 사이 간격. 링크가 하나도 없을 수도 있어
+                    버튼 쪽이 아니라 여기서 띄운다. */}
+                {(selectedService.website || selectedService.cancelUrl) && (
+                  <View style={{ height: Spacing.lg }} />
                 )}
 
                 {/* 구독 추가 버튼 */}
@@ -929,7 +904,19 @@ const styles = StyleSheet.create({
   modalSummaryValue: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   modalWebBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14,
-    borderTopWidth: 1, borderTopColor: Colors.borderLight, marginBottom: Spacing.lg,
+    borderTopWidth: 1, borderTopColor: Colors.borderLight,
   },
   modalWebText: { flex: 1, fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.medium },
+  // 해지는 눌러야 할 버튼이 아니라 필요할 때 찾는 링크라, 공식 사이트보다 한 톤 낮춘다
+  modalCancelBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14,
+    borderTopWidth: 1, borderTopColor: Colors.borderLight,
+  },
+  modalCancelText: { flex: 1, fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: FontWeight.medium },
+  retryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 14,
+    borderRadius: BorderRadius.full, borderWidth: 1, borderColor: Colors.primary,
+  },
+  retryText: { fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.medium },
 });

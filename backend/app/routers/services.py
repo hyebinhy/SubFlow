@@ -7,10 +7,45 @@ from app.core.deps import get_current_user, get_db
 from app.models.plan_price_history import PlanPriceHistory
 from app.models.service import Service
 from app.models.service_plan import ServicePlan
+from app.models.subscription import BillingCycle
 from app.models.user import User
 from app.schemas.service import PlanPriceHistoryResponse, ServiceListResponse, ServiceResponse
 
 router = APIRouter()
+
+
+def _to_list_item(service: Service) -> ServiceListResponse:
+    """서비스 한 건을 목록 응답으로 옮긴다.
+
+    목록·인기·검색 세 엔드포인트가 같은 모양을 만들어야 해서 한곳에 모았다.
+    카드에 찍히는 가격 범위는 서로 비교되는 값이어야 한다. 통화가 섞이면 뜻이
+    없으니 첫 요금제의 통화로 맞추고(지금 카탈로그는 서비스별로 통화가 하나),
+    월간 요금제가 하나라도 있으면 그것만 쓴다. 월간과 연간을 한 범위에 넣으면
+    "11,900~119,000원" 같은 값이 나와 읽는 사람이 열 배 비싼 요금제로 오해한다.
+    연간 요금제는 시트를 열면 주기와 함께 그대로 보인다.
+    """
+    plans = service.plans
+    currency = plans[0].currency if plans else None
+    same_currency = [p for p in plans if p.currency == currency]
+    monthly = [p.price for p in same_currency if p.billing_cycle == BillingCycle.MONTHLY]
+    comparable = monthly or [p.price for p in same_currency]
+
+    return ServiceListResponse(
+        id=service.id,
+        name=service.name,
+        description=service.description,
+        category_id=service.category_id,
+        category=service.category,
+        logo_url=service.logo_url,
+        website_url=service.website_url,
+        cancel_url=service.cancel_url,
+        is_popular=service.is_popular,
+        plan_count=len(plans),
+        min_price=min(comparable, default=None),
+        max_price=max(comparable, default=None),
+        currency=currency,
+        plans=plans,
+    )
 
 
 @router.get("", response_model=list[ServiceListResponse])
@@ -28,23 +63,7 @@ async def list_services(
     query = query.order_by(Service.is_popular.desc(), Service.name)
 
     result = await db.execute(query)
-    services = result.scalars().all()
-
-    return [
-        ServiceListResponse(
-            id=s.id,
-            name=s.name,
-            description=s.description,
-            category_id=s.category_id,
-            category=s.category,
-            logo_url=s.logo_url,
-            is_popular=s.is_popular,
-            plan_count=len(s.plans),
-            min_price=min((p.price for p in s.plans), default=None),
-            currency=s.plans[0].currency if s.plans else None,
-        )
-        for s in services
-    ]
+    return [_to_list_item(s) for s in result.scalars().all()]
 
 
 @router.get("/popular", response_model=list[ServiceListResponse])
@@ -58,23 +77,7 @@ async def popular_services(
         .where(Service.is_popular.is_(True))
         .order_by(Service.name)
     )
-    services = result.scalars().all()
-
-    return [
-        ServiceListResponse(
-            id=s.id,
-            name=s.name,
-            description=s.description,
-            category_id=s.category_id,
-            category=s.category,
-            logo_url=s.logo_url,
-            is_popular=s.is_popular,
-            plan_count=len(s.plans),
-            min_price=min((p.price for p in s.plans), default=None),
-            currency=s.plans[0].currency if s.plans else None,
-        )
-        for s in services
-    ]
+    return [_to_list_item(s) for s in result.scalars().all()]
 
 
 @router.get("/search", response_model=list[ServiceListResponse])
@@ -89,23 +92,7 @@ async def search_services(
         .where(Service.name.ilike(f"%{q}%"))
         .order_by(Service.name)
     )
-    services = result.scalars().all()
-
-    return [
-        ServiceListResponse(
-            id=s.id,
-            name=s.name,
-            description=s.description,
-            category_id=s.category_id,
-            category=s.category,
-            logo_url=s.logo_url,
-            is_popular=s.is_popular,
-            plan_count=len(s.plans),
-            min_price=min((p.price for p in s.plans), default=None),
-            currency=s.plans[0].currency if s.plans else None,
-        )
-        for s in services
-    ]
+    return [_to_list_item(s) for s in result.scalars().all()]
 
 
 @router.get("/{service_id}/price-history", response_model=dict[int, list[PlanPriceHistoryResponse]])

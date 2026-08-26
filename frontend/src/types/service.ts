@@ -39,8 +39,12 @@ export interface ServiceListItem {
   category_id?: number;
   category?: Category;
   logo_url?: string;
+  website_url?: string;
+  cancel_url?: string;
   is_popular: boolean;
   plan_count: number;
   min_price?: number;
+  max_price?: number;
   currency?: string;
+  plans: ServicePlan[];
 }

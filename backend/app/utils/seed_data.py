@@ -15,7 +15,8 @@ DEFAULT_CATEGORIES = [
     {"name": "Developer Tools", "icon": "💻", "color": "#6E40C9", "is_default": True},
     {"name": "Cloud/Infrastructure", "icon": "☁️", "color": "#FF9900", "is_default": True},
     {"name": "Productivity", "icon": "📋", "color": "#4285F4", "is_default": True},
-    {"name": "Education", "icon": "📚", "color": "#00BFA5", "is_default": True},
+    {"name": "Education", "icon": "🎓", "color": "#00BFA5", "is_default": True},
+    {"name": "Books", "icon": "📚", "color": "#8B5E3C", "is_default": True},
     {"name": "Health & Fitness", "icon": "💪", "color": "#FF6B6B", "is_default": True},
     {"name": "News & Media", "icon": "📰", "color": "#1A1A2E", "is_default": True},
     {"name": "Gaming", "icon": "🎮", "color": "#107C10", "is_default": True},
@@ -629,24 +630,98 @@ DEFAULT_SERVICES = {
                 {"name": "플러스", "price": 26400, "currency": "KRW", "billing_cycle": "MONTHLY"},
             ],
         },
+    ],
+    # 전자책·오디오북 구독. 원래 Education에 밀리의 서재와 리디 셀렉트만 얹혀 있었는데,
+    # 강의 플랫폼과 독서 구독은 고르는 기준도 갈아타는 대상도 달라 한 칸에 두면 비교가 안 된다.
+    "Books": [
         {
             "name": "밀리의 서재",
-            "description": "전자책, 오디오북 무제한 구독 서비스",
+            "description": "전자책, 오디오북, 챗북 무제한 구독 서비스",
             "website_url": "https://www.millie.co.kr",
+            "cancel_url": "https://www.millie.co.kr/v3/mypage",
             "logo_url": "/logos/millie.png",
             "is_popular": True,
             "plans": [
-                {"name": "베이직", "price": 11900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                # 웹 결제 기준. 스토어 결제는 수수료가 얹혀 더 비싸다
+                # (구글 12,900 / 애플 14,900) — 카탈로그는 공식 웹가를 쓴다.
+                {"name": "정기구독", "price": 11900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "연간 구독권", "price": 119000, "currency": "KRW", "billing_cycle": "YEARLY"},
             ],
         },
         {
             "name": "리디 셀렉트",
-            "description": "전자책, 웹소설, 웹툰 구독 서비스",
-            "website_url": "https://ridibooks.com",
+            "description": "신간과 베스트셀러를 무제한으로 보는 전자책 구독",
+            "website_url": "https://select.ridibooks.com",
+            "cancel_url": "https://select.ridibooks.com/settings",
             "logo_url": "/logos/ridibooks.png",
-            "is_popular": False,
+            "is_popular": True,
             "plans": [
                 {"name": "셀렉트", "price": 4900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "예스24 크레마클럽",
+            "description": "예스24의 전자책 월정액 구독 (구 예스24 북클럽)",
+            "website_url": "https://cremaclub.yes24.com",
+            "cancel_url": "https://cremaclub.yes24.com/BookClub/MyBookClub",
+            "logo_url": "/logos/yes24.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "스탠다드 55", "price": 5500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "프리미엄 77", "price": 7700, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "FLO 99", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "교보문고 sam",
+            "description": "교보문고 전자책 구독 — 권수 정액제와 무제한 요금제",
+            "website_url": "https://sam.kyobobook.co.kr",
+            "cancel_url": "https://sam.kyobobook.co.kr/dig/sam/pssbuy",
+            "logo_url": "/logos/kyobo.png",
+            "is_popular": True,
+            "plans": [
+                # sam2/3/12는 월 몇 권을 빌리느냐로 나뉘고, 무제한만 권수 제한이 없다.
+                {"name": "sam2", "price": 7000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "sam3", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "sam12", "price": 18000, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "sam 무제한", "price": 9900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "윌라",
+            "description": "오디오북, 전자책, 클래스를 무제한으로 듣는 구독 서비스",
+            "website_url": "https://www.welaaa.com",
+            "cancel_url": "https://www.welaaa.com/mypage",
+            "logo_url": "/logos/welaaa.png",
+            "is_popular": True,
+            "plans": [
+                {"name": "베이직", "price": 12500, "currency": "KRW", "billing_cycle": "MONTHLY"},
+                {"name": "패밀리", "price": 16900, "currency": "KRW", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Kindle Unlimited",
+            "description": "아마존 킨들 전자책 무제한 구독",
+            "website_url": "https://www.amazon.com/kindle-dbs/hz/subscribe/ku",
+            "cancel_url": "https://www.amazon.com/kindle-dbs/ku/ku-central",
+            "logo_url": "/logos/kindleunlimited.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Kindle Unlimited", "price": 11.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+            ],
+        },
+        {
+            "name": "Audible",
+            "description": "아마존 오디오북 구독 — 정액 청취와 크레딧 구매",
+            "website_url": "https://www.audible.com",
+            "cancel_url": "https://www.audible.com/account",
+            "logo_url": "/logos/audible.png",
+            "is_popular": False,
+            "plans": [
+                {"name": "Plus", "price": 7.95, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Standard", "price": 8.99, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Premium Plus", "price": 14.95, "currency": "USD", "billing_cycle": "MONTHLY"},
+                {"name": "Premium Plus (연)", "price": 149.50, "currency": "USD", "billing_cycle": "YEARLY"},
             ],
         },
     ],
@@ -982,14 +1057,22 @@ DEFAULT_SERVICES = {
 
 async def seed_categories(db: AsyncSession) -> None:
     result = await db.execute(select(Category))
-    existing = {c.name for c in result.scalars().all()}
+    existing = {c.name: c for c in result.scalars().all()}
 
-    added = False
+    changed = False
     for cat_data in DEFAULT_CATEGORIES:
-        if cat_data["name"] not in existing:
+        category = existing.get(cat_data["name"])
+        if category is None:
             db.add(Category(**cat_data))
-            added = True
-    if added:
+            changed = True
+            continue
+        # 아이콘/색은 여기 값이 기준이다. 새로 만들 때만 반영하면 Education의 📚를
+        # Books에 넘겨주는 것 같은 변경이 기존 DB에는 영영 적용되지 않는다.
+        for field in ("icon", "color"):
+            if getattr(category, field) != cat_data[field]:
+                setattr(category, field, cat_data[field])
+                changed = True
+    if changed:
         await db.commit()
 
 
@@ -1015,6 +1098,23 @@ async def _update_logo_urls(db: AsyncSession) -> None:
             sub.logo_url = new_url
 
     await db.commit()
+
+
+async def _detach_plan(db: AsyncSession, plan_id: int) -> None:
+    """요금제를 지우기 전에 그 요금제를 가리키는 행들을 먼저 떼어 낸다.
+
+    seed는 앱 기동(lifespan)에서 돌기 때문에 여기서 무결성 오류가 나면 앱이
+    아예 못 뜬다. subscriptions.plan_id는 nullable이라 끊어 주면 되고
+    (구독 자체는 plan_name·cost를 따로 들고 있어 화면은 그대로다),
+    plan_price_history.plan_id는 NOT NULL이라 지우는 수밖에 없다.
+    """
+    subs = await db.execute(select(Subscription).where(Subscription.plan_id == plan_id))
+    for sub in subs.scalars().all():
+        sub.plan_id = None
+
+    history = await db.execute(select(PlanPriceHistory).where(PlanPriceHistory.plan_id == plan_id))
+    for row in history.scalars().all():
+        await db.delete(row)
 
 
 async def seed_services(db: AsyncSession) -> None:
@@ -1044,6 +1144,14 @@ async def seed_services(db: AsyncSession) -> None:
                     if new_val and getattr(service, field) != new_val:
                         setattr(service, field, new_val)
                         changed = True
+                # 소속 카테고리와 인기 표시도 여기 값이 기준이다. 위 루프는 값이
+                # 참일 때만 반영하므로 False나 카테고리 이동은 통과하지 못한다.
+                if category_id is not None and service.category_id != category_id:
+                    service.category_id = category_id
+                    changed = True
+                if service.is_popular != svc_data.get("is_popular", False):
+                    service.is_popular = svc_data.get("is_popular", False)
+                    changed = True
                 seed_plan_names = {p["name"] for p in plans_data}
 
                 for plan_data in plans_data:
@@ -1064,7 +1172,9 @@ async def seed_services(db: AsyncSession) -> None:
                 # Remove plans that are no longer in seed data
                 for (sid, pname), existing_plan in list(existing_plans.items()):
                     if sid == service.id and pname not in seed_plan_names:
+                        await _detach_plan(db, existing_plan.id)
                         await db.delete(existing_plan)
+                        del existing_plans[(sid, pname)]
                         changed = True
             else:
                 # Add new service
@@ -1121,16 +1231,18 @@ PRICE_HISTORY_DATA: dict[str, dict[str, list[tuple[float, str, str]]]] = {
             (23900, "KRW", "2024-03-01"),
         ],
     },
+    # 요금제 이름은 카탈로그(DEFAULT_SERVICES)에 적힌 것과 글자까지 같아야 한다.
+    # 영문 이름으로 적혀 있어 seed_price_history가 조용히 건너뛰고 있었다.
     "Spotify": {
-        "Individual": [
+        "개인": [
             (8990, "KRW", "2021-01-01"),
             (10990, "KRW", "2023-07-01"),
         ],
-        "Duo": [
+        "듀오": [
             (11990, "KRW", "2021-01-01"),
             (14990, "KRW", "2023-07-01"),
         ],
-        "Family": [
+        "가족": [
             (14990, "KRW", "2021-01-01"),
             (17490, "KRW", "2023-07-01"),
         ],
@@ -1185,14 +1297,29 @@ PRICE_HISTORY_DATA: dict[str, dict[str, list[tuple[float, str, str]]]] = {
             (18.00, "USD", "2024-04-01"),
         ],
     },
+    # 2017년 출시가를 2025-06-10에 처음 올렸다. 기존 구독자는 옛 가격이 유지돼,
+    # 같은 서비스를 쓰면서 내는 돈이 갈리는 사례라 인상 이력 화면에 딱 맞는다.
+    "밀리의 서재": {
+        "정기구독": [
+            (9900, "KRW", "2017-10-01"),
+            (11900, "KRW", "2025-06-10"),
+        ],
+        "연간 구독권": [
+            (99000, "KRW", "2017-10-01"),
+            (119000, "KRW", "2025-06-10"),
+        ],
+    },
 }
 
 
 async def seed_price_history(db: AsyncSession) -> None:
-    """주요 서비스의 과거 가격 변동 이력을 시딩합니다."""
-    existing = await db.execute(select(PlanPriceHistory.id).limit(1))
-    if existing.scalar_one_or_none() is not None:
-        return  # 이미 시딩됨
+    """주요 서비스의 과거 가격 변동 이력을 시딩합니다.
+
+    "한 줄이라도 있으면 끝난 걸로 친다"가 아니라 요금제 단위로 건너뛴다.
+    전자로 두면 이미 시딩된 DB에는 새로 추가한 이력이 영영 들어가지 않는다.
+    """
+    seeded = await db.execute(select(PlanPriceHistory.plan_id).distinct())
+    seeded_plan_ids = set(seeded.scalars().all())
 
     # plan_id 조회를 위한 맵 생성
     svc_result = await db.execute(select(Service))
@@ -1207,7 +1334,7 @@ async def seed_price_history(db: AsyncSession) -> None:
             continue
         for plan_name, history in plans.items():
             plan_id = plan_map.get((svc_id, plan_name))
-            if not plan_id:
+            if not plan_id or plan_id in seeded_plan_ids:
                 continue
             for price, currency, effective_date_str in history:
                 db.add(PlanPriceHistory(

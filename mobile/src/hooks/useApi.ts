@@ -74,9 +74,34 @@ export function useExchangeRateAlerts() {
   return useFetch(() => analyticsAPI.getExchangeRateAlerts());
 }
 
-// ── Services ──
+// ── Services (카탈로그) ──
+export interface CatalogPlan {
+  id: number;
+  name: string;
+  price: number | string;      // Decimal이 문자열로 넘어오는 경우가 있어 둘 다 받는다
+  currency: string;
+  billing_cycle: string;
+}
+
+export interface CatalogService {
+  id: number;
+  name: string;
+  description: string | null;
+  category_id: number | null;
+  category: { id: number; name: string; icon: string | null; color: string | null } | null;
+  logo_url: string | null;
+  website_url: string | null;
+  cancel_url: string | null;
+  is_popular: boolean;
+  plan_count: number;
+  min_price: number | string | null;
+  max_price: number | string | null;
+  currency: string | null;
+  plans: CatalogPlan[];
+}
+
 export function useServices() {
-  return useFetch(() => servicesAPI.getAll());
+  return useFetch<CatalogService[]>(() => servicesAPI.getAll());
 }
 
 // ── News (카드뉴스) ──

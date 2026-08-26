@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ImageSourcePropType } from 'react-native';
 
-// ── 전체 PNG 로고 (83개) ──
+// ── 전체 PNG 로고 (88개) ──
 const LOGOS: Record<string, ImageSourcePropType> = {
   'Netflix': require('../../assets/logos/netflix.png'),
   'YouTube Premium': require('../../assets/logos/youtube.png'),
@@ -57,6 +57,11 @@ const LOGOS: Record<string, ImageSourcePropType> = {
   '인프런': require('../../assets/logos/inflearn.png'),
   '밀리의 서재': require('../../assets/logos/millie.png'),
   '리디 셀렉트': require('../../assets/logos/ridibooks.png'),
+  '예스24 크레마클럽': require('../../assets/logos/yes24.png'),
+  '교보문고 sam': require('../../assets/logos/kyobo.png'),
+  '윌라': require('../../assets/logos/welaaa.png'),
+  'Kindle Unlimited': require('../../assets/logos/kindleunlimited.png'),
+  'Audible': require('../../assets/logos/audible.png'),
   'Nintendo Switch Online': require('../../assets/logos/nintendo.png'),
   'PlayStation Plus': require('../../assets/logos/playstation.png'),
   'Xbox Game Pass': require('../../assets/logos/xbox.png'),
