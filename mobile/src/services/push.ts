@@ -31,9 +31,13 @@ export async function registerForPush(): Promise<void> {
     if (status !== 'granted') return;
 
     if (Platform.OS === 'android') {
+      // DEFAULT는 알림함에만 쌓이고 화면에 뜨지 않는다. 결제일처럼 때를 놓치면
+      // 의미가 없는 알림이라 HIGH로 올려 배너가 바로 보이게 한다.
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.DEFAULT,
+        name: '구독 알림',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#4A90D9',
       });
     }
 

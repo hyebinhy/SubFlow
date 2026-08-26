@@ -15,8 +15,8 @@ def captured_mail(monkeypatch) -> list[dict]:
     """send_email 호출을 가로채 목록에 쌓는다. 발송은 성공한 것으로 친다."""
     sent: list[dict] = []
 
-    async def fake_send_email(to: str, subject: str, body: str) -> bool:
-        sent.append({"to": to, "subject": subject, "body": body})
+    async def fake_send_email(to, subject, body, attachments=None) -> bool:
+        sent.append({"to": to, "subject": subject, "body": body, "attachments": attachments})
         return True
 
     monkeypatch.setattr(feedback_router, "send_email", fake_send_email)
@@ -108,7 +108,7 @@ async def test_mail_failure_still_returns_ok(
     내용은 서버 로그에 남는다.
     """
 
-    async def failing_send_email(to: str, subject: str, body: str) -> bool:
+    async def failing_send_email(to, subject, body, attachments=None) -> bool:
         return False
 
     monkeypatch.setattr(feedback_router, "send_email", failing_send_email)
@@ -120,3 +120,70 @@ async def test_mail_failure_still_returns_ok(
     )
     assert resp.status_code == 200
     assert resp.json() == {"sent": False}
+
+
+async def test_screenshot_is_attached(
+    test_client: httpx.AsyncClient,
+    auth_headers: dict,
+    captured_mail: list[dict],
+):
+    """첨부한 이미지는 메일 첨부로 실리고, 본문에도 파일명이 남는다."""
+    import base64
+
+    png = base64.b64encode(b"fake-image-bytes").decode()
+    resp = await test_client.post(
+        "/api/v1/feedback",
+        headers=auth_headers,
+        json={
+            "message": "이 화면에서 금액이 겹쳐 보입니다",
+            "screenshot": {"filename": "shot.jpg", "content_base64": png},
+        },
+    )
+
+    assert resp.status_code == 200
+    mail = captured_mail[0]
+    assert mail["attachments"] == [{"filename": "shot.jpg", "content": png}]
+    assert "shot.jpg" in mail["body"]
+
+
+async def test_broken_screenshot_does_not_block_the_report(
+    test_client: httpx.AsyncClient,
+    auth_headers: dict,
+    captured_mail: list[dict],
+):
+    """base64가 깨져도 신고 자체는 나간다 — 사용자가 쓴 글을 날리면 안 된다."""
+    resp = await test_client.post(
+        "/api/v1/feedback",
+        headers=auth_headers,
+        json={
+            "message": "첨부가 이상해도 본문은 가야 합니다",
+            "screenshot": {"filename": "x.jpg", "content_base64": "!!!not-base64!!!"},
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.json() == {"sent": True}
+    assert captured_mail[0]["attachments"] is None
+    assert "본문은 가야 합니다" in captured_mail[0]["body"]
+
+
+async def test_oversized_screenshot_is_dropped(
+    test_client: httpx.AsyncClient,
+    auth_headers: dict,
+    captured_mail: list[dict],
+):
+    """상한을 넘는 첨부는 버리고 본문만 보낸다."""
+    import base64
+
+    huge = base64.b64encode(b"x" * (5 * 1024 * 1024 + 10)).decode()
+    resp = await test_client.post(
+        "/api/v1/feedback",
+        headers=auth_headers,
+        json={
+            "message": "큰 이미지를 붙여 봅니다",
+            "screenshot": {"filename": "huge.jpg", "content_base64": huge},
+        },
+    )
+
+    assert resp.status_code == 200
+    assert captured_mail[0]["attachments"] is None

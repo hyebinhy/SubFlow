@@ -98,6 +98,7 @@ export interface CatalogService {
   max_price: number | string | null;
   currency: string | null;
   plans: CatalogPlan[];
+  aliases?: string[];
 }
 
 export function useServices() {

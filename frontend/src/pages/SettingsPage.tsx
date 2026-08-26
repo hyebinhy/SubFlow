@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Bell, LifeBuoy, Mail, Smartphone, User, WalletCards } from "lucide-react";
+import { Bell, ImagePlus, Mail, MessageSquareWarning, Smartphone, User, WalletCards, X } from "lucide-react";
 import { authApi } from "../api/auth";
 import { notificationApi } from "../api/notifications";
-import { feedbackApi, type FeedbackType } from "../api/feedback";
+import { collectClientInfo, feedbackApi, prepareScreenshot, type FeedbackType } from "../api/feedback";
 import { useAuthStore } from "../store/authStore";
 import type { NotificationSettings } from "../types/notification";
 import { tr } from "../i18n/translations";
@@ -49,6 +49,22 @@ export default function SettingsPage() {
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [shot, setShot] = useState<{ filename: string; content_base64: string } | null>(null);
+  const [shotPreview, setShotPreview] = useState<string | null>(null);
+
+  // 화면 경로는 설정 페이지에서 열었으므로 고정이지만, 창 크기는 그때그때 다르다
+  const clientInfo = collectClientInfo();
+
+  const handlePickScreenshot = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const prepared = await prepareScreenshot(file);
+      setShot(prepared);
+      setShotPreview(`data:image/jpeg;base64,${prepared.content_base64}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tr("이미지를 첨부하지 못했습니다."));
+    }
+  };
 
   const handleFeedbackSend = async () => {
     if (feedbackMessage.trim().length < 5) {
@@ -57,10 +73,12 @@ export default function SettingsPage() {
     }
     setSendingFeedback(true);
     try {
-      await feedbackApi.send(feedbackType, feedbackMessage.trim());
+      await feedbackApi.send(feedbackType, feedbackMessage.trim(), shot);
       // 발송 실패도 서버가 로그로 받아 두므로 사용자에겐 접수됐다고 알린다
       toast.success(tr("보내주셔서 감사합니다. 확인 후 반영하겠습니다."));
       setFeedbackMessage("");
+      setShot(null);
+      setShotPreview(null);
     } catch {
       toast.error(tr("잠시 후 다시 시도해주세요."));
     } finally {
@@ -297,7 +315,7 @@ export default function SettingsPage() {
         <section className="glass p-6">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
-              <LifeBuoy className="h-5 w-5" />
+              <MessageSquareWarning className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900">{tr("오류 신고·의견 보내기")}</h3>
@@ -331,14 +349,53 @@ export default function SettingsPage() {
             className="glass-input mt-3 block w-full resize-none rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
 
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-xs text-slate-400">
-              {tr("보고 있는 화면과 브라우저 정보가 함께 전송됩니다.")}
-            </p>
+          {/* 스크린샷 — 글로 설명하기 어려운 화면은 한 장이 훨씬 빠르다 */}
+          <div className="mt-3 flex items-center gap-3">
+            <label className="glass inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-white/40">
+              <ImagePlus className="h-4 w-4" />
+              {tr("사진 첨부")}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  handlePickScreenshot(e.target.files?.[0]);
+                  e.target.value = "";   // 같은 파일을 다시 골라도 onChange가 뜨도록
+                }}
+              />
+            </label>
+            {shotPreview && (
+              <div className="relative">
+                <img src={shotPreview} alt="" className="h-12 w-20 rounded-md object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setShot(null); setShotPreview(null); }}
+                  className="absolute -right-1.5 -top-1.5 rounded-full bg-slate-700 p-0.5 text-white"
+                  aria-label={tr("첨부 취소")}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 무엇이 함께 가는지 값을 그대로 보여 준다 — 문구로만 적으면 짐작할 수 없다 */}
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs text-slate-400">{tr("아래 정보가 같이 전송됩니다")}</p>
+              <p className="truncate text-xs text-slate-500">
+                {[
+                  clientInfo.screen,
+                  clientInfo.browser,
+                  `${clientInfo.viewport}`,
+                  user?.email,
+                ].filter(Boolean).join("  ·  ")}
+              </p>
+            </div>
             <button
               onClick={handleFeedbackSend}
               disabled={sendingFeedback}
-              className="btn-primary-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
+              className="btn-primary-glass shrink-0 px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               {sendingFeedback ? tr("보내는 중...") : tr("보내기")}
             </button>

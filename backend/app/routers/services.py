@@ -10,6 +10,7 @@ from app.models.service_plan import ServicePlan
 from app.models.subscription import BillingCycle
 from app.models.user import User
 from app.schemas.service import PlanPriceHistoryResponse, ServiceListResponse, ServiceResponse
+from app.utils.service_aliases import aliases_for, matches
 
 router = APIRouter()
 
@@ -45,6 +46,7 @@ def _to_list_item(service: Service) -> ServiceListResponse:
         max_price=max(comparable, default=None),
         currency=currency,
         plans=plans,
+        aliases=aliases_for(service.name),
     )
 
 
@@ -86,13 +88,14 @@ async def search_services(
     _current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # 이름 LIKE만 걸면 '넷플릭스'로는 Netflix가 안 잡힌다. 별칭은 DB가 아니라
+    # 앱 쪽 사전에 있으므로 전부 읽어 와서 이름+별칭으로 거른다(88종이라 부담 없다).
     result = await db.execute(
         select(Service)
         .options(selectinload(Service.category), selectinload(Service.plans))
-        .where(Service.name.ilike(f"%{q}%"))
         .order_by(Service.name)
     )
-    return [_to_list_item(s) for s in result.scalars().all()]
+    return [_to_list_item(s) for s in result.scalars().all() if matches(s.name, q)]
 
 
 @router.get("/{service_id}/price-history", response_model=dict[int, list[PlanPriceHistoryResponse]])

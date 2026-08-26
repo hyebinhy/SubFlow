@@ -73,6 +73,8 @@ interface Service {
   description: string;
   website?: string;
   cancelUrl?: string;
+  /** 검색용 보조어. 'Netflix'를 '넷플릭스'로도 찾게 해준다. */
+  aliases: string[];
   minPrice: number | null;
   maxPrice: number | null;
   currency: string | null;
@@ -91,6 +93,7 @@ function toService(raw: CatalogService): Service {
     description: SERVICE_TAGLINES[raw.name] ?? raw.description ?? '',
     website: raw.website_url ?? undefined,
     cancelUrl: raw.cancel_url ?? undefined,
+    aliases: raw.aliases ?? [],
     minPrice: raw.min_price === null || raw.min_price === undefined ? null : Number(raw.min_price),
     maxPrice: raw.max_price === null || raw.max_price === undefined ? null : Number(raw.max_price),
     currency: raw.currency ?? null,
@@ -399,7 +402,9 @@ export default function CatalogScreen() {
       const matchCategory = selectedCategory === 'All' || s.category === selectedCategory;
       const matchSearch = q === '' ||
         s.name.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q);
+        s.description.toLowerCase().includes(q) ||
+        // 한국에서 쓰는 이름이 등록된 이름과 다른 경우가 많다 (Melon ↔ 멜론)
+        s.aliases.some((a) => a.toLowerCase().includes(q));
       return matchCategory && matchSearch;
     });
   }, [services, selectedCategory, searchQuery]);

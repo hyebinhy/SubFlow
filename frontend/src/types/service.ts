@@ -24,6 +24,8 @@ export interface Service {
   is_popular: boolean;
   created_at: string;
   plans: ServicePlan[];
+  /** 검색 보조어 (한글/영문 표기 차이) */
+  aliases?: string[];
 }
 
 export interface PlanPriceHistory {

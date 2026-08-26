@@ -13,6 +13,19 @@ from app.schemas.notification import NotificationSettingsUpdateRequest
 from app.services.subscription_service import annotate_monthly_krw
 
 
+# 알림 설정이 아직 없는 사용자에게 쓰는 기본값 (모델 기본값과 같게 유지)
+DEFAULT_NOTIFY_DAYS_BEFORE = 3
+
+
+def _fmt_money(amount, currency: str) -> str:
+    """금액을 통화에 맞게 적는다. 원·엔은 소수점 없이, 나머지는 둘째 자리까지."""
+    n = float(amount)
+    if currency in ("KRW", "JPY"):
+        return f"{round(n):,}{'원' if currency == 'KRW' else '엔'}"
+    symbol = {"USD": "$", "EUR": "€", "GBP": "£"}.get(currency, currency + " ")
+    return f"{symbol}{n:,.2f}"
+
+
 class NotificationService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -169,13 +182,6 @@ class NotificationService:
 
         cancel_urls = await self._cancel_urls(user_id)
 
-        def _fmt(amount, currency: str) -> str:
-            n = float(amount)
-            if currency in ("KRW", "JPY"):
-                return f"{round(n):,}{'원' if currency == 'KRW' else '엔'}"
-            symbol = {"USD": "$", "EUR": "€", "GBP": "£"}.get(currency, currency + " ")
-            return f"{symbol}{n:,.2f}"
-
         for a in alerts:
             key = f"price_change:{a.subscription_id}:{a.effective_date}"
             if key in existing_keys:
@@ -184,8 +190,8 @@ class NotificationService:
             pct = f"{'+' if up else ''}{a.change_percentage:.1f}%"
             title = f"{a.service_name} 요금이 {'인상' if up else '인하'}됐어요"
             body = (
-                f"{a.plan_name} · {_fmt(a.old_price, a.currency)} → "
-                f"{_fmt(a.new_price, a.currency)} ({pct})"
+                f"{a.plan_name} · {_fmt_money(a.old_price, a.currency)} → "
+                f"{_fmt_money(a.new_price, a.currency)} ({pct})"
             )
             cancel_url = cancel_urls.get(a.subscription_id)
             self.db.add(
@@ -209,6 +215,7 @@ class NotificationService:
         await self.sync_overlap_notifications(user_id)
         await self.sync_price_change_notifications(user_id)
         await self.sync_trial_notifications(user_id)
+        await self.sync_renewal_notifications(user_id)
         await self.sync_budget_notifications(user_id)
         await self.sync_exchange_rate_notifications(user_id)
 
@@ -265,6 +272,71 @@ class NotificationService:
                     link="/subscriptions",
                     action_url=cancel_url,
                     action_label="해지 가이드" if cancel_url else None,
+                    dedup_key=key,
+                )
+            )
+        await self.db.commit()
+
+    async def sync_renewal_notifications(self, user_id: UUID) -> None:
+        """결제일이 다가온 구독 알림.
+
+        "결제 N일 전 알림" 설정이 이 함수의 범위다. 지금까지 그 설정은 대시보드
+        목록의 조회 범위로만 쓰이고 알림은 나가지 않았다.
+
+        dedup_key에 결제일을 넣어 결제 주기마다 한 번씩만 나가게 한다. 갱신되면
+        next_billing_date가 앞으로 밀리므로 다음 주기에 자연히 새 알림이 생긴다.
+        """
+        # get_settings()는 설정이 없으면 404를 던진다. 이 함수는 스케줄러에서도
+        # 도는데 배경 작업이 HTTP 예외로 죽으면 뒤 사용자들 알림까지 밀린다.
+        ns = (
+            await self.db.execute(
+                select(NotificationSetting).where(NotificationSetting.user_id == user_id)
+            )
+        ).scalar_one_or_none()
+        days_before = ns.notify_days_before if ns else DEFAULT_NOTIFY_DAYS_BEFORE
+
+        today = date.today()
+        end_date = today + timedelta(days=days_before)
+
+        upcoming = (
+            await self.db.execute(
+                select(Subscription).where(
+                    Subscription.user_id == user_id,
+                    Subscription.status == SubscriptionStatus.ACTIVE,
+                    Subscription.next_billing_date >= today,
+                    Subscription.next_billing_date <= end_date,
+                )
+            )
+        ).scalars().all()
+        if not upcoming:
+            return
+
+        existing = await self._existing_keys(user_id, NotificationType.RENEWAL)
+        cancel_urls = await self._cancel_urls(user_id)
+
+        for sub in upcoming:
+            key = f"renewal:{sub.id}:{sub.next_billing_date}"
+            if key in existing:
+                continue
+
+            days = (sub.next_billing_date - today).days
+            when = "오늘" if days == 0 else ("내일" if days == 1 else f"{days}일 뒤")
+            # 청구되는 건 분담 몫이 아니라 전체 금액이므로 cost를 그대로 쓴다
+            amount = _fmt_money(sub.cost, sub.currency)
+            share = ""
+            if (sub.member_count or 1) > 1:
+                share = f" (내 몫 {_fmt_money(sub.personal_cost, sub.currency)})"
+
+            self.db.add(
+                Notification(
+                    user_id=user_id,
+                    type=NotificationType.RENEWAL.value,
+                    title=f"{sub.service_name} 결제가 {when}예요",
+                    body=f"{sub.next_billing_date.month}월 {sub.next_billing_date.day}일 · {amount}{share}",
+                    category="구독 알림",
+                    link="/subscriptions",
+                    action_url=cancel_urls.get(str(sub.id)),
+                    action_label="해지 가이드" if cancel_urls.get(str(sub.id)) else None,
                     dedup_key=key,
                 )
             )

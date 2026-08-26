@@ -59,7 +59,10 @@ class ServiceListResponse(BaseModel):
     max_price: Decimal | None = None
     currency: str | None = None
     # 카탈로그 화면은 요금제를 눌러 고르는 게 목적이라, 목록만 받아 놓고 상세를
-    # 다시 부르면 시트를 열 때마다 빈 화면이 뜬다. 83종 전부 실어도 수십 KB다.
+    # 다시 부르면 시트를 열 때마다 빈 화면이 뜬다. 88종 전부 실어도 수십 KB다.
     plans: list[ServicePlanResponse] = []
+    # 한글/영문 표기가 서로 다른 서비스를 찾기 위한 검색 보조어.
+    # 클라이언트도 목록을 손에 쥔 채 거르므로 함께 내려준다.
+    aliases: list[str] = []
 
     model_config = {"from_attributes": True}

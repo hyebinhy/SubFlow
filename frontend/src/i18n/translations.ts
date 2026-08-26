@@ -314,8 +314,12 @@ const EN: Record<string, string> = {
   "기타": "Other",
   "어떤 화면에서 무엇을 하다가 생긴 일인지 적어주시면 큰 도움이 됩니다.":
     "Tell us which screen you were on and what you were doing — it helps a lot.",
-  "보고 있는 화면과 브라우저 정보가 함께 전송됩니다.":
-    "Your current screen and browser details are sent along.",
+  "아래 정보가 같이 전송됩니다": "Sent along with your report",
+  "사진 첨부": "Attach image",
+  "첨부 취소": "Remove attachment",
+  "이미지를 첨부하지 못했습니다.": "Could not attach the image.",
+  "이미지 파일만 첨부할 수 있습니다.": "Only image files can be attached.",
+  "이미지가 너무 큽니다.": "That image is too large.",
   "보내기": "Send",
   "5자 이상 입력해주세요.": "Please enter at least 5 characters.",
   "보내주셔서 감사합니다. 확인 후 반영하겠습니다.": "Thanks — we'll take a look.",

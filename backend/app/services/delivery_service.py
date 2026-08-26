@@ -26,7 +26,16 @@ async def send_expo_push(token: str, title: str, body: str) -> bool:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
                 EXPO_PUSH_URL,
-                json={"to": token, "title": title, "body": body, "sound": "default"},
+                # priority/channelId를 줘야 안드로이드에서 배너로 바로 뜬다.
+                # 없으면 기본 채널·기본 우선순위로 떨어져 알림함에만 쌓인다.
+                json={
+                    "to": token,
+                    "title": title,
+                    "body": body,
+                    "sound": "default",
+                    "priority": "high",
+                    "channelId": "default",
+                },
                 headers={"Accept": "application/json", "Content-Type": "application/json"},
             )
             resp.raise_for_status()
@@ -47,7 +56,9 @@ def _resend_key() -> str:
     return ""
 
 
-async def _send_via_resend(to: str, subject: str, body: str, key: str) -> bool:
+async def _send_via_resend(
+    to: str, subject: str, body: str, key: str, attachments: list[dict] | None = None
+) -> bool:
     """Resend HTTP API로 발송.
 
     PaaS(Railway 등)는 스팸 방지로 아웃바운드 25/587 포트를 막는 경우가 많다.
@@ -58,8 +69,14 @@ async def _send_via_resend(to: str, subject: str, body: str, key: str) -> bool:
         r = await client.post(
             RESEND_API_URL,
             headers={"Authorization": "Bearer " + key},
-            json={"from": settings.SMTP_FROM, "to": [to],
-                  "subject": subject, "text": body},
+            json={
+                "from": settings.SMTP_FROM,
+                "to": [to],
+                "subject": subject,
+                "text": body,
+                # [{"filename": ..., "content": <base64 문자열>}]
+                **({"attachments": attachments} if attachments else {}),
+            },
         )
     if r.status_code >= 400:
         logger.warning("[delivery] resend %s: %s", r.status_code, r.text[:200])
@@ -67,14 +84,21 @@ async def _send_via_resend(to: str, subject: str, body: str, key: str) -> bool:
     return True
 
 
-async def send_email(to: str, subject: str, body: str) -> bool:
-    """이메일 발송. 미설정이면 False(no-op)."""
+async def send_email(
+    to: str, subject: str, body: str, attachments: list[dict] | None = None
+) -> bool:
+    """이메일 발송. 미설정이면 False(no-op).
+
+    attachments는 Resend 경로에서만 실린다. SMTP 폴백은 MIME 조립이 따로
+    필요한데, 운영은 Resend를 쓰고 SMTP는 다른 공급자용 예비 경로라
+    첨부 없이 본문만 보낸다(첨부 때문에 신고 자체를 놓치는 편이 더 나쁘다).
+    """
     if not to:
         return False
     key = _resend_key()
     if key:
         try:
-            return await _send_via_resend(to, subject, body, key)
+            return await _send_via_resend(to, subject, body, key, attachments)
         except Exception as exc:
             logger.warning("[delivery] resend failed: %s", exc)
             return False
