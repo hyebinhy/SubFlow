@@ -36,17 +36,44 @@ export default function RegisterScreen() {
 
   const email = emailLocal && emailDomain ? `${emailLocal}@${emailDomain}` : '';
 
+  /**
+   * '@'가 섞여 들어온 값을 로컬과 도메인으로 가른다. '@'가 없으면 null.
+   * 도메인 쪽에 '@'가 더 있으면 떼어 낸다.
+   */
+  const splitEmail = (value: string) => {
+    const at = value.indexOf('@');
+    if (at === -1) return null;
+    return {
+      local: value.slice(0, at).trim(),
+      domain: value.slice(at + 1).replace(/@/g, '').trim(),
+    };
+  };
+
   // 앞칸에 'me@naver.com'을 통째로 붙여넣는 경우가 흔하다 — 알아서 쪼갠다.
   const handleLocalChange = (value: string) => {
-    if (value.includes('@')) {
-      const [local, ...rest] = value.split('@');
-      const domain = rest.join('@');
-      setEmailLocal(local);
-      setEmailDomain(domain);
-      if (domain && !EMAIL_DOMAINS.includes(domain)) setCustomDomain(true);
+    const parts = splitEmail(value);
+    if (parts) {
+      setEmailLocal(parts.local);
+      setEmailDomain(parts.domain);
+      if (parts.domain && !EMAIL_DOMAINS.includes(parts.domain)) setCustomDomain(true);
       return;
     }
     setEmailLocal(value);
+  };
+
+  /**
+   * 뒤칸도 앞칸과 똑같이 쪼갠다. 자동완성·붙여넣기로 전체 주소가 이 칸에 들어오면
+   * '@'만 지울 경우 'me@naver.com'이 'menaver.com'이 되어 주소가 망가진다.
+   */
+  const handleDomainChange = (value: string) => {
+    const parts = splitEmail(value);
+    if (parts) {
+      // '@naver.com'처럼 앞이 비어 있으면 도메인만 고친다 — 앞칸에 쓴 걸 지우면 안 된다
+      if (parts.local) setEmailLocal(parts.local);
+      setEmailDomain(parts.domain);
+      return;
+    }
+    setEmailDomain(value);
   };
 
   const handleRegister = async () => {
@@ -120,7 +147,7 @@ export default function RegisterScreen() {
                         placeholder="직접 입력"
                         placeholderTextColor={Colors.textTertiary}
                         value={emailDomain}
-                        onChangeText={(v) => setEmailDomain(v.replace('@', ''))}
+                        onChangeText={handleDomainChange}
                         keyboardType="email-address"
                         autoCapitalize="none"
                         autoFocus
