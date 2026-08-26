@@ -21,8 +21,11 @@ from app.models.user import User
 
 TEST_EMAIL = "mobile@test.com"
 TEST_PASSWORD = "test1234"
-TEST_USERNAME = "Mobile Tester"
-MONTHLY_BUDGET = 70_000
+TEST_USERNAME = "지우"
+# 스토어 스크린샷용 데모 데이터다. 월 지출 합계가 102,190원이므로 예산을
+# 130,000원으로 두면 약 79%가 되어 "예산 안에서 관리 중"으로 보인다.
+# (70,000원이면 146% 초과라 화면이 빨간 경고로 뒤덮인다)
+MONTHLY_BUDGET = 130_000
 
 # (서비스명, 플랜명, 월 비용 KRW, 통화, billing_day, 가입 시작 일자(개월 전))
 #
@@ -55,7 +58,12 @@ async def upsert_test_user(db) -> User:
     result = await db.execute(select(User).where(User.email == TEST_EMAIL))
     user = result.scalar_one_or_none()
     if user:
-        print(f"[user] reuse existing: {user.email}")
+        # 표시 이름은 스크린샷에 그대로 노출되므로 재시드 때마다 맞춰 준다
+        if user.username != TEST_USERNAME:
+            print(f"[user] rename: {user.username} -> {TEST_USERNAME}")
+            user.username = TEST_USERNAME
+        else:
+            print(f"[user] reuse existing: {user.email}")
         return user
     user = User(
         email=TEST_EMAIL,

@@ -40,3 +40,5 @@ docker-compose.override.yml
 
 # Cloudflare Wrangler 로컬 상태
 .wrangler/
+
+marketing/
