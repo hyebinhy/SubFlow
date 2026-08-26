@@ -16,7 +16,6 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.subflow.app",
-      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -28,7 +27,6 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.subflow.app",
-      "versionCode": 1,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS"
       ]
