@@ -29,6 +29,12 @@
       "package": "com.subflow.app",
       "permissions": [
         "android.permission.POST_NOTIFICATIONS"
+      ],
+      "runtimeVersion": {
+        "policy": "fingerprint"
+      },
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -47,7 +53,8 @@
         "expo-image-picker",
         {
           "photosPermission": "오류 신고에 첨부할 화면 사진을 고를 때만 사진 보관함을 엽니다.",
-          "cameraPermission": false
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
     ],
@@ -57,6 +64,9 @@
       },
       "router": {}
     },
-    "owner": "yoongyeongeun"
+    "owner": "yoongyeongeun",
+    "updates": {
+      "url": "https://u.expo.dev/ee9a4e67-7a1e-4ad7-9cd6-6c33613b6426"
+    }
   }
 }
