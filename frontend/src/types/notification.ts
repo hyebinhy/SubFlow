@@ -5,6 +5,8 @@ export interface NotificationSettings {
   email_notifications: boolean;
   push_notifications: boolean;
   budget_monthly: number | null;
+  /** 푸시를 받을 기기가 연결돼 있는지 (앱에 로그인하면 연결된다) */
+  push_device_connected?: boolean;
 }
 
 export interface NotificationSettingsUpdate {

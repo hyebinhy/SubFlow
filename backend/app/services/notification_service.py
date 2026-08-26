@@ -422,9 +422,15 @@ class NotificationService:
         if settings_row is None:
             settings_row = NotificationSetting(user_id=user_id)
             self.db.add(settings_row)
+        # 처음 토큰을 받는 기기라면 푸시를 켜 준다. 사용자가 OS 알림 권한을
+        # 허용해서 여기까지 온 것이라 켜는 쪽이 기대에 맞다.
+        #
+        # 다만 이미 토큰이 있던 계정은 건드리지 않는다. 앱은 실행할 때마다
+        # 토큰을 다시 등록하는데, 그때마다 켜 버리면 웹에서 꺼 둔 설정이
+        # 앱을 한 번 열었다는 이유로 되살아난다.
+        first_token = settings_row.push_token is None
         settings_row.push_token = token
-        # 토큰을 등록하면 푸시 알림을 켠다
-        if token:
+        if token and first_token:
             settings_row.push_notifications = True
         await self.db.commit()
         await self.db.refresh(settings_row)

@@ -63,6 +63,10 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
   // 계정 삭제 — 본문에 비밀번호를 실어 보낸다 (axios는 delete에 data 지원)
   deleteAccount: (password: string) => api.delete('/auth/me', { data: { password } }),
+  // 재설정 메일 요청. 가입 여부와 무관하게 항상 성공으로 답한다(가입자 명단이 새지 않도록).
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  // 인증 메일 재발송. 링크는 웹앱(app.mysubflow.app)으로 열린다.
+  resendVerification: () => api.post('/auth/verify-email/resend'),
 };
 
 // ── Subscriptions ──

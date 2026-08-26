@@ -23,3 +23,8 @@ class NotificationSetting(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="notification_setting")
+
+    @property
+    def push_device_connected(self) -> bool:
+        """푸시를 보낼 기기가 붙어 있는지. 토큰 자체는 밖으로 내보내지 않는다."""
+        return bool(self.push_token)

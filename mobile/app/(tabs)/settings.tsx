@@ -6,10 +6,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Card } from '../../src/components/Card';
 import { GradientButton } from '../../src/components/GradientButton';
-import { authAPI, notificationAPI, feedbackAPI } from '../../src/services/api';
+import { authAPI, feedbackAPI } from '../../src/services/api';
 import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../src/store/authStore';
@@ -69,7 +69,14 @@ export default function SettingsScreen() {
     monthlyBudget, setMonthlyBudget,
     currency, setCurrency,
   } = useSettingsStore();
+  const syncFromServer = useSettingsStore((st) => st.syncFromServer);
   const { t } = useTranslation();
+
+  // 이 화면을 열 때마다 서버 값을 다시 읽는다. 웹에서 앱 연동을 켜 두면
+  // 앱에서도 켜진 것으로 보여야 한다.
+  useFocusEffect(
+    React.useCallback(() => { syncFromServer(); }, [syncFromServer])
+  );
 
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
@@ -132,6 +139,27 @@ export default function SettingsScreen() {
       });
     } catch {
       Alert.alert(language === 'ko' ? '사진을 첨부하지 못했습니다' : 'Could not attach the image');
+    }
+  };
+
+  // 이메일 미인증이면 알림 메일이 아예 나가지 않는다(delivery_service가 검사).
+  // 앱에서 인증할 길이 없어 앱만 쓰는 사람은 이메일 알림을 영영 못 받았다.
+  const [resending, setResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    try {
+      await authAPI.resendVerification();
+      Alert.alert(
+        language === 'ko' ? '인증 메일을 보냈어요' : 'Verification email sent',
+        language === 'ko'
+          ? '메일함에서 링크를 눌러주세요. 인증해야 알림 메일이 발송됩니다.'
+          : 'Open the link in your inbox. Email notifications need a verified address.',
+      );
+    } catch {
+      Alert.alert(language === 'ko' ? '잠시 후 다시 시도해주세요' : 'Please try again in a moment');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -208,14 +236,9 @@ export default function SettingsScreen() {
     setLanguage(language === 'en' ? 'ko' : 'en');
   };
 
-  const syncPush = (v: boolean) => {
-    setPushEnabled(v);
-    notificationAPI.updateSettings({ push_enabled: v }).catch(() => {});
-  };
-  const syncEmail = (v: boolean) => {
-    setEmailEnabled(v);
-    notificationAPI.updateSettings({ email_enabled: v }).catch(() => {});
-  };
+  // 저장은 store가 맡는다. 화면은 값만 넘긴다.
+  const syncPush = (v: boolean) => setPushEnabled(v);
+  const syncEmail = (v: boolean) => setEmailEnabled(v);
 
   const openBudgetModal = () => {
     setBudgetInput(monthlyBudget ? monthlyBudget.toLocaleString() : '');
@@ -226,7 +249,6 @@ export default function SettingsScreen() {
     const val = parseInt(budgetInput.replace(/[^0-9]/g, ''), 10);
     if (val > 0) {
       setMonthlyBudget(val);
-      notificationAPI.updateSettings({ monthly_budget: val }).catch(() => {});
     }
     setBudgetModalVisible(false);
   };
@@ -244,7 +266,6 @@ export default function SettingsScreen() {
           text: language === 'ko' ? `결제 ${d}일 전` : `${d} day${d > 1 ? 's' : ''} before`,
           onPress: () => {
             setDaysBefore(d);
-            notificationAPI.updateSettings({ days_before: d }).catch(() => {});
           },
           style: d === daysBefore ? 'default' as const : 'default' as const,
         })),
@@ -320,6 +341,25 @@ export default function SettingsScreen() {
                   trackColor={{ true: Colors.primary, false: Colors.border }} thumbColor={Colors.surface} />
               }
             />
+            {/* 인증되지 않은 주소로는 알림 메일을 보내지 않는다. 켜 두고 왜 안
+                오는지 모르는 상태를 없애려고, 미인증일 때만 이 줄을 띄운다. */}
+            {user && (user as any).email_verified === false && (
+              <>
+                <View style={styles.divider} />
+                <SettingRow
+                  icon="alert-circle" iconColor="#FF9500"
+                  title={language === 'ko' ? '이메일 인증이 필요해요' : 'Verify your email'}
+                  subtitle={
+                    resending
+                      ? (language === 'ko' ? '보내는 중...' : 'Sending...')
+                      : (language === 'ko'
+                          ? '인증 전에는 알림 메일이 나가지 않습니다 · 눌러서 인증 메일 받기'
+                          : 'Email notifications are paused until you verify · Tap to resend')
+                  }
+                  onPress={resending ? undefined : handleResendVerification}
+                />
+              </>
+            )}
             <View style={styles.divider} />
             <SettingRow
               icon="time" iconColor="#5AC8FA"

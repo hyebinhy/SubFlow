@@ -264,6 +264,18 @@ export default function SettingsPage() {
                     {tr("앱 연동")} {pushNotif ? tr("켜짐") : tr("꺼짐")}
                   </button>
                 </div>
+                {/* 켜 두어도 기기가 붙어 있지 않으면 아무것도 못 간다.
+                    왜 안 오는지 모르는 상태로 두지 않는다. */}
+                {pushNotif && notifSettings && !notifSettings.push_device_connected && (
+                  <p className="mt-2 text-xs text-amber-600">
+                    {tr("휴대폰에서 SubFlow 앱에 로그인하면 이 기기로 알림이 갑니다.")}
+                  </p>
+                )}
+                {pushNotif && notifSettings?.push_device_connected && (
+                  <p className="mt-2 text-xs text-slate-400">
+                    {tr("휴대폰이 연결되어 있습니다.")}
+                  </p>
+                )}
               </div>
 
               <div className="mt-5 flex justify-end">
