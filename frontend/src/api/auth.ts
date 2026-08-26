@@ -34,6 +34,12 @@ export const authApi = {
       .post<{ message: string }>("/auth/verify-email/resend")
       .then((r) => r.data),
 
+  /** 계정과 모든 데이터를 삭제한다 (복구 불가). 본인 확인을 위해 비밀번호를 함께 보낸다. */
+  deleteAccount: (password: string) =>
+    apiClient
+      .delete<{ message: string }>("/auth/me", { data: { password } })
+      .then((r) => r.data),
+
   resetPassword: (token: string, newPassword: string) =>
     apiClient
       .post<{ message: string }>("/auth/reset-password", {

@@ -15,8 +15,11 @@ def captured_mail(monkeypatch) -> list[dict]:
     """send_email 호출을 가로채 목록에 쌓는다. 발송은 성공한 것으로 친다."""
     sent: list[dict] = []
 
-    async def fake_send_email(to, subject, body, attachments=None) -> bool:
-        sent.append({"to": to, "subject": subject, "body": body, "attachments": attachments})
+    async def fake_send_email(to, subject, body, attachments=None, reply_to=None) -> bool:
+        sent.append({
+            "to": to, "subject": subject, "body": body,
+            "attachments": attachments, "reply_to": reply_to,
+        })
         return True
 
     monkeypatch.setattr(feedback_router, "send_email", fake_send_email)
@@ -52,6 +55,8 @@ async def test_sends_mail_with_reporter_and_context(
     mail = captured_mail[0]
     assert mail["to"] == "yge0307@gmail.com"
     assert "testuser@example.com" in mail["subject"]
+    # 받은 메일에서 바로 답장할 수 있어야 한다
+    assert mail["reply_to"] == "testuser@example.com"
 
     body = mail["body"]
     assert "금액이 0원으로 저장됩니다" in body
@@ -108,7 +113,7 @@ async def test_mail_failure_still_returns_ok(
     내용은 서버 로그에 남는다.
     """
 
-    async def failing_send_email(to, subject, body, attachments=None) -> bool:
+    async def failing_send_email(to, subject, body, attachments=None, reply_to=None) -> bool:
         return False
 
     monkeypatch.setattr(feedback_router, "send_email", failing_send_email)
@@ -187,3 +192,62 @@ async def test_oversized_screenshot_is_dropped(
 
     assert resp.status_code == 200
     assert captured_mail[0]["attachments"] is None
+
+
+# ── 랜딩 문의 (비로그인) ─────────────────────────────────────────────
+
+
+async def test_contact_works_without_login(
+    test_client: httpx.AsyncClient, captured_mail: list[dict]
+):
+    """가입 전 사람도 문의할 수 있고, 답장 주소는 문의자 주소가 된다."""
+    resp = await test_client.post(
+        "/api/v1/feedback/contact",
+        json={
+            "email": "visitor@example.com",
+            "name": "방문자",
+            "message": "안드로이드 앱은 언제 나오나요?",
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.json() == {"sent": True}
+
+    mail = captured_mail[0]
+    assert mail["to"] == "yge0307@gmail.com"
+    assert mail["reply_to"] == "visitor@example.com"
+    assert "안드로이드 앱은 언제" in mail["body"]
+    assert "방문자" in mail["body"]
+
+
+async def test_contact_requires_a_valid_email(
+    test_client: httpx.AsyncClient, captured_mail: list[dict]
+):
+    """답장할 주소가 없거나 형식이 틀리면 받지 않는다."""
+    resp = await test_client.post(
+        "/api/v1/feedback/contact",
+        json={"email": "not-an-email", "message": "회신 주소가 이상합니다"},
+    )
+    assert resp.status_code == 422
+    assert captured_mail == []
+
+
+async def test_contact_drops_honeypot_submissions(
+    test_client: httpx.AsyncClient, captured_mail: list[dict]
+):
+    """사람에게 감춰 둔 칸이 채워져 있으면 봇으로 보고 버린다.
+
+    봇에게는 성공한 것처럼 답한다 — 실패를 알려 주면 우회해서 다시 온다.
+    """
+    resp = await test_client.post(
+        "/api/v1/feedback/contact",
+        json={
+            "email": "bot@example.com",
+            "message": "광고 링크 광고 링크",
+            "website": "http://spam.example.com",
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.json() == {"sent": True}
+    assert captured_mail == []   # 실제로는 나가지 않았다

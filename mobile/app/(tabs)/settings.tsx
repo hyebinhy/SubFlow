@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert,
-  Modal, TextInput, Pressable, Linking, Platform,
+  Modal, TextInput, Pressable, Linking, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { Card } from '../../src/components/Card';
 import { GradientButton } from '../../src/components/GradientButton';
 import { authAPI, notificationAPI, feedbackAPI } from '../../src/services/api';
 import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
@@ -82,6 +83,57 @@ export default function SettingsScreen() {
   const [feedbackType, setFeedbackType] = useState<'bug' | 'suggestion' | 'other'>('bug');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [shot, setShot] = useState<{ uri: string; filename: string; content_base64: string } | null>(null);
+
+  /**
+   * 갤러리에서 사진 한 장을 고른다.
+   *
+   * 폰 스크린샷은 원본이 몇 MB라 그대로 보내면 메일에 못 싣는다. 긴 변을
+   * 1600px로 줄이고 품질을 낮춰 base64로 받으면 대개 수백 KB로 떨어지는데,
+   * 화면을 알아보고 글자를 읽는 데는 충분하다.
+   */
+  const handlePickScreenshot = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert(
+          language === 'ko' ? '사진 접근 권한이 필요합니다' : 'Photo access is required',
+          language === 'ko'
+            ? '설정에서 SubFlow의 사진 권한을 켜주세요.'
+            : 'Enable photo access for SubFlow in Settings.',
+        );
+        return;
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        base64: true,
+        allowsEditing: false,
+      });
+      if (res.canceled || !res.assets?.length) return;
+
+      const asset = res.assets[0];
+      if (!asset.base64) {
+        Alert.alert(language === 'ko' ? '이미지를 읽지 못했습니다' : 'Could not read the image');
+        return;
+      }
+      // base64는 원본보다 약 4/3 크다. 서버도 5MB에서 자른다.
+      if ((asset.base64.length * 3) / 4 > 5 * 1024 * 1024) {
+        Alert.alert(
+          language === 'ko' ? '이미지가 너무 큽니다' : 'That image is too large',
+          language === 'ko' ? '조금 더 작은 사진을 골라주세요.' : 'Please pick a smaller image.',
+        );
+        return;
+      }
+      setShot({
+        uri: asset.uri,
+        filename: (asset.fileName ?? 'screenshot').replace(/\.[^.]+$/, '') + '.jpg',
+        content_base64: asset.base64,
+      });
+    } catch {
+      Alert.alert(language === 'ko' ? '사진을 첨부하지 못했습니다' : 'Could not attach the image');
+    }
+  };
 
   const handleSendFeedback = async () => {
     if (feedbackMessage.trim().length < 5) {
@@ -100,9 +152,11 @@ export default function SettingsScreen() {
           appVersion: Constants.expoConfig?.version ?? 'unknown',
           language,
         },
+        screenshot: shot ? { filename: shot.filename, content_base64: shot.content_base64 } : null,
       });
       setFeedbackModalVisible(false);
       setFeedbackMessage('');
+      setShot(null);
       Alert.alert(
         language === 'ko' ? '보내주셔서 감사합니다' : 'Thanks for the report',
         language === 'ko' ? '확인 후 반영하겠습니다.' : "We'll take a look.",
@@ -448,10 +502,32 @@ export default function SettingsScreen() {
               placeholder={language === 'ko' ? '내용을 적어주세요' : 'Describe the problem'}
               placeholderTextColor={Colors.textTertiary}
             />
+            {/* 사진 첨부 — 글로 설명하기 어려운 화면은 한 장이 훨씬 빠르다 */}
+            <View style={styles.fbShotRow}>
+              <TouchableOpacity style={styles.fbShotBtn} onPress={handlePickScreenshot} activeOpacity={0.7}>
+                <Ionicons name="image-outline" size={16} color={Colors.primary} />
+                <Text style={styles.fbShotText}>
+                  {language === 'ko' ? '사진 첨부' : 'Attach image'}
+                </Text>
+              </TouchableOpacity>
+              {shot && (
+                <View>
+                  <Image source={{ uri: shot.uri }} style={styles.fbShotPreview} />
+                  <TouchableOpacity
+                    style={styles.fbShotRemove}
+                    onPress={() => setShot(null)}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="close" size={12} color={Colors.textWhite} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
             <Text style={styles.fbNote}>
               {language === 'ko'
-                ? '기기와 앱 버전 정보가 함께 전송됩니다.'
-                : 'Your device and app version are sent along.'}
+                ? `함께 전송: ${Platform.OS} · 앱 ${Constants.expoConfig?.version ?? '-'} · ${user?.email ?? ''}`
+                : `Sent along: ${Platform.OS} · app ${Constants.expoConfig?.version ?? '-'} · ${user?.email ?? ''}`}
             </Text>
 
             <View style={modalStyles.btnRow}>
@@ -573,6 +649,19 @@ const styles = StyleSheet.create({
     padding: Spacing.md, minHeight: 110, fontSize: FontSize.sm, color: Colors.textPrimary,
   },
   fbNote: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: Spacing.sm, marginBottom: Spacing.md },
+  fbShotRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.md },
+  fbShotBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 12,
+    borderRadius: BorderRadius.full, borderWidth: 1, borderColor: Colors.border,
+  },
+  fbShotText: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: FontWeight.medium },
+  fbShotPreview: { width: 64, height: 44, borderRadius: BorderRadius.sm },
+  fbShotRemove: {
+    position: 'absolute', top: -6, right: -6,
+    width: 18, height: 18, borderRadius: 9, backgroundColor: '#4A5568',
+    justifyContent: 'center', alignItems: 'center',
+  },
   deleteRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Spacing.xs, marginTop: Spacing.lg, paddingVertical: Spacing.sm,

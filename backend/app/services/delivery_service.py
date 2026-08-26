@@ -57,7 +57,12 @@ def _resend_key() -> str:
 
 
 async def _send_via_resend(
-    to: str, subject: str, body: str, key: str, attachments: list[dict] | None = None
+    to: str,
+    subject: str,
+    body: str,
+    key: str,
+    attachments: list[dict] | None = None,
+    reply_to: str | None = None,
 ) -> bool:
     """Resend HTTP API로 발송.
 
@@ -76,6 +81,9 @@ async def _send_via_resend(
                 "text": body,
                 # [{"filename": ..., "content": <base64 문자열>}]
                 **({"attachments": attachments} if attachments else {}),
+                # 보낸 주소는 no-reply라 그냥 회신하면 아무 데도 안 간다.
+                # 신고자 주소를 넣어 두면 받은 메일에서 바로 답장이 된다.
+                **({"reply_to": reply_to} if reply_to else {}),
             },
         )
     if r.status_code >= 400:
@@ -85,11 +93,15 @@ async def _send_via_resend(
 
 
 async def send_email(
-    to: str, subject: str, body: str, attachments: list[dict] | None = None
+    to: str,
+    subject: str,
+    body: str,
+    attachments: list[dict] | None = None,
+    reply_to: str | None = None,
 ) -> bool:
     """이메일 발송. 미설정이면 False(no-op).
 
-    attachments는 Resend 경로에서만 실린다. SMTP 폴백은 MIME 조립이 따로
+    attachments와 reply_to는 Resend 경로에서만 실린다. SMTP 폴백은 MIME 조립이 따로
     필요한데, 운영은 Resend를 쓰고 SMTP는 다른 공급자용 예비 경로라
     첨부 없이 본문만 보낸다(첨부 때문에 신고 자체를 놓치는 편이 더 나쁘다).
     """
@@ -98,7 +110,7 @@ async def send_email(
     key = _resend_key()
     if key:
         try:
-            return await _send_via_resend(to, subject, body, key, attachments)
+            return await _send_via_resend(to, subject, body, key, attachments, reply_to)
         except Exception as exc:
             logger.warning("[delivery] resend failed: %s", exc)
             return False

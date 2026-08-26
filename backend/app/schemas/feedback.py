@@ -1,6 +1,6 @@
 import enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class FeedbackType(str, enum.Enum):
@@ -35,6 +35,21 @@ class FeedbackRequest(BaseModel):
     # 값이 길어지면 메일이 못 읽게 되므로 개수와 길이는 서버에서 자른다.
     client: dict[str, str] = Field(default_factory=dict)
     screenshot: FeedbackScreenshot | None = None
+
+
+class ContactRequest(BaseModel):
+    """랜딩 페이지에서 보내는 문의. 로그인 없이 받는다.
+
+    가입 전 사람이 묻는 창구라 계정이 없다. 대신 답장을 보낼 주소를 필수로
+    받는다 — 주소가 없으면 읽고도 답을 줄 수가 없다.
+    """
+
+    email: EmailStr
+    message: str = Field(min_length=5, max_length=2000)
+    name: str | None = Field(default=None, max_length=60)
+    # 스팸 봇은 보이는 칸을 전부 채우고 간다. 사람에게는 감춰 둔 칸이라
+    # 여기에 값이 들어와 있으면 사람이 쓴 글이 아니다.
+    website: str | None = None
 
 
 class FeedbackResponse(BaseModel):

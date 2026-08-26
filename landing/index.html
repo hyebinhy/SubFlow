@@ -403,6 +403,22 @@
   /* 지금 쓸 수 있는 항목 — '준비 중'과 한눈에 갈리도록 색을 달리한다 */
   .store-opt .sob-live { color: #0f7b4f; background: #e3f6ec; }
 
+  .cform { display: grid; gap: 14px; text-align: left; }
+  .cfield { display: grid; gap: 6px; }
+  .cfield > span { font-size: 13px; font-weight: 700; color: #55617a; }
+  .cfield em { font-style: normal; font-weight: 500; color: #93a0b8; }
+  .cfield input, .cfield textarea {
+    width: 100%; padding: 11px 13px; border: 1.5px solid #e2e8f2; border-radius: 10px;
+    font: inherit; font-size: 14.5px; color: #0d1526; background: #fff; resize: vertical;
+  }
+  .cfield input:focus, .cfield textarea:focus { outline: none; border-color: #4a90d9; }
+  /* 화면에서 지우면(display:none) 일부 봇이 건너뛴다. 자리만 없애 사람 눈에서만 뺀다. */
+  .cpot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .cnote { min-height: 18px; margin: 0; font-size: 13px; color: #55617a; }
+  .cnote.err { color: #d64545; }
+  .cnote.ok { color: #0f7b4f; }
+  .cbtn { width: 100%; justify-content: center; }
+
   .anim { opacity: 1; }
   html.gsap-ready .anim { opacity: 0; }
   /* About은 전역 페이드 대신 핀 타임라인이 직접 다루므로 숨기지 않는다 */
@@ -1099,7 +1115,7 @@
       <div class="foot-links">
         <a href="./privacy.html">개인정보처리방침</a>
         <a href="./terms.html">이용약관</a>
-        <a href="mailto:yge0307@gmail.com">문의</a>
+        <a href="#contact" class="js-open-contact">문의</a>
       </div>
     </div>
     <p class="copyright">© 2026 SubFlow. All rights reserved.</p>
@@ -1130,6 +1146,37 @@
         <span class="sob sob-live">이용 가능</span>
       </a>
     </div>
+  </div>
+</div>
+
+<!-- 문의 모달 — 가입 전 사람도 물어볼 수 있어야 해서 로그인을 걸지 않는다.
+     답장을 보내려면 주소가 필요하므로 이메일은 필수로 받는다. -->
+<div class="store-modal" id="contactModal" aria-hidden="true">
+  <div class="store-backdrop" data-cclose></div>
+  <div class="store-card" role="dialog" aria-modal="true" aria-label="문의하기">
+    <button class="store-close" type="button" data-cclose aria-label="닫기">×</button>
+    <h3 class="store-title">문의하기</h3>
+    <p class="store-sub">궁금한 점이나 불편한 점을 남겨주세요. 적어주신 주소로 답장드립니다.</p>
+
+    <form class="cform" id="contactForm" novalidate>
+      <label class="cfield">
+        <span>답장받을 이메일</span>
+        <input type="email" name="email" required placeholder="me@example.com" autocomplete="email" />
+      </label>
+      <label class="cfield">
+        <span>이름 <em>(선택)</em></span>
+        <input type="text" name="name" maxlength="60" placeholder="어떻게 불러드릴까요?" autocomplete="name" />
+      </label>
+      <label class="cfield">
+        <span>내용</span>
+        <textarea name="message" rows="5" required maxlength="2000" placeholder="어떤 점이 궁금하신가요?"></textarea>
+      </label>
+      <!-- 봇은 보이는 칸을 전부 채우고 간다. 사람 눈에는 안 보이는 칸이라
+           여기 값이 차 있으면 사람이 쓴 글이 아니다. -->
+      <input class="cpot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+      <p class="cnote" id="contactNote"></p>
+      <button class="btn btn-primary cbtn" type="submit">보내기</button>
+    </form>
   </div>
 </div>
 
@@ -1249,6 +1296,14 @@
     '신용카드 필요 없음 · 이메일만 있으면 됩니다': 'No credit card · just an email',
 
     '개인정보처리방침': 'Privacy Policy', '이용약관': 'Terms of Service', '문의': 'Contact',
+    '문의하기': 'Contact us',
+    '궁금한 점이나 불편한 점을 남겨주세요. 적어주신 주소로 답장드립니다.':
+      "Tell us what you need. We'll reply to the address you leave.",
+    '답장받을 이메일': 'Email for our reply',
+    '이름': 'Name', '(선택)': '(optional)',
+    '어떻게 불러드릴까요?': 'What should we call you?',
+    '내용': 'Message', '어떤 점이 궁금하신가요?': 'What would you like to ask?',
+    '보내기': 'Send',
     '© 2026 SubFlow. All rights reserved.': '© 2026 SubFlow. All rights reserved.',
     'SubFlow 시작하기': 'Get started with SubFlow',
     '원하는 방법으로 만나보세요.': 'Pick how you want to begin.',
@@ -1498,6 +1553,85 @@ var D = { bg:'#08090d', bg2:'#0e1016', surface:'#14171f', surface2:'#1a1e28',
     // 아직 링크가 없는(준비 중) 항목은 클릭해도 이동하지 않도록
     modal.querySelectorAll('.store-opt').forEach(function (a) {
       a.addEventListener('click', function (ev) { if (a.getAttribute('href') === '#') ev.preventDefault(); });
+    });
+  }
+
+  // ── 문의 모달 ──
+  var cModal = document.getElementById('contactModal');
+  var cForm = document.getElementById('contactForm');
+  var cNote = document.getElementById('contactNote');
+
+  function openContact(ev) {
+    if (ev) ev.preventDefault();
+    if (!cModal) return;
+    cModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    var first = cForm && cForm.querySelector('input[name=email]');
+    if (first) setTimeout(function () { first.focus(); }, 50);
+  }
+  function closeContact() {
+    if (!cModal) return;
+    cModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.querySelectorAll('.js-open-contact').forEach(function (b) {
+    b.addEventListener('click', openContact);
+  });
+  if (cModal) {
+    cModal.querySelectorAll('[data-cclose]').forEach(function (c) {
+      c.addEventListener('click', closeContact);
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && cModal.classList.contains('open')) closeContact();
+    });
+  }
+
+  if (cForm) {
+    cForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var isEn = document.documentElement.lang === 'en';
+      var data = {
+        email: cForm.email.value.trim(),
+        name: cForm.name.value.trim() || null,
+        message: cForm.message.value.trim(),
+        website: cForm.website.value,
+      };
+      function say(text, cls) { cNote.textContent = text; cNote.className = 'cnote' + (cls ? ' ' + cls : ''); }
+
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) {
+        say(isEn ? 'Enter an email we can reply to.' : '답장받을 이메일을 정확히 적어주세요.', 'err');
+        return;
+      }
+      if (data.message.length < 5) {
+        say(isEn ? 'Please add a bit more detail.' : '내용을 조금만 더 적어주세요.', 'err');
+        return;
+      }
+
+      var btn = cForm.querySelector('button[type=submit]');
+      btn.disabled = true;
+      say(isEn ? 'Sending...' : '보내는 중...');
+
+      fetch('https://api.mysubflow.app/api/v1/feedback/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+        .then(function (r) {
+          if (r.status === 429) throw new Error('rate');
+          if (!r.ok) throw new Error('fail');
+          say(isEn ? "Thanks — we'll reply to that address." : '보내주셔서 감사합니다. 적어주신 주소로 답장드릴게요.', 'ok');
+          cForm.reset();
+          setTimeout(closeContact, 2200);
+        })
+        .catch(function (err) {
+          say(
+            err && err.message === 'rate'
+              ? (isEn ? 'Too many requests. Please try again later.' : '잠시 후 다시 시도해주세요.')
+              : (isEn ? 'Could not send. Please try again.' : '보내지 못했습니다. 잠시 후 다시 시도해주세요.'),
+            'err'
+          );
+        })
+        .finally(function () { btn.disabled = false; });
     });
   }
 

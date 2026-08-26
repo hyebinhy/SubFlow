@@ -121,6 +121,7 @@ export const feedbackAPI = {
     type: 'bug' | 'suggestion' | 'other';
     message: string;
     client?: Record<string, string>;
+    screenshot?: { filename: string; content_base64: string } | null;
   }) => api.post('/feedback', data),
 };
 

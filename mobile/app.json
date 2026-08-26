@@ -44,6 +44,13 @@
         {
           "color": "#4A90D9"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "오류 신고에 첨부할 화면 사진을 고를 때만 사진 보관함을 엽니다.",
+          "cameraPermission": false
+        }
       ]
     ],
     "extra": {

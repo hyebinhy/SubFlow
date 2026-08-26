@@ -8,7 +8,12 @@ from app.config import settings
 from app.core.deps import get_current_user
 from app.core.limiter import limiter
 from app.models.user import User
-from app.schemas.feedback import FeedbackRequest, FeedbackResponse, FeedbackType
+from app.schemas.feedback import (
+    ContactRequest,
+    FeedbackRequest,
+    FeedbackResponse,
+    FeedbackType,
+)
 from app.services.delivery_service import send_email
 
 logger = logging.getLogger("uvicorn.error")
@@ -94,7 +99,45 @@ async def send_feedback(
     logger.info("[feedback] from=%s type=%s\n%s", current_user.email, data.type.value, body)
 
     subject = f"[SubFlow] {_TYPE_LABEL.get(data.type, '문의')} - {current_user.email}"
-    sent = await send_email(settings.FEEDBACK_EMAIL, subject, body, _build_attachments(data))
+    # 신고자 주소를 회신 주소로 달아 두면 받은 메일에서 바로 답장할 수 있다
+    sent = await send_email(
+        settings.FEEDBACK_EMAIL, subject, body,
+        _build_attachments(data), reply_to=current_user.email,
+    )
     if not sent:
         logger.warning("[feedback] 메일 발송 실패 — 위 로그로만 남는다 (to=%s)", settings.FEEDBACK_EMAIL)
+    return FeedbackResponse(sent=sent)
+
+
+@router.post("/contact", response_model=FeedbackResponse)
+@limiter.limit("3/hour")
+async def contact(request: Request, data: ContactRequest):
+    """랜딩 페이지 문의. 로그인 없이 받는다.
+
+    가입 전 사람이 묻는 창구라 인증을 걸 수 없다. 대신 IP당 시간 3회로 묶고
+    감춰 둔 칸(website)에 값이 차 있으면 봇으로 보고 버린다. 봇에게는 성공한
+    것처럼 답해 — 실패를 알려 주면 우회 방법을 찾아 다시 온다.
+    """
+    if data.website:
+        logger.info("[contact] 허니팟에 값이 차 있어 버린다 (from=%s)", data.email)
+        return FeedbackResponse(sent=True)
+
+    who = f"{data.name} <{data.email}>" if data.name else data.email
+    agent = request.headers.get("user-agent", "")
+    body = "\n".join([
+        data.message.strip(),
+        "",
+        "─" * 40,
+        "종류    : 랜딩 문의 (비로그인)",
+        f"보낸이  : {who}",
+        f"시각    : {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
+        f"UA      : {agent[:_MAX_CLIENT_VALUE]}",
+    ])
+    logger.info("[contact] from=%s\n%s", data.email, body)
+
+    subject = f"[SubFlow] 랜딩 문의 - {data.email}"
+    # 회신 주소가 곧 문의한 사람 주소다. 이게 없으면 답장을 보낼 데가 없다.
+    sent = await send_email(settings.FEEDBACK_EMAIL, subject, body, reply_to=data.email)
+    if not sent:
+        logger.warning("[contact] 메일 발송 실패 — 위 로그로만 남는다")
     return FeedbackResponse(sent=sent)

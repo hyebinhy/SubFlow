@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Bell, ImagePlus, Mail, MessageSquareWarning, Smartphone, User, WalletCards, X } from "lucide-react";
+import { Bell, ImagePlus, Mail, MessageSquareWarning, Smartphone, TriangleAlert, User, WalletCards, X } from "lucide-react";
 import { authApi } from "../api/auth";
 import { notificationApi } from "../api/notifications";
 import { collectClientInfo, feedbackApi, prepareScreenshot, type FeedbackType } from "../api/feedback";
@@ -21,7 +21,7 @@ const withCommas = (v: string) => {
 };
 
 export default function SettingsPage() {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, logout } = useAuthStore();
   const [username, setUsername] = useState(user?.username ?? "");
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
   const [notifyDays, setNotifyDays] = useState(3);
@@ -51,6 +51,25 @@ export default function SettingsPage() {
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [shot, setShot] = useState<{ filename: string; content_base64: string } | null>(null);
   const [shotPreview, setShotPreview] = useState<string | null>(null);
+
+  // ── 회원 탈퇴 ──
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) return;
+    setDeleting(true);
+    try {
+      await authApi.deleteAccount(deletePassword);
+      toast.success(tr("계정이 삭제되었습니다."));
+      logout();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.detail || tr("비밀번호가 올바르지 않습니다."));
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // 화면 경로는 설정 페이지에서 열었으므로 고정이지만, 창 크기는 그때그때 다르다
   const clientInfo = collectClientInfo();
@@ -400,6 +419,64 @@ export default function SettingsPage() {
               {sendingFeedback ? tr("보내는 중...") : tr("보내기")}
             </button>
           </div>
+        </section>
+
+        {/* 회원 탈퇴 — 스토어 심사(Apple 5.1.1(v))가 앱 안에서의 계정 삭제를
+            요구하고, 개인정보보호법상으로도 탈퇴 수단이 있어야 한다.
+            모바일에는 있었지만 웹에는 아예 빠져 있었다. */}
+        <section className="glass border-rose-200/60 p-6 xl:col-span-2">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+              <TriangleAlert className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">{tr("회원 탈퇴")}</h3>
+              <p className="text-xs text-slate-400">
+                {tr("계정과 모든 구독 데이터가 삭제되며 되돌릴 수 없습니다.")}
+              </p>
+            </div>
+          </div>
+
+          {!deleteOpen ? (
+            <button
+              onClick={() => setDeleteOpen(true)}
+              className="btn-danger-glass px-4 py-2 text-sm font-medium"
+            >
+              {tr("회원 탈퇴")}
+            </button>
+          ) : (
+            <div className="rounded-2xl bg-rose-50/60 p-4">
+              <p className="text-sm text-rose-700">
+                {tr("정말 탈퇴하시겠어요? 구독 내역, 결제 이력, 알림 설정이 모두 사라집니다.")}
+              </p>
+              <label className="mt-3 block text-sm font-medium text-slate-500">
+                {tr("확인을 위해 비밀번호를 입력해주세요")}
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="glass-input mt-1 block w-full max-w-sm rounded-lg px-3 py-2 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => { setDeleteOpen(false); setDeletePassword(""); }}
+                  className="glass px-4 py-2 text-sm font-medium text-slate-500"
+                >
+                  {tr("취소")}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={!deletePassword || deleting}
+                  className="btn-danger-glass px-4 py-2 text-sm font-medium disabled:opacity-50"
+                >
+                  {deleting ? tr("삭제 중...") : tr("영구 삭제")}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>

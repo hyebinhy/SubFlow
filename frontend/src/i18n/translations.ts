@@ -315,6 +315,16 @@ const EN: Record<string, string> = {
   "어떤 화면에서 무엇을 하다가 생긴 일인지 적어주시면 큰 도움이 됩니다.":
     "Tell us which screen you were on and what you were doing — it helps a lot.",
   "아래 정보가 같이 전송됩니다": "Sent along with your report",
+  "회원 탈퇴": "Delete account",
+  "계정과 모든 구독 데이터가 삭제되며 되돌릴 수 없습니다.":
+    "Your account and all subscription data will be deleted. This cannot be undone.",
+  "정말 탈퇴하시겠어요? 구독 내역, 결제 이력, 알림 설정이 모두 사라집니다.":
+    "Are you sure? Your subscriptions, payment history and notification settings will all be gone.",
+  "확인을 위해 비밀번호를 입력해주세요": "Enter your password to confirm",
+  "영구 삭제": "Delete permanently",
+  "삭제 중...": "Deleting...",
+  "계정이 삭제되었습니다.": "Your account has been deleted.",
+  // "비밀번호가 올바르지 않습니다."는 위 공통 항목에 이미 있다
   "사진 첨부": "Attach image",
   "첨부 취소": "Remove attachment",
   "이미지를 첨부하지 못했습니다.": "Could not attach the image.",
