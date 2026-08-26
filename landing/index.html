@@ -400,6 +400,8 @@
   .store-opt .soi svg { width: 30px; height: 30px; display: block; }
   .store-opt .sol { font-weight: 700; font-size: 16px; flex: 1; color: #0d1526; }
   .store-opt .sob { font-size: 12px; font-weight: 700; color: #4a90d9; background: #eaf3fd; padding: 5px 11px; border-radius: 999px; }
+  /* 지금 쓸 수 있는 항목 — '준비 중'과 한눈에 갈리도록 색을 달리한다 */
+  .store-opt .sob-live { color: #0f7b4f; background: #e3f6ec; }
 
   .anim { opacity: 1; }
   html.gsap-ready .anim { opacity: 0; }
@@ -1122,10 +1124,10 @@
         <span class="sol">Google Play</span>
         <span class="sob">준비 중</span>
       </a>
-      <a class="store-opt" href="#" data-store="web" target="_blank" rel="noopener">
+      <a class="store-opt" href="https://app.mysubflow.app" data-store="web" target="_blank" rel="noopener">
         <span class="soi"><svg viewBox="0 0 24 24" fill="none" stroke="#4a90d9" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg></span>
         <span class="sol">웹으로 시작</span>
-        <span class="sob">준비 중</span>
+        <span class="sob sob-live">이용 가능</span>
       </a>
     </div>
   </div>
@@ -1250,7 +1252,7 @@
     '© 2026 SubFlow. All rights reserved.': '© 2026 SubFlow. All rights reserved.',
     'SubFlow 시작하기': 'Get started with SubFlow',
     '원하는 방법으로 만나보세요.': 'Pick how you want to begin.',
-    '준비 중': 'Coming soon', '웹으로 시작': 'Start on the web'
+    '준비 중': 'Coming soon', '웹으로 시작': 'Start on the web', '이용 가능': 'Available'
   };
 
   var META_EN = {
