@@ -317,10 +317,9 @@ const EN: Record<string, string> = {
   "보고 있는 화면과 브라우저 정보가 함께 전송됩니다.":
     "Your current screen and browser details are sent along.",
   "보내기": "Send",
-  "보내는 중...": "Sending...",
   "5자 이상 입력해주세요.": "Please enter at least 5 characters.",
   "보내주셔서 감사합니다. 확인 후 반영하겠습니다.": "Thanks — we'll take a look.",
-  "잠시 후 다시 시도해주세요.": "Please try again in a moment.",
+  // "보내는 중...", "잠시 후 다시 시도해주세요."는 위 공통 항목에 이미 있다
 
   // ── 설정 / 기타 ──
   "계정, 알림, 예산 기준을 한 곳에서 관리합니다.":
