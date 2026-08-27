@@ -7,4 +7,7 @@ export const categoryApi = {
 
   create: (data: { name: string; icon?: string; color?: string }) =>
     apiClient.post<Category>("/categories", data).then((r) => r.data),
+
+  // 내가 만든 카테고리만 지울 수 있다 (기본 카탈로그는 404)
+  remove: (id: number) => apiClient.delete(`/categories/${id}`).then(() => undefined),
 };

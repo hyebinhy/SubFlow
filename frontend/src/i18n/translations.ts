@@ -410,6 +410,40 @@ const EN: Record<string, string> = {
   "출처": "Source",
   "중복 {a}건, 가격 변동 {b}건, 체험 만료 {c}건 기준입니다.":
     "Based on {a} duplicates, {b} price changes and {c} expiring trials.",
+  // ── 카탈로그: 사용자가 직접 넣는 카테고리·서비스 ──
+  "카테고리 추가": "Add category",
+  "서비스 추가": "Add service",
+  "이름 *": "Name *",
+  "예: 운동, 반려동물": "e.g. Fitness, Pets",
+  "아이콘": "Icon",
+  "색": "Color",
+  "내가 만든 카테고리": "Categories you added",
+  "아직 없습니다.": "None yet.",
+  "카테고리를 지워도 구독 기록은 남고 분류만 없어집니다.":
+    "Deleting a category keeps your subscriptions; they just lose the label.",
+  "카테고리를 추가했습니다.": "Category added.",
+  "카테고리를 삭제했습니다.": "Category deleted.",
+  "같은 이름의 카테고리가 이미 있습니다.": "A category with that name already exists.",
+  "카테고리 추가에 실패했습니다.": "Could not add the category.",
+  "카테고리 삭제에 실패했습니다.": "Could not delete the category.",
+  "카탈로그에 없는 서비스를 직접 등록합니다. 등록한 서비스는 나에게만 보입니다.":
+    "Add a service the catalog doesn't have. Only you can see it.",
+  "서비스 이름 *": "Service name *",
+  "예: 동네 헬스장": "e.g. Local gym",
+  "금액": "Amount",
+  "통화": "Currency",
+  "결제 주기": "Billing cycle",
+  "설명": "Description",
+  "선택 입력": "Optional",
+  "홈페이지 주소": "Website",
+  "기본": "Standard",
+  "내 서비스": "Mine",
+  "서비스를 추가했습니다.": "Service added.",
+  "서비스를 삭제했습니다.": "Service deleted.",
+  "같은 이름의 서비스가 이미 있습니다.": "A service with that name already exists.",
+  "서비스 추가에 실패했습니다.": "Could not add the service.",
+  "서비스 삭제에 실패했습니다.": "Could not delete the service.",
+  "'{name}' 서비스를 삭제하시겠습니까?": "Delete the service '{name}'?",
 };
 
 /**

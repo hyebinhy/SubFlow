@@ -3,10 +3,11 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.category import Category
 from app.models.service import Service
 from app.models.service_plan import ServicePlan
 from app.models.subscription import Subscription, SubscriptionStatus
@@ -96,10 +97,30 @@ class SubscriptionService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscription not found")
         return (await annotate_monthly_krw([subscription]))[0]
 
+    async def _assert_category_visible(self, user_id: UUID, category_id: int | None) -> None:
+        """내 것도 기본 카탈로그도 아닌 카테고리는 붙일 수 없다.
+
+        구독 응답에는 카테고리 이름이 함께 나가므로, 막지 않으면 id를 넣어 보는
+        것만으로 남이 만든 카테고리 이름을 읽어 낼 수 있다.
+        """
+        if category_id is None:
+            return
+        result = await self.db.execute(
+            select(Category.id).where(
+                Category.id == category_id,
+                or_(Category.user_id.is_(None), Category.user_id == user_id),
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+
     async def create_from_catalog(self, user_id: UUID, data: SubscriptionFromCatalogRequest) -> Subscription:
-        # Fetch service and plan
+        # Fetch service and plan (기본 카탈로그이거나 내가 등록한 것만)
         svc_result = await self.db.execute(
-            select(Service).options(selectinload(Service.plans)).where(Service.id == data.service_id)
+            select(Service).options(selectinload(Service.plans)).where(
+                Service.id == data.service_id,
+                or_(Service.user_id.is_(None), Service.user_id == user_id),
+            )
         )
         service = svc_result.scalar_one_or_none()
         if not service:
@@ -152,6 +173,7 @@ class SubscriptionService:
         return (await annotate_monthly_krw([result.scalar_one()]))[0]
 
     async def create(self, user_id: UUID, data: SubscriptionCreateRequest) -> Subscription:
+        await self._assert_category_visible(user_id, data.category_id)
         subscription = Subscription(user_id=user_id, **data.model_dump())
         if subscription.currency != "KRW":
             rates = await get_exchange_rates()
@@ -175,6 +197,8 @@ class SubscriptionService:
     async def update(self, subscription_id: UUID, user_id: UUID, data: SubscriptionUpdateRequest) -> Subscription:
         subscription = await self.get_by_id(subscription_id, user_id)
         update_data = data.model_dump(exclude_unset=True)
+        if "category_id" in update_data:
+            await self._assert_category_visible(user_id, update_data["category_id"])
 
         # Detect changes and record history before applying updates
         if "status" in update_data and update_data["status"] != subscription.status:

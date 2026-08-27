@@ -19,11 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { subscriptionAPI, analyticsAPI } from '../../src/services/api';
-import { useServices, type CatalogService } from '../../src/hooks/useApi';
+import { subscriptionAPI, analyticsAPI, servicesAPI } from '../../src/services/api';
+import { useServices, useCategories, type CatalogService } from '../../src/hooks/useApi';
 import { SERVICE_TAGLINES } from '../../src/constants/serviceTaglines';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
+import { CatalogAddModal } from '../../src/components/CatalogAddModal';
 import { GradientButton } from '../../src/components/GradientButton';
 import {
   Colors,
@@ -41,22 +42,23 @@ interface Category {
   color: string;
 }
 
-const CATEGORIES: Category[] = [
-  { name: 'All', icon: 'apps', color: Colors.primary },
-  { name: 'Entertainment', icon: 'tv', color: '#E50914' },
-  { name: 'Music', icon: 'musical-notes', color: '#1DB954' },
-  { name: 'Developer Tools', icon: 'code-slash', color: '#24292E' },
-  { name: 'Cloud/Infrastructure', icon: 'cloud', color: '#FF9900' },
-  { name: 'Productivity', icon: 'briefcase', color: '#D83B01' },
-  { name: 'Education', icon: 'school', color: '#0056D2' },
-  { name: 'Books', icon: 'book', color: '#8B5E3C' },
-  { name: 'Gaming', icon: 'game-controller', color: '#107C10' },
-  { name: 'Health & Fitness', icon: 'fitness', color: '#FC4C02' },
-  { name: 'News & Media', icon: 'newspaper', color: '#000000' },
-  { name: 'Storage', icon: 'folder', color: '#3693F5' },
-  { name: 'Security & VPN', icon: 'shield-checkmark', color: '#4687FF' },
-  { name: 'Lifestyle', icon: 'heart', color: '#03C75A' },
-];
+// 카테고리 목록 자체는 서버에서 받는다(사용자가 만든 것이 섞이므로).
+// 다만 기본 13종의 아이콘·색은 앱 쪽 감각으로 고른 값이라 여기 남겨 둔다.
+const DEFAULT_CATEGORY_STYLE: Record<string, { icon: Category['icon']; color: string }> = {
+  Entertainment: { icon: 'tv', color: '#E50914' },
+  Music: { icon: 'musical-notes', color: '#1DB954' },
+  'Developer Tools': { icon: 'code-slash', color: '#24292E' },
+  'Cloud/Infrastructure': { icon: 'cloud', color: '#FF9900' },
+  Productivity: { icon: 'briefcase', color: '#D83B01' },
+  Education: { icon: 'school', color: '#0056D2' },
+  Books: { icon: 'book', color: '#8B5E3C' },
+  Gaming: { icon: 'game-controller', color: '#107C10' },
+  'Health & Fitness': { icon: 'fitness', color: '#FC4C02' },
+  'News & Media': { icon: 'newspaper', color: '#000000' },
+  Storage: { icon: 'folder', color: '#3693F5' },
+  'Security & VPN': { icon: 'shield-checkmark', color: '#4687FF' },
+  Lifestyle: { icon: 'heart', color: '#03C75A' },
+};
 
 interface Plan {
   id: number;
@@ -79,6 +81,8 @@ interface Service {
   maxPrice: number | null;
   currency: string | null;
   plans: Plan[];
+  /** 내가 직접 등록한 서비스인지. 기본 카탈로그는 지울 수 없다. */
+  isCustom: boolean;
 }
 
 const CURRENCY_SYMBOL: Record<string, string> = { KRW: '₩', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
@@ -94,6 +98,7 @@ function toService(raw: CatalogService): Service {
     website: raw.website_url ?? undefined,
     cancelUrl: raw.cancel_url ?? undefined,
     aliases: raw.aliases ?? [],
+    isCustom: raw.is_custom ?? false,
     minPrice: raw.min_price === null || raw.min_price === undefined ? null : Number(raw.min_price),
     maxPrice: raw.max_price === null || raw.max_price === undefined ? null : Number(raw.max_price),
     currency: raw.currency ?? null,
@@ -167,6 +172,21 @@ export default function CatalogScreen() {
   // 스토어 심사를 새로 받아야 하고, 웹과 값이 갈라진다.
   const { data: rawServices, loading, error, refetch } = useServices();
   const services = useMemo(() => (rawServices ?? []).map(toService), [rawServices]);
+
+  // 카테고리도 서버가 원본이다. 기본 13종에 내가 만든 것이 뒤에 붙어 내려온다.
+  const { data: rawCategories, refetch: refetchCategories } = useCategories();
+  const categories = useMemo(() => rawCategories ?? [], [rawCategories]);
+  const categoryPills = useMemo<Category[]>(() => [
+    { name: 'All', icon: 'apps', color: Colors.primary },
+    ...categories.map((c) => ({
+      name: c.name,
+      icon: DEFAULT_CATEGORY_STYLE[c.name]?.icon ?? 'pricetag',
+      color: c.color ?? DEFAULT_CATEGORY_STYLE[c.name]?.color ?? Colors.primary,
+    })),
+  ], [categories]);
+
+  // 카탈로그에 없는 것을 직접 넣는 두 갈래 — 분류(카테고리)와 항목(서비스)
+  const [addMode, setAddMode] = useState<'category' | 'service' | null>(null);
 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { t, language } = useTranslation();
@@ -396,6 +416,42 @@ export default function CatalogScreen() {
     }
   };
 
+  // 기본 13종은 사전에 번역이 있고, 사용자가 만든 이름은 없다. t()는 키가 없으면
+  // 키를 그대로 돌려주므로 그때는 원래 이름을 쓴다.
+  const categoryLabel = (name: string) => {
+    const key = `category.${name}`;
+    const label = t(key as any);
+    return label === key ? name : label;
+  };
+
+  const handleDeleteService = (service: Service) => {
+    Alert.alert(
+      language === 'ko' ? '서비스 삭제' : 'Delete service',
+      language === 'ko'
+        ? `'${service.name}'을(를) 삭제할까요? 이미 등록한 구독은 그대로 남습니다.`
+        : `Delete '${service.name}'? Subscriptions you already added stay as they are.`,
+      [
+        { text: language === 'ko' ? '취소' : 'Cancel', style: 'cancel' },
+        {
+          text: language === 'ko' ? '삭제' : 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await servicesAPI.remove(service.id);
+              closeModal();
+              refetch();
+            } catch {
+              Alert.alert(
+                language === 'ko' ? '오류' : 'Error',
+                language === 'ko' ? '삭제하지 못했습니다.' : 'Could not delete.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return services.filter((s) => {
@@ -452,7 +508,7 @@ export default function CatalogScreen() {
 
           {/* 카테고리 필터 */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-             {CATEGORIES.map((cat) => (
+             {categoryPills.map((cat) => (
                 <TouchableOpacity
                   key={cat.name}
                   style={[styles.categoryPill, selectedCategory === cat.name && styles.categoryPillActive]}
@@ -460,10 +516,21 @@ export default function CatalogScreen() {
                 >
                   <Ionicons name={cat.icon} size={14} color={selectedCategory === cat.name ? Colors.textPrimary : Colors.textWhite} />
                   <Text style={[styles.categoryText, selectedCategory === cat.name && styles.categoryTextActive]}>
-                    {cat.name === 'All' ? t('common.all') : (t((`category.${cat.name}`) as any) || cat.name)}
+                    {cat.name === 'All' ? t('common.all') : categoryLabel(cat.name)}
                   </Text>
                 </TouchableOpacity>
              ))}
+             {/* 필터 줄 끝에 붙여 둔다 — 찾는 게 목록에 없을 때 바로 눈에 들어온다 */}
+             <TouchableOpacity
+               style={styles.categoryPillAdd}
+               onPress={() => setAddMode('category')}
+               activeOpacity={0.7}
+             >
+               <Ionicons name="add" size={14} color={Colors.textWhite} />
+               <Text style={styles.categoryText}>
+                 {language === 'ko' ? '카테고리' : 'Category'}
+               </Text>
+             </TouchableOpacity>
           </ScrollView>
 
           {/* 서비스 카드 그리드 */}
@@ -471,9 +538,20 @@ export default function CatalogScreen() {
              <View style={styles.mainWhiteCard}>
                 <View style={styles.cardHeaderRow}>
                    <Text style={styles.cardTitle}>
-                     {selectedCategory === 'All' ? t('catalog.allServices') : t((`category.${selectedCategory}`) as any)}
+                     {selectedCategory === 'All' ? t('catalog.allServices') : categoryLabel(selectedCategory)}
                    </Text>
                    <View style={styles.cardHeaderRight}>
+                     {/* 카탈로그에 없는 서비스를 직접 넣는 자리 */}
+                     <TouchableOpacity
+                       style={styles.addServiceBtn}
+                       onPress={() => setAddMode('service')}
+                       activeOpacity={0.7}
+                     >
+                       <Ionicons name="add" size={13} color={Colors.primary} />
+                       <Text style={styles.addServiceText}>
+                         {language === 'ko' ? '서비스' : 'Service'}
+                       </Text>
+                     </TouchableOpacity>
                      {/* 외화 요금을 원화로 환산해 보는 토글 */}
                      <TouchableOpacity
                        style={[styles.krwToggle, showKrw && styles.krwToggleActive]}
@@ -543,6 +621,13 @@ export default function CatalogScreen() {
                   <View style={styles.empty}>
                     <Ionicons name="search-outline" size={48} color={Colors.textTertiary} />
                     <Text style={styles.emptyText}>{t('catalog.noResults')}</Text>
+                    {/* 없는 걸 찾았다는 건 직접 넣을 때라는 뜻이다 */}
+                    <TouchableOpacity style={styles.retryBtn} onPress={() => setAddMode('service')} activeOpacity={0.7}>
+                      <Ionicons name="add" size={14} color={Colors.primary} />
+                      <Text style={styles.retryText}>
+                        {language === 'ko' ? '직접 등록하기' : 'Add it yourself'}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 )}
              </View>
@@ -551,6 +636,16 @@ export default function CatalogScreen() {
           <View style={{ height: 120 }} />
         </ScrollView>
       </SafeAreaView>
+
+      <CatalogAddModal
+        mode={addMode}
+        onClose={() => setAddMode(null)}
+        categories={categories}
+        onChanged={() => {
+          refetchCategories();
+          refetch();
+        }}
+      />
 
       {/* ── 서비스 상세 모달 (배경 fade + 시트 slide) ── */}
       {modalVisible && (
@@ -581,7 +676,7 @@ export default function CatalogScreen() {
                     <Text style={styles.modalDesc}>{selectedService.description}</Text>
                     <View style={styles.modalCategoryBadge}>
                       <Text style={styles.modalCategoryText}>
-                        {t((`category.${selectedService.category}`) as any) || selectedService.category}
+                        {categoryLabel(selectedService.category)}
                       </Text>
                     </View>
                   </View>
@@ -738,6 +833,20 @@ export default function CatalogScreen() {
                   loading={isSubmitting}
                   onPress={handleSubscribe}
                 />
+
+                {/* 직접 등록한 서비스만 지울 수 있다. 기본 카탈로그는 손대지 않는다. */}
+                {selectedService.isCustom && (
+                  <TouchableOpacity
+                    style={styles.modalDeleteBtn}
+                    onPress={() => handleDeleteService(selectedService)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                    <Text style={styles.modalDeleteText}>
+                      {language === 'ko' ? '이 서비스 삭제' : 'Delete this service'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <View style={{ height: 20 }} />
               </ScrollView>
             )}
@@ -783,6 +892,11 @@ const styles = StyleSheet.create({
     borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)'
   },
   categoryPillActive: { backgroundColor: '#FFF', borderColor: '#FFF' },
+  // 필터 pill과 같은 크기지만 점선 테두리로 '고르는 것'과 '더하는 것'을 구분한다
+  categoryPillAdd: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10,
+    borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.6)',
+  },
   categoryText: { fontSize: FontSize.xs, color: '#FFF', fontWeight: FontWeight.semibold },
   categoryTextActive: { color: Colors.textPrimary },
   gridContainer: { marginTop: Spacing.sm, paddingHorizontal: Spacing.sm },
@@ -793,6 +907,13 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   countText: { fontSize: FontSize.xs, color: Colors.textTertiary, fontWeight: FontWeight.medium },
   cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  addServiceBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1, borderColor: Colors.primary,
+  },
+  addServiceText: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: FontWeight.semibold },
   krwToggle: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 5,
@@ -918,6 +1039,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: Colors.borderLight,
   },
   modalCancelText: { flex: 1, fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: FontWeight.medium },
+  modalDeleteBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    marginTop: Spacing.md, paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.dangerSoft,
+    backgroundColor: Colors.dangerSoft,
+  },
+  modalDeleteText: { fontSize: FontSize.sm, color: Colors.dangerText, fontWeight: FontWeight.semibold },
   retryBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 8, paddingHorizontal: 14,

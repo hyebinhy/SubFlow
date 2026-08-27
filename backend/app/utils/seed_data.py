@@ -1056,7 +1056,9 @@ DEFAULT_SERVICES = {
 
 
 async def seed_categories(db: AsyncSession) -> None:
-    result = await db.execute(select(Category))
+    # 시드는 기본 카탈로그(user_id IS NULL)만 건드린다. 사용자가 만든 카테고리를
+    # 이름으로 집어 오면 남의 "Music"에 시드의 아이콘·색을 덮어쓰게 된다.
+    result = await db.execute(select(Category).where(Category.user_id.is_(None)))
     existing = {c.name: c for c in result.scalars().all()}
 
     changed = False
@@ -1084,7 +1086,7 @@ async def _update_logo_urls(db: AsyncSession) -> None:
             logo_map[svc["name"]] = svc["logo_url"]
 
     # Update services table
-    result = await db.execute(select(Service))
+    result = await db.execute(select(Service).where(Service.user_id.is_(None)))
     for service in result.scalars().all():
         new_url = logo_map.get(service.name)
         if new_url and service.logo_url != new_url:
@@ -1118,17 +1120,24 @@ async def _detach_plan(db: AsyncSession, plan_id: int) -> None:
 
 
 async def seed_services(db: AsyncSession) -> None:
-    # Build category name -> id map
-    cat_result = await db.execute(select(Category))
+    # 아래 조회는 전부 기본 카탈로그(user_id IS NULL)로 좁힌다. 이름으로 찾는
+    # 구조라 사용자가 만든 동명의 항목을 시드 대상으로 착각하면, 요금제 정리
+    # 단계에서 그 사람이 넣은 요금제를 "시드에 없는 것"으로 보고 지워 버린다.
+    cat_result = await db.execute(select(Category).where(Category.user_id.is_(None)))
     cat_map = {c.name: c.id for c in cat_result.scalars().all()}
 
     # Get existing services as dict {name: Service}
-    svc_result = await db.execute(select(Service))
+    svc_result = await db.execute(select(Service).where(Service.user_id.is_(None)))
     existing_services = {s.name: s for s in svc_result.scalars().all()}
 
     # Get existing plans as dict {(service_id, plan_name): ServicePlan}
+    default_service_ids = {s.id for s in existing_services.values()}
     plan_result = await db.execute(select(ServicePlan))
-    existing_plans = {(p.service_id, p.name): p for p in plan_result.scalars().all()}
+    existing_plans = {
+        (p.service_id, p.name): p
+        for p in plan_result.scalars().all()
+        if p.service_id in default_service_ids
+    }
 
     changed = False
     for category_name, services in DEFAULT_SERVICES.items():
@@ -1321,8 +1330,8 @@ async def seed_price_history(db: AsyncSession) -> None:
     seeded = await db.execute(select(PlanPriceHistory.plan_id).distinct())
     seeded_plan_ids = set(seeded.scalars().all())
 
-    # plan_id 조회를 위한 맵 생성
-    svc_result = await db.execute(select(Service))
+    # plan_id 조회를 위한 맵 생성 (기본 카탈로그만)
+    svc_result = await db.execute(select(Service).where(Service.user_id.is_(None)))
     svc_map = {s.name: s.id for s in svc_result.scalars().all()}
 
     plan_result = await db.execute(select(ServicePlan))

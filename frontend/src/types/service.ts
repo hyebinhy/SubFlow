@@ -22,6 +22,8 @@ export interface Service {
   website_url?: string;
   cancel_url?: string;
   is_popular: boolean;
+  /** 내가 직접 등록한 서비스인지 (기본 카탈로그는 false) */
+  is_custom?: boolean;
   created_at: string;
   plans: ServicePlan[];
   /** 검색 보조어 (한글/영문 표기 차이) */
@@ -44,9 +46,27 @@ export interface ServiceListItem {
   website_url?: string;
   cancel_url?: string;
   is_popular: boolean;
+  is_custom?: boolean;
   plan_count: number;
   min_price?: number;
   max_price?: number;
   currency?: string;
   plans: ServicePlan[];
+}
+
+export interface ServicePlanCreateRequest {
+  name: string;
+  price: number;
+  currency: string;
+  billing_cycle: BillingCycle;
+  description?: string;
+}
+
+export interface ServiceCreateRequest {
+  name: string;
+  description?: string;
+  category_id?: number;
+  website_url?: string;
+  cancel_url?: string;
+  plans: ServicePlanCreateRequest[];
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ArrowLeftRight, Tag } from "lucide-react";
+import { ArrowLeftRight, FolderPlus, PlusCircle, Tag } from "lucide-react";
 import { serviceApi } from "../api/services";
 import { subscriptionApi } from "../api/subscriptions";
 import { categoryApi } from "../api/categories";
@@ -11,6 +11,8 @@ import type { ServiceListItem, ServicePlan } from "../types/service";
 import type { Category } from "../types/category";
 import ServiceCard from "../components/service/ServiceCard";
 import ServiceDetail from "../components/service/ServiceDetail";
+import CategoryManagerModal from "../components/catalog/CategoryManagerModal";
+import ServiceCreateModal from "../components/catalog/ServiceCreateModal";
 import SubscriptionModal from "../components/subscription/SubscriptionModal";
 import { tr } from "../i18n/translations";
 import { nextBillingDate, todayIso } from "../utils/billingDate";
@@ -30,6 +32,10 @@ export default function ServicesPage() {
   const [startDate, setStartDate] = useState(todayIso());
   const [nextDate, setNextDate] = useState(todayIso());
   const [saving, setSaving] = useState(false);
+
+  // 카탈로그에 없는 것을 직접 넣는 두 갈래 — 분류(카테고리)와 항목(서비스)
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
 
   // 원화 환산 토글. 환율은 처음 켤 때 한 번만 받는다(서버도 1시간 캐시).
   const [showKrw, setShowKrw] = useState(false);
@@ -72,6 +78,17 @@ export default function ServicesPage() {
     const timer = setTimeout(fetchServices, search ? 300 : 0);
     return () => clearTimeout(timer);
   }, [fetchServices, search]);
+
+  const handleDeleteService = async (svc: ServiceListItem) => {
+    if (!window.confirm(tr("'{name}' 서비스를 삭제하시겠습니까?", { name: svc.name }))) return;
+    try {
+      await serviceApi.remove(svc.id);
+      toast.success(tr("서비스를 삭제했습니다."));
+      fetchServices();
+    } catch {
+      toast.error(tr("서비스 삭제에 실패했습니다."));
+    }
+  };
 
   const handleSubscribe = async () => {
     if (!subscribing) return;
@@ -204,7 +221,22 @@ export default function ServicesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-slate-900">{tr("서비스 탐색")}</h2>
-        <div className="text-right">
+        <div className="flex items-center gap-2 text-right">
+          <button
+            onClick={() => setCategoryModalOpen(true)}
+            className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-white/40"
+          >
+            <FolderPlus className="h-3.5 w-3.5" />
+            {tr("카테고리 추가")}
+          </button>
+          <button
+            onClick={() => setServiceModalOpen(true)}
+            className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-white/40"
+          >
+            <PlusCircle className="h-3.5 w-3.5" />
+            {tr("서비스 추가")}
+          </button>
+          <div className="text-right">
           {/* 외화 요금을 원화로 환산해 보는 토글 */}
           <button
             onClick={toggleKrw}
@@ -223,6 +255,7 @@ export default function ServicesPage() {
               {ratesAsOf} {tr("고시 환율 기준")}
             </p>
           )}
+          </div>
         </div>
       </div>
 
@@ -292,10 +325,24 @@ export default function ServicesPage() {
               onClick={setSelectedServiceId}
               showKrw={showKrw}
               rates={rates}
+              onDelete={svc.is_custom ? handleDeleteService : undefined}
             />
           ))}
         </div>
       )}
+
+      <CategoryManagerModal
+        isOpen={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        categories={categories}
+        onChanged={fetchServices}
+      />
+      <ServiceCreateModal
+        isOpen={serviceModalOpen}
+        onClose={() => setServiceModalOpen(false)}
+        categories={categories}
+        onCreated={fetchServices}
+      />
     </div>
   );
 }

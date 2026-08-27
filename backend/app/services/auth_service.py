@@ -20,9 +20,13 @@ from app.core.security import (
     peek_token_subject,
     verify_password,
 )
+from app.models.category import Category
 from app.models.notification import Notification
 from app.models.notification_setting import NotificationSetting
 from app.models.payment_history import PaymentHistory
+from app.models.plan_price_history import PlanPriceHistory
+from app.models.service import Service
+from app.models.service_plan import ServicePlan
 from app.models.subscription import Subscription
 from app.models.subscription_history import SubscriptionHistory
 from app.models.user import User
@@ -84,6 +88,17 @@ class AuthService:
         for model in (PaymentHistory, SubscriptionHistory, Notification,
                       NotificationSetting, Subscription):
             await self.db.execute(delete(model).where(model.user_id == user.id))
+
+        # 직접 등록한 서비스·카테고리도 users.id를 참조한다. 남겨 두면 계정 삭제가
+        # FK로 막힌다. 요금제와 가격 이력이 서비스를 참조하므로 그쪽부터 지운다.
+        my_service_ids = select(Service.id).where(Service.user_id == user.id).scalar_subquery()
+        my_plan_ids = select(ServicePlan.id).where(
+            ServicePlan.service_id.in_(my_service_ids)
+        ).scalar_subquery()
+        await self.db.execute(delete(PlanPriceHistory).where(PlanPriceHistory.plan_id.in_(my_plan_ids)))
+        await self.db.execute(delete(ServicePlan).where(ServicePlan.service_id.in_(my_service_ids)))
+        await self.db.execute(delete(Service).where(Service.user_id == user.id))
+        await self.db.execute(delete(Category).where(Category.user_id == user.id))
 
         await self.db.execute(delete(User).where(User.id == user.id))
         await self.db.commit()

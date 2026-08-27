@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.subscription import BillingCycle
 from app.schemas.category import CategoryResponse
@@ -39,6 +39,8 @@ class ServiceResponse(BaseModel):
     cancel_url: str | None = None
     is_popular: bool
     created_at: datetime
+    # 내가 직접 등록한 서비스인지. 지우기 버튼을 이 값으로 가른다.
+    is_custom: bool = False
     plans: list[ServicePlanResponse] = []
 
     model_config = {"from_attributes": True}
@@ -54,6 +56,7 @@ class ServiceListResponse(BaseModel):
     website_url: str | None = None
     cancel_url: str | None = None
     is_popular: bool
+    is_custom: bool = False
     plan_count: int = 0
     min_price: Decimal | None = None
     max_price: Decimal | None = None
@@ -66,3 +69,26 @@ class ServiceListResponse(BaseModel):
     aliases: list[str] = []
 
     model_config = {"from_attributes": True}
+
+
+class ServicePlanCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    price: Decimal = Field(ge=0)
+    currency: str = Field(default="KRW", min_length=3, max_length=3)
+    billing_cycle: BillingCycle = BillingCycle.MONTHLY
+    description: str | None = None
+
+
+class ServiceCreateRequest(BaseModel):
+    """사용자가 직접 등록하는 서비스.
+
+    요금제를 하나도 안 넣으면 카탈로그 카드에 가격이 안 뜨고 구독 등록도
+    막히므로, 화면에서는 요금제 한 줄을 기본으로 채워 보낸다.
+    """
+
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = None
+    category_id: int | None = None
+    website_url: str | None = Field(default=None, max_length=500)
+    cancel_url: str | None = Field(default=None, max_length=500)
+    plans: list[ServicePlanCreateRequest] = Field(default_factory=list, max_length=10)

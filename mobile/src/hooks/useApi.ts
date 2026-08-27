@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { subscriptionAPI, analyticsAPI, servicesAPI, notificationAPI, newsAPI } from '../services/api';
+import { subscriptionAPI, analyticsAPI, servicesAPI, categoriesAPI, notificationAPI, newsAPI } from '../services/api';
 
 function useFetch<T>(fetcher: () => Promise<{ data: T }>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
@@ -93,6 +93,8 @@ export interface CatalogService {
   website_url: string | null;
   cancel_url: string | null;
   is_popular: boolean;
+  /** 내가 직접 등록한 서비스인지 (기본 카탈로그는 false) */
+  is_custom?: boolean;
   plan_count: number;
   min_price: number | string | null;
   max_price: number | string | null;
@@ -103,6 +105,20 @@ export interface CatalogService {
 
 export function useServices() {
   return useFetch<CatalogService[]>(() => servicesAPI.getAll());
+}
+
+export interface CatalogCategory {
+  id: number;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  is_default: boolean;
+  /** 내가 직접 만든 카테고리인지 (기본 13종은 false) */
+  is_custom: boolean;
+}
+
+export function useCategories() {
+  return useFetch<CatalogCategory[]>(() => categoriesAPI.getAll());
 }
 
 // ── News (카드뉴스) ──

@@ -117,6 +117,23 @@ export const servicesAPI = {
   getPopular: () => api.get('/services/popular'),
   search: (q: string) => api.get(`/services/search?q=${q}`),
   getById: (id: number) => api.get(`/services/${id}`),
+  // 카탈로그에 없는 서비스를 직접 등록한다. 등록한 사람에게만 보인다.
+  create: (data: {
+    name: string;
+    description?: string;
+    category_id?: number;
+    website_url?: string;
+    plans?: { name: string; price: number; currency: string; billing_cycle: string }[];
+  }) => api.post('/services', data),
+  remove: (id: number) => api.delete(`/services/${id}`),
+};
+
+// ── Categories ──
+// 기본 13종은 모두가 공유하고, 사용자가 만든 것은 만든 사람에게만 내려온다.
+export const categoriesAPI = {
+  getAll: () => api.get('/categories'),
+  create: (data: { name: string; icon?: string; color?: string }) => api.post('/categories', data),
+  remove: (id: number) => api.delete(`/categories/${id}`),
 };
 
 // ── Feedback (오류 신고·의견) ──
