@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useBottomSheet } from '../../src/hooks/useBottomSheet';
 import { useAnalyticsOverview, useCategoryBreakdown, useSpendingTrend, useSavingsSuggestions, useBudgetStatus, useOverlaps } from '../../src/hooks/useApi';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
@@ -76,6 +77,11 @@ export default function AnalyticsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [trendDetailOpen, setTrendDetailOpen] = useState(false);
   const [categoryListOpen, setCategoryListOpen] = useState(false);
+
+  // 세 시트 모두 같은 방식으로 열리고 닫힌다 — 아래로 쓸어 내리거나 배경을 누른다.
+  const trendSheet = useBottomSheet(trendDetailOpen, () => setTrendDetailOpen(false));
+  const catListSheet = useBottomSheet(categoryListOpen, () => setCategoryListOpen(false));
+  const catDetailSheet = useBottomSheet(!!selectedCategory, () => setSelectedCategory(null));
 
   // 토스트 자동 닫힘
   useEffect(() => {
@@ -493,9 +499,12 @@ export default function AnalyticsScreen() {
       </SafeAreaView>
 
       {/* ── 지출 추이 상세 바텀시트 ── */}
-      <Modal visible={trendDetailOpen} transparent animationType="slide" onRequestClose={() => setTrendDetailOpen(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setTrendDetailOpen(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+      <Modal visible={trendDetailOpen} transparent animationType="none" onRequestClose={trendSheet.close}>
+        <View style={styles.sheetOverlay}>
+          <Animated.View style={[styles.sheetBackdrop, { opacity: trendSheet.backdrop }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={trendSheet.close} />
+          </Animated.View>
+          <Animated.View style={[styles.sheet, trendSheet.style]} {...trendSheet.panHandlers}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>월별 지출 추이</Text>
             <Text style={styles.sheetSubtitle}>최근 {trendData.length}개월</Text>
@@ -543,14 +552,17 @@ export default function AnalyticsScreen() {
                 onPress={() => setTrendDetailOpen(false)}
               />
             </View>
-          </Pressable>
-        </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* ── 카테고리 풀 리스트 시트 ── */}
-      <Modal visible={categoryListOpen} transparent animationType="slide" onRequestClose={() => setCategoryListOpen(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setCategoryListOpen(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+      <Modal visible={categoryListOpen} transparent animationType="none" onRequestClose={catListSheet.close}>
+        <View style={styles.sheetOverlay}>
+          <Animated.View style={[styles.sheetBackdrop, { opacity: catListSheet.backdrop }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={catListSheet.close} />
+          </Animated.View>
+          <Animated.View style={[styles.sheet, catListSheet.style]} {...catListSheet.panHandlers}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>카테고리별 지출</Text>
             <Text style={styles.sheetSubtitle}>총 {cats.length}개 카테고리</Text>
@@ -566,7 +578,12 @@ export default function AnalyticsScreen() {
               </View>
             )}
 
-            <ScrollView style={{ maxHeight: 380, marginTop: Spacing.md }}>
+            {/* 목록이 맨 위일 때만 쓸어 닫기가 걸리도록 스크롤 위치를 알려 준다 */}
+            <ScrollView
+              style={{ maxHeight: 380, marginTop: Spacing.md }}
+              onScroll={catListSheet.onScroll}
+              scrollEventThrottle={catListSheet.scrollEventThrottle}
+            >
               {cats.map((cat: any, i: number) => (
                 <TouchableOpacity
                   key={i}
@@ -596,14 +613,17 @@ export default function AnalyticsScreen() {
                 onPress={() => setCategoryListOpen(false)}
               />
             </View>
-          </Pressable>
-        </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* ── 카테고리 상세 시트 ── */}
-      <Modal visible={!!selectedCategory} transparent animationType="slide" onRequestClose={() => setSelectedCategory(null)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setSelectedCategory(null)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+      <Modal visible={!!selectedCategory} transparent animationType="none" onRequestClose={catDetailSheet.close}>
+        <View style={styles.sheetOverlay}>
+          <Animated.View style={[styles.sheetBackdrop, { opacity: catDetailSheet.backdrop }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={catDetailSheet.close} />
+          </Animated.View>
+          <Animated.View style={[styles.sheet, catDetailSheet.style]} {...catDetailSheet.panHandlers}>
             <View style={styles.sheetHandle} />
             {selectedCategory && (
               <>
@@ -652,8 +672,8 @@ export default function AnalyticsScreen() {
                 </View>
               </>
             )}
-          </Pressable>
-        </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* ── 적용 확인 모달 ── */}
@@ -808,7 +828,8 @@ const styles = StyleSheet.create({
   },
   momPillText: { fontSize: 11, fontWeight: FontWeight.heavy },
   // 바텀시트 공통
-  sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 28, borderTopRightRadius: 28,

@@ -636,7 +636,9 @@ export default function SettingsScreen() {
       </Modal>
 
       {/* 통화 선택 모달 */}
-      <Modal transparent animationType="slide" visible={currencyModalVisible} onRequestClose={() => setCurrencyModalVisible(false)}>
+      {/* 가운데 뜨는 박스라 아래에서 밀려 올라오면 어긋난다. 나머지 설정
+          다이얼로그(예산·문의·탈퇴)와 같이 fade로 맞춘다. */}
+      <Modal transparent animationType="fade" visible={currencyModalVisible} onRequestClose={() => setCurrencyModalVisible(false)}>
         <Pressable style={modalStyles.overlay} onPress={() => setCurrencyModalVisible(false)}>
           <Pressable style={[modalStyles.box, { paddingBottom: Spacing.lg }]} onPress={() => {}}>
             <Text style={modalStyles.title}>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import {
   Alert,
   Animated,
   KeyboardAvoidingView,
-  PanResponder,
   Platform,
   Pressable,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { categoriesAPI, servicesAPI } from '../services/api';
 import type { CatalogCategory } from '../hooks/useApi';
 import { useTranslation } from '../hooks/useTranslation';
+import { useBottomSheet } from '../hooks/useBottomSheet';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../constants/theme';
 
 type Mode = 'category' | 'service';
@@ -36,9 +36,6 @@ interface Props {
 const ICONS = ['🏷️', '🏋️', '🍽️', '🚗', '🏠', '🐾', '🎨', '✈️', '💊', '📦'];
 const COLORS = ['#64748B', '#2563EB', '#16A34A', '#D97706', '#DC2626', '#7C3AED'];
 const CURRENCIES = ['KRW', 'USD', 'EUR', 'JPY'];
-/** 시트가 화면 밖으로 나가는 거리. 실제 시트 높이보다 넉넉하게 둔다. */
-const SHEET_TRAVEL = 800;
-
 const CYCLES: { value: string; ko: string; en: string }[] = [
   { value: 'monthly', ko: '월간', en: 'Monthly' },
   { value: 'yearly', ko: '연간', en: 'Yearly' },
@@ -62,49 +59,11 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
 
   const mine = categories.filter((c) => c.is_custom);
 
-  // 아래로 쓸어 닫기 — 카탈로그·구독 상세 시트와 같은 동작.
-  // 시트 안이 ScrollView라, 스크롤이 맨 위일 때만 제스처를 가로채야
-  // 목록 스크롤과 싸우지 않는다.
-  const slideAnim = useRef(new Animated.Value(SHEET_TRAVEL)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const sheetScrollY = useRef(0);
-
-  useEffect(() => {
-    if (mode === null) return;
-    sheetScrollY.current = 0;
-    fadeAnim.setValue(0);
-    slideAnim.setValue(SHEET_TRAVEL);
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, damping: 25, stiffness: 300, useNativeDriver: true }),
-    ]).start();
-  }, [mode]);
-
-  /** 내려가는 애니메이션을 끝낸 뒤에 실제로 닫는다. */
-  const animateClose = (after: () => void) => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: SHEET_TRAVEL, duration: 220, useNativeDriver: true }),
-    ]).start(after);
-  };
-
-  const sheetPan = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_e, g) =>
-        sheetScrollY.current <= 0 && g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
-      onPanResponderMove: (_e, g) => { if (g.dy > 0) slideAnim.setValue(g.dy); },
-      onPanResponderRelease: (_e, g) => {
-        if (g.dy > 120 || g.vy > 0.8) {
-          closeRef.current();
-        } else {
-          Animated.spring(slideAnim, { toValue: 0, damping: 25, stiffness: 300, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
-
-  // PanResponder는 한 번만 만들어지므로 최신 close를 ref로 넘긴다.
-  const closeRef = useRef<() => void>(() => {});
+  // 아래로 쓸어 닫기 — 앱 안의 다른 시트와 같은 훅을 쓴다.
+  const sheet = useBottomSheet(mode !== null, () => {
+    reset();
+    onClose();
+  });
 
   const reset = () => {
     setName('');
@@ -117,13 +76,7 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
     setWebsite('');
   };
 
-  const close = () => {
-    animateClose(() => {
-      reset();
-      onClose();
-    });
-  };
-  closeRef.current = close;
+  const close = sheet.close;
 
   const failMessage = (status?: number) => {
     if (status === 400) {
@@ -205,14 +158,11 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* 배경을 눌러도 닫힌다 */}
-        <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.overlay, { opacity: sheet.backdrop }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} />
         </Animated.View>
 
-        <Animated.View
-          style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}
-          {...sheetPan.panHandlers}
-        >
+        <Animated.View style={[styles.sheet, sheet.style]} {...sheet.panHandlers}>
           {/* 잡고 내릴 곳임을 알리는 손잡이 */}
           <View style={styles.handle} />
           <View style={styles.headerRow}>
@@ -225,8 +175,8 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            onScroll={(e) => { sheetScrollY.current = e.nativeEvent.contentOffset.y; }}
-            scrollEventThrottle={16}
+            onScroll={sheet.onScroll}
+            scrollEventThrottle={sheet.scrollEventThrottle}
           >
             {mode === 'service' && (
               <Text style={styles.hint}>

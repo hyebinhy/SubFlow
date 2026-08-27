@@ -9,12 +9,14 @@ import {
   Modal,
   Pressable,
   ActivityIndicator,
+  Animated,
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useBottomSheet } from '../hooks/useBottomSheet';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../constants/theme';
 import { useNews, NewsItem } from '../hooks/useApi';
 import { newsAPI } from '../services/api';
@@ -103,6 +105,8 @@ function NewsCard({ item, onPress }: { item: NewsItem; onPress: () => void }) {
 // ── AI 요약 바텀시트 ──
 function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
   const { t, language } = useTranslation();
+  // 이 시트는 열릴 때만 그려지므로(부모가 조건부 렌더) visible은 항상 true다.
+  const detailSheet = useBottomSheet(true, onClose);
   const ai = isAiItem(item);
   const [summary, setSummary] = React.useState<string | null>(null);
   const [mode, setMode] = React.useState<'loading' | 'ai' | 'unavailable'>('loading');
@@ -131,9 +135,12 @@ function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
   }, [item]);
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={sheet.overlay} onPress={onClose}>
-        <Pressable style={sheet.container} onPress={(e) => e.stopPropagation()}>
+    <Modal visible transparent animationType="none" onRequestClose={detailSheet.close}>
+      <View style={sheet.overlay}>
+        <Animated.View style={[sheet.backdrop, { opacity: detailSheet.backdrop }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={detailSheet.close} />
+        </Animated.View>
+        <Animated.View style={[sheet.container, detailSheet.style]} {...detailSheet.panHandlers}>
           <View style={sheet.handle} />
 
           <View style={sheet.headerRow}>
@@ -197,8 +204,8 @@ function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
               <Ionicons name="open-outline" size={15} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-        </Pressable>
-      </Pressable>
+        </Animated.View>
+      </View>
     </Modal>
   );
 }
@@ -206,6 +213,8 @@ function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
 // ── 카드뉴스 전체 모달 (제목 옆 아이콘으로 오픈) ──
 export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { t } = useTranslation();
+  // 위를 44px 남기고 올라오는 시트라 상세 시트와 같은 규칙으로 닫는다.
+  const listSheet = useBottomSheet(visible, onClose);
   const { data, loading, error, refetch } = useNews();
   const [selected, setSelected] = React.useState<NewsItem | null>(null);
 
@@ -217,7 +226,8 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={listSheet.close}>
+      <Animated.View style={[styles.modalShell, listSheet.style]} {...listSheet.panHandlers}>
       <BlurView intensity={38} tint="light" style={styles.modalRoot}>
         {/* 가독성 확보용 옅은 틴트 (배경 홈이 비쳐 보이도록 반투명) */}
         <View style={styles.modalTint} />
@@ -231,7 +241,7 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
               />
               <Text style={styles.modalTitle}>{t('news.section')}</Text>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={8}>
+            <TouchableOpacity style={styles.closeBtn} onPress={listSheet.close} hitSlop={8}>
               <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
@@ -251,9 +261,12 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
               <Text style={styles.stateText}>{t('news.empty')}</Text>
             </View>
           ) : (
+            // 목록이 맨 위일 때만 쓸어 닫기가 걸리도록 스크롤 위치를 알려 준다
             <ScrollView
               contentContainerStyle={styles.list}
               showsVerticalScrollIndicator={false}
+              onScroll={listSheet.onScroll}
+              scrollEventThrottle={listSheet.scrollEventThrottle}
             >
               {items.map((item, idx) => (
                 <NewsCard key={`${item.title}-${idx}`} item={item} onPress={() => setSelected(item)} />
@@ -264,11 +277,15 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
           {selected && <NewsSheet item={selected} onClose={() => setSelected(null)} />}
         </SafeAreaView>
       </BlurView>
+      </Animated.View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  // 제스처와 애니메이션을 받는 바깥 껍데기. BlurView에 transform을 직접 걸면
+  // 안드로이드에서 블러가 어긋나므로 한 겹 감싼다.
+  modalShell: { flex: 1 },
   // ── Modal shell (frosted glass) ──
   // 아래에서 올라오는 시트라 윗모서리만 둥글게 깎는다.
   modalRoot: {
@@ -399,8 +416,11 @@ const styles = StyleSheet.create({
 const sheet = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   container: {
     backgroundColor: '#FFFFFF',
