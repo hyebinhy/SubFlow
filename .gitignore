@@ -42,3 +42,10 @@ docker-compose.override.yml
 .wrangler/
 
 marketing/
+
+# 화면 녹화 원본 — 루트에 임시로 받아 두는 것들.
+# landing/shots/webui.mp4처럼 실제로 쓰는 영상은 추적 중이라 루트만 막는다.
+/*.mp4
+
+# CDP로 Expo 웹을 붙잡아 스크린샷·영상을 뽑는 스크래치 스크립트
+mobile/_*.js
