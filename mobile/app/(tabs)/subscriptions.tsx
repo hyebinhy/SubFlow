@@ -511,7 +511,10 @@ export default function SubscriptionsScreen() {
           </Animated.View>
           <View style={styles.sheetAnchor} pointerEvents="box-none">
             <Animated.View style={[styles.groupSheet, groupSheet.style]} {...groupSheet.panHandlers}>
-              <View style={styles.groupSheetHandle} />
+              {/* 손잡이는 4px짜리 막대라 그것만 노려 잡기 어렵다 — 주변까지 끌리게 */}
+              <View style={styles.sheetHandleZone} {...groupSheet.handlePanHandlers}>
+                <View style={styles.groupSheetHandle} />
+              </View>
               <Text style={styles.groupSheetTitle}>
                 {language === 'ko' ? '분류' : 'Category'}
               </Text>
@@ -970,10 +973,11 @@ const styles = StyleSheet.create({
     // 이제 탭바 위로 올라오므로 홈 인디케이터 자리를 직접 비워 준다
     paddingBottom: Spacing.xxxl,
   },
-  groupSheetHandle: {
-    alignSelf: 'center', width: 36, height: 4, borderRadius: 2,
-    backgroundColor: Colors.border, marginBottom: Spacing.md,
+  sheetHandleZone: {
+    alignSelf: 'stretch', alignItems: 'center',
+    paddingTop: Spacing.xs, paddingBottom: Spacing.md,
   },
+  groupSheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Colors.border },
   groupSheetTitle: {
     fontSize: FontSize.lg, fontWeight: FontWeight.bold,
     color: Colors.textPrimary, marginBottom: Spacing.sm,

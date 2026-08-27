@@ -163,8 +163,11 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
         </Animated.View>
 
         <Animated.View style={[styles.sheet, sheet.style]} {...sheet.panHandlers}>
-          {/* 잡고 내릴 곳임을 알리는 손잡이 */}
-          <View style={styles.handle} />
+          {/* 잡고 내릴 곳임을 알리는 손잡이. 4px 막대만 노려 잡기 어려우니
+              주변까지 끌리는 영역으로 감싼다. */}
+          <View style={styles.handleZone} {...sheet.handlePanHandlers}>
+            <View style={styles.handle} />
+          </View>
           <View style={styles.headerRow}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity onPress={close} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -365,14 +368,13 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl,
     maxHeight: '88%',
   },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.border,
-    marginBottom: Spacing.md,
+  handleZone: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
   },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Colors.border },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -505,7 +505,9 @@ export default function AnalyticsScreen() {
             <Pressable style={StyleSheet.absoluteFill} onPress={trendSheet.close} />
           </Animated.View>
           <Animated.View style={[styles.sheet, trendSheet.style]} {...trendSheet.panHandlers}>
-            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHandleZone} {...trendSheet.handlePanHandlers}>
+              <View style={styles.sheetHandle} />
+            </View>
             <Text style={styles.sheetTitle}>월별 지출 추이</Text>
             <Text style={styles.sheetSubtitle}>최근 {trendData.length}개월</Text>
 
@@ -563,7 +565,9 @@ export default function AnalyticsScreen() {
             <Pressable style={StyleSheet.absoluteFill} onPress={catListSheet.close} />
           </Animated.View>
           <Animated.View style={[styles.sheet, catListSheet.style]} {...catListSheet.panHandlers}>
-            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHandleZone} {...catListSheet.handlePanHandlers}>
+              <View style={styles.sheetHandle} />
+            </View>
             <Text style={styles.sheetTitle}>카테고리별 지출</Text>
             <Text style={styles.sheetSubtitle}>총 {cats.length}개 카테고리</Text>
 
@@ -624,7 +628,9 @@ export default function AnalyticsScreen() {
             <Pressable style={StyleSheet.absoluteFill} onPress={catDetailSheet.close} />
           </Animated.View>
           <Animated.View style={[styles.sheet, catDetailSheet.style]} {...catDetailSheet.panHandlers}>
-            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHandleZone} {...catDetailSheet.handlePanHandlers}>
+              <View style={styles.sheetHandle} />
+            </View>
             {selectedCategory && (
               <>
                 <View style={styles.catDetailHeader}>
@@ -836,10 +842,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xxl, paddingTop: Spacing.lg, paddingBottom: Spacing.xxxl,
     maxHeight: '85%',
   },
-  sheetHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: Colors.borderLight, alignSelf: 'center', marginBottom: Spacing.lg,
+  // 손잡이는 4px 막대라 그것만 노려 잡기 어렵다 — 주변까지 끌리는 영역으로 감싼다
+  sheetHandleZone: {
+    alignSelf: 'stretch', alignItems: 'center',
+    paddingTop: Spacing.xs, paddingBottom: Spacing.lg,
   },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderLight },
   sheetTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
   sheetSubtitle: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: 4 },
   sheetStatsRow: {

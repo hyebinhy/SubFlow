@@ -143,7 +143,11 @@ function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
         <Pressable style={StyleSheet.absoluteFill} onPress={detailSheet.close} />
       </Animated.View>
       <Animated.View style={[sheet.container, detailSheet.style]} {...detailSheet.panHandlers}>
-        <View style={sheet.handle} />
+        {/* 손잡이는 4px짜리 막대라 그것만 노려 잡기 어렵다. 위아래로 넉넉한
+            영역을 두고 거기서도 끌리게 한다. */}
+        <View style={sheet.handleZone} {...detailSheet.handlePanHandlers}>
+          <View style={sheet.handle} />
+        </View>
 
         <View style={sheet.headerRow}>
           <View style={[sheet.labelChip, ai ? sheet.labelChipAi : sheet.labelChipPrice]}>
@@ -437,13 +441,18 @@ const sheet = StyleSheet.create({
     padding: Spacing.xxl,
     paddingBottom: Spacing.xxxl + Spacing.md,
   },
+  handleZone: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.lg,
+    marginTop: -Spacing.md,
+  },
   handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
     backgroundColor: Colors.borderLight,
-    alignSelf: 'center',
-    marginBottom: Spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
