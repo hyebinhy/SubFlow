@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Animated,
   KeyboardAvoidingView,
+  PanResponder,
   Platform,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { categoriesAPI, servicesAPI } from '../services/api';
@@ -33,6 +36,9 @@ interface Props {
 const ICONS = ['🏷️', '🏋️', '🍽️', '🚗', '🏠', '🐾', '🎨', '✈️', '💊', '📦'];
 const COLORS = ['#64748B', '#2563EB', '#16A34A', '#D97706', '#DC2626', '#7C3AED'];
 const CURRENCIES = ['KRW', 'USD', 'EUR', 'JPY'];
+/** 시트가 화면 밖으로 나가는 거리. 실제 시트 높이보다 넉넉하게 둔다. */
+const SHEET_TRAVEL = 800;
+
 const CYCLES: { value: string; ko: string; en: string }[] = [
   { value: 'monthly', ko: '월간', en: 'Monthly' },
   { value: 'yearly', ko: '연간', en: 'Yearly' },
@@ -56,6 +62,50 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
 
   const mine = categories.filter((c) => c.is_custom);
 
+  // 아래로 쓸어 닫기 — 카탈로그·구독 상세 시트와 같은 동작.
+  // 시트 안이 ScrollView라, 스크롤이 맨 위일 때만 제스처를 가로채야
+  // 목록 스크롤과 싸우지 않는다.
+  const slideAnim = useRef(new Animated.Value(SHEET_TRAVEL)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const sheetScrollY = useRef(0);
+
+  useEffect(() => {
+    if (mode === null) return;
+    sheetScrollY.current = 0;
+    fadeAnim.setValue(0);
+    slideAnim.setValue(SHEET_TRAVEL);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, damping: 25, stiffness: 300, useNativeDriver: true }),
+    ]).start();
+  }, [mode]);
+
+  /** 내려가는 애니메이션을 끝낸 뒤에 실제로 닫는다. */
+  const animateClose = (after: () => void) => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: SHEET_TRAVEL, duration: 220, useNativeDriver: true }),
+    ]).start(after);
+  };
+
+  const sheetPan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) =>
+        sheetScrollY.current <= 0 && g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderMove: (_e, g) => { if (g.dy > 0) slideAnim.setValue(g.dy); },
+      onPanResponderRelease: (_e, g) => {
+        if (g.dy > 120 || g.vy > 0.8) {
+          closeRef.current();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, damping: 25, stiffness: 300, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
+
+  // PanResponder는 한 번만 만들어지므로 최신 close를 ref로 넘긴다.
+  const closeRef = useRef<() => void>(() => {});
+
   const reset = () => {
     setName('');
     setIcon(ICONS[0]);
@@ -68,9 +118,12 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
   };
 
   const close = () => {
-    reset();
-    onClose();
+    animateClose(() => {
+      reset();
+      onClose();
+    });
   };
+  closeRef.current = close;
 
   const failMessage = (status?: number) => {
     if (status === 400) {
@@ -146,12 +199,21 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
       : isKo ? '서비스 추가' : 'Add service';
 
   return (
-    <Modal visible={mode !== null} transparent animationType="slide" onRequestClose={close}>
+    <Modal visible={mode !== null} transparent animationType="none" onRequestClose={close}>
       <KeyboardAvoidingView
-        style={styles.overlay}
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.sheet}>
+        {/* 배경을 눌러도 닫힌다 */}
+        <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+        </Animated.View>
+
+        <Animated.View
+          style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}
+          {...sheetPan.panHandlers}
+        >
+          {/* 잡고 내릴 곳임을 알리는 손잡이 */}
           <View style={styles.handle} />
           <View style={styles.headerRow}>
             <Text style={styles.title}>{title}</Text>
@@ -160,7 +222,12 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScroll={(e) => { sheetScrollY.current = e.nativeEvent.contentOffset.y; }}
+            scrollEventThrottle={16}
+          >
             {mode === 'service' && (
               <Text style={styles.hint}>
                 {isKo
@@ -330,14 +397,15 @@ export function CatalogAddModal({ mode, onClose, categories, onChanged }: Props)
               </View>
             )}
           </ScrollView>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(18,32,50,0.42)', justifyContent: 'flex-end' },
+  flex: { flex: 1, justifyContent: 'flex-end' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(18,32,50,0.42)' },
   sheet: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: BorderRadius.xxl,

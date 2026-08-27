@@ -172,9 +172,30 @@ class SubscriptionService:
         )
         return (await annotate_monthly_krw([result.scalar_one()]))[0]
 
+    async def _infer_category_id(self, user_id: UUID, service_name: str) -> int | None:
+        """이름이 같은 카탈로그 서비스의 카테고리를 물려받는다.
+
+        분류를 따로 고르지 않았다면 우리가 정해 둔 카테고리를 따르는 게 맞다.
+        직접 입력으로 "Netflix"를 적어도 서비스 탐색에서 고른 것과 같은 칸에
+        들어가야, 카테고리별로 묶어 볼 때 같은 서비스가 둘로 갈라지지 않는다.
+        """
+        result = await self.db.execute(
+            select(Service.category_id)
+            .where(
+                Service.name == service_name,
+                or_(Service.user_id.is_(None), Service.user_id == user_id),
+            )
+            # 내가 등록한 것이 있으면 그쪽을 먼저 본다
+            .order_by(Service.user_id.is_(None))
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def create(self, user_id: UUID, data: SubscriptionCreateRequest) -> Subscription:
         await self._assert_category_visible(user_id, data.category_id)
         subscription = Subscription(user_id=user_id, **data.model_dump())
+        if subscription.category_id is None:
+            subscription.category_id = await self._infer_category_id(user_id, subscription.service_name)
         if subscription.currency != "KRW":
             rates = await get_exchange_rates()
             subscription.initial_exchange_rate = rates.get(subscription.currency)

@@ -400,3 +400,61 @@ async def test_price_history_respects_ownership(
     )
     assert mine_view.status_code == 200
     assert mine_view.json() == {}
+
+
+# ---------------------------------------------------------------------------
+# 구독 분류 기본값
+# ---------------------------------------------------------------------------
+
+
+async def test_manual_subscription_inherits_catalog_category(
+    test_client: httpx.AsyncClient, auth_headers: dict, test_db: AsyncSession
+):
+    """분류를 안 고르면 같은 이름의 카탈로그 서비스 카테고리를 따른다."""
+    cat = Category(name="Entertainment", icon="🎬", is_default=True)
+    test_db.add(cat)
+    await test_db.flush()
+    test_db.add(Service(name="Netflix", category_id=cat.id))
+    await test_db.commit()
+
+    sub = await test_client.post(
+        "/api/v1/subscriptions",
+        json=_sub_payload(service_name="Netflix"),
+        headers=auth_headers,
+    )
+    assert sub.status_code == 201, sub.text
+    assert sub.json()["category_id"] == cat.id
+
+
+async def test_explicit_category_wins_over_catalog(
+    test_client: httpx.AsyncClient, auth_headers: dict, test_db: AsyncSession
+):
+    """직접 고른 분류가 있으면 카탈로그 값으로 덮어쓰지 않는다."""
+    cat = Category(name="Entertainment", icon="🎬", is_default=True)
+    test_db.add(cat)
+    await test_db.flush()
+    test_db.add(Service(name="Netflix", category_id=cat.id))
+    await test_db.commit()
+
+    mine = await test_client.post(
+        "/api/v1/categories", json={"name": "가족 공유"}, headers=auth_headers
+    )
+    sub = await test_client.post(
+        "/api/v1/subscriptions",
+        json=_sub_payload(service_name="Netflix", category_id=mine.json()["id"]),
+        headers=auth_headers,
+    )
+    assert sub.json()["category_id"] == mine.json()["id"]
+
+
+async def test_unknown_service_stays_uncategorised(
+    test_client: httpx.AsyncClient, auth_headers: dict
+):
+    """카탈로그에 없는 이름이면 미분류 그대로 둔다."""
+    sub = await test_client.post(
+        "/api/v1/subscriptions",
+        json=_sub_payload(service_name="동네 헬스장"),
+        headers=auth_headers,
+    )
+    assert sub.status_code == 201
+    assert sub.json()["category_id"] is None

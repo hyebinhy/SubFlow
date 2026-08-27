@@ -444,6 +444,10 @@ const EN: Record<string, string> = {
   "서비스 추가에 실패했습니다.": "Could not add the service.",
   "서비스 삭제에 실패했습니다.": "Could not delete the service.",
   "'{name}' 서비스를 삭제하시겠습니까?": "Delete the service '{name}'?",
+
+  // ── 구독 목록 분류 ──
+  "분류 전체": "All groups",
+  "이 조건에 맞는 구독이 없습니다.": "No subscriptions match these filters.",
 };
 
 /**

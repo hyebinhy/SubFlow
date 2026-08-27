@@ -13,7 +13,7 @@ import { useTranslation } from '../../src/hooks/useTranslation';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
-import { useSubscriptions, useAnalyticsOverview } from '../../src/hooks/useApi';
+import { useSubscriptions, useAnalyticsOverview, useCategories } from '../../src/hooks/useApi';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
 import { Colors, Spacing, FontSize, FontWeight, Shadow, TabBarSpace } from '../../src/constants/theme';
 
@@ -35,6 +35,7 @@ type Sub = {
   nextDate: string;
   status: 'active' | 'paused' | 'cancelled';
   category: string;
+  categoryId: number | null;
   cancelUrl?: string;
   memberCount: number;
   rateKrw?: number; // 이 통화의 현재 환율 (1 통화 = ? KRW). 원화면 없음
@@ -71,12 +72,20 @@ export default function SubscriptionsScreen() {
   const { t, language } = useTranslation();
   const subsQuery = useSubscriptions();
   const overviewQuery = useAnalyticsOverview();
+  // 분류는 서버가 원본이다 — 기본 카탈로그 13종 + 내가 만든 것이 함께 내려온다.
+  const categoriesQuery = useCategories();
+  const categories = (categoriesQuery.data ?? []);
+  // 'all'이면 카테고리별로 묶어 보여주고, 하나를 고르면 그 칸만 남긴다.
+  // 'none'은 어느 분류에도 안 들어간 구독.
+  const [categoryFilter, setCategoryFilter] = useState<number | 'all' | 'none'>('all');
 
   // 모달 상태
   const [selectedSub, setSelectedSub] = useState<Sub | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editDate, setEditDate] = useState('');
   const [editMembers, setEditMembers] = useState(1);
+  const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
+  const [editStatus, setEditStatus] = useState<Sub['status']>('active');
   const slideAnim = useRef(new Animated.Value(600)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -100,13 +109,55 @@ export default function SubscriptionsScreen() {
     nextDate: s.next_billing_date ?? '—',
     status: (s.status ?? 'active') as any,
     category: s.category?.name ?? s.category_name ?? '',
+    categoryId: s.category_id ?? s.category?.id ?? null,
     cancelUrl: s.service?.cancel_url ?? s.cancel_url ?? '',
     currency: s.currency ?? 'KRW',
     rateKrw: s.exchange_rate_krw != null ? Number(s.exchange_rate_krw) : undefined,
     memberCount: Math.max(1, Number(s.member_count ?? 1)),
   }));
 
-  const filtered = filter === 'all' ? allSubs : allSubs.filter(s => s.status === filter);
+  const byStatus = filter === 'all' ? allSubs : allSubs.filter(s => s.status === filter);
+  const filtered = categoryFilter === 'all'
+    ? byStatus
+    : categoryFilter === 'none'
+      ? byStatus.filter(s => s.categoryId === null)
+      : byStatus.filter(s => s.categoryId === categoryFilter);
+
+  // 분류를 따로 안 고르면 카테고리별로 묶어 보여준다. 순서는 카테고리 목록을
+  // 따라가고(기본 13종 먼저, 내가 만든 것이 뒤), 미분류는 맨 끝에 둔다.
+  const grouped = useMemo(() => {
+    if (categoryFilter !== 'all') return null;
+    const buckets = new Map<number | 'none', { label: string; icon: string | null; color: string | null; items: Sub[] }>();
+    for (const c of categories) {
+      buckets.set(c.id, { label: c.name, icon: c.icon, color: c.color, items: [] });
+    }
+    buckets.set('none', {
+      label: language === 'ko' ? '미분류' : 'Uncategorized',
+      icon: null, color: null, items: [],
+    });
+    for (const sub of filtered) {
+      const key: number | 'none' = sub.categoryId !== null && buckets.has(sub.categoryId)
+        ? sub.categoryId
+        : 'none';
+      buckets.get(key)!.items.push(sub);
+    }
+    return [...buckets.entries()].filter(([, b]) => b.items.length > 0);
+  }, [filtered, categories, categoryFilter, language]);
+
+  // 필터 줄에는 실제로 쓰이는 분류만 남긴다. 13종을 전부 늘어놓으면 옆으로
+  // 한참 밀리는데, 눌러 봐야 비어 있는 칸이라 고를 이유가 없다.
+  const usedCategories = useMemo(() => {
+    const ids = new Set(allSubs.map(s => s.categoryId).filter(id => id !== null));
+    return categories.filter(c => ids.has(c.id));
+  }, [allSubs, categories]);
+  const hasUncategorised = allSubs.some(s => s.categoryId === null);
+
+  /** 기본 13종은 사전에 번역이 있고, 사용자가 만든 이름은 없다. */
+  const categoryLabel = (name: string) => {
+    const key = `category.${name}`;
+    const label = t(key as any);
+    return label === key ? name : label;
+  };
   // 월 총액: 통화가 섞여 있으면 단순 합산이 불가하므로, 백엔드가 KRW로 환산해 준 값을 사용
   const naiveTotal = allSubs.filter(s => s.status === 'active').reduce((sum, s) => sum + s.amount, 0);
   const monthlyTotalKRW = Number((overviewQuery.data as any)?.total_monthly_cost ?? naiveTotal);
@@ -115,6 +166,11 @@ export default function SubscriptionsScreen() {
     setSelectedSub(sub);
     setEditDate(sub.nextDate);
     setEditMembers(sub.memberCount);
+    setEditCategoryId(sub.categoryId);
+    setEditStatus(sub.status);
+    // 탭은 한 번 뜨면 계속 살아 있다. 서비스 탐색에서 방금 만든 분류가
+    // 여기 목록에 없으면 고를 수가 없으므로, 시트를 열 때 다시 읽는다.
+    categoriesQuery.refetch();
     setSelectedPlan(null);
     setPlanPickerVisible(false);
     setDatePickerVisible(false);
@@ -262,6 +318,36 @@ export default function SubscriptionsScreen() {
     ]);
   };
 
+  /** 목록 한 줄. 묶어서 보여줄 때와 늘어놓을 때가 같은 모양이라 한곳에 둔다. */
+  const renderRow = (sub: Sub, i: number) => (
+    <TouchableOpacity key={sub.id} style={[styles.subItem, i > 0 && styles.itemBorder]} onPress={() => openModal(sub)} activeOpacity={0.6}>
+      <ServiceLogo name={sub.name} size={48} />
+      <View style={styles.subInfo}>
+        <Text style={styles.subName}>{sub.name}</Text>
+        <Text style={styles.subDetail}>
+          {sub.plan}{sub.category ? ` · ${categoryLabel(sub.category)}` : ''}
+        </Text>
+        {sub.memberCount > 1 && (
+          <View style={styles.splitBadge}>
+            <Ionicons name="people" size={11} color={Colors.primary} />
+            <Text style={styles.splitBadgeText}>
+              {sub.memberCount}{language === 'ko' ? '명 · 내 몫 ' : ' · mine '}
+              {formatPrice(sub.amount / sub.memberCount, sub.currency)}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.subRight}>
+        <Text style={styles.subAmount}>{formatPrice(sub.amount, sub.currency)}</Text>
+        {/* 외화 구독은 현재 환율 기준 원화를 아래에 병기 */}
+        {krwHint(sub.amount, sub.currency, sub.rateKrw) !== '' && (
+          <Text style={styles.subKrw}>{krwHint(sub.amount, sub.currency, sub.rateKrw)}</Text>
+        )}
+        <Text style={styles.subDate}>{sub.nextDate}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <LinearGradient colors={[Colors.primaryBg, Colors.background]} style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
@@ -308,6 +394,45 @@ export default function SubscriptionsScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+
+            {/* 분류 줄. 상태와 따로 걸리므로 "활성 + 엔터테인먼트"처럼 겹쳐 볼 수 있다. */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+              <TouchableOpacity
+                style={[styles.categoryFilterPill, categoryFilter === 'all' && styles.categoryFilterPillActive]}
+                onPress={() => setCategoryFilter('all')}
+              >
+                <Ionicons
+                  name="albums-outline"
+                  size={13}
+                  color={categoryFilter === 'all' ? Colors.textPrimary : Colors.textWhite}
+                />
+                <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>
+                  {language === 'ko' ? '분류 전체' : 'All groups'}
+                </Text>
+              </TouchableOpacity>
+              {usedCategories.map(c => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[styles.categoryFilterPill, categoryFilter === c.id && styles.categoryFilterPillActive]}
+                  onPress={() => setCategoryFilter(c.id)}
+                >
+                  {c.icon ? <Text style={styles.categoryFilterIcon}>{c.icon}</Text> : null}
+                  <Text style={[styles.filterText, categoryFilter === c.id && styles.filterTextActive]}>
+                    {categoryLabel(c.name)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              {hasUncategorised && (
+                <TouchableOpacity
+                  style={[styles.categoryFilterPill, categoryFilter === 'none' && styles.categoryFilterPillActive]}
+                  onPress={() => setCategoryFilter('none')}
+                >
+                  <Text style={[styles.filterText, categoryFilter === 'none' && styles.filterTextActive]}>
+                    {language === 'ko' ? '미분류' : 'Uncategorized'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
           </View>
 
           <View style={styles.cardContainer}>
@@ -317,32 +442,28 @@ export default function SubscriptionsScreen() {
                 <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
               </View>
 
-              {filtered.map((sub, i) => (
-                <TouchableOpacity key={sub.id} style={[styles.subItem, i > 0 && styles.itemBorder]} onPress={() => openModal(sub)} activeOpacity={0.6}>
-                  <ServiceLogo name={sub.name} size={48} />
-                  <View style={styles.subInfo}>
-                    <Text style={styles.subName}>{sub.name}</Text>
-                    <Text style={styles.subDetail}>{sub.plan} · {sub.category}</Text>
-                    {sub.memberCount > 1 && (
-                      <View style={styles.splitBadge}>
-                        <Ionicons name="people" size={11} color={Colors.primary} />
-                        <Text style={styles.splitBadgeText}>
-                          {sub.memberCount}{language === 'ko' ? '명 · 내 몫 ' : ' · mine '}
-                          {formatPrice(sub.amount / sub.memberCount, sub.currency)}
+              {/* 분류 전체일 때는 카테고리별로 묶고, 하나를 고르면 그냥 늘어놓는다 */}
+              {grouped
+                ? grouped.map(([key, bucket]) => (
+                    <View key={String(key)}>
+                      <View style={styles.groupHeader}>
+                        <View
+                          style={[
+                            styles.groupDot,
+                            { backgroundColor: bucket.color ?? Colors.border },
+                          ]}
+                        >
+                          {bucket.icon ? <Text style={styles.groupDotIcon}>{bucket.icon}</Text> : null}
+                        </View>
+                        <Text style={styles.groupTitle}>
+                          {key === 'none' ? bucket.label : categoryLabel(bucket.label)}
                         </Text>
+                        <Text style={styles.groupCount}>{bucket.items.length}</Text>
                       </View>
-                    )}
-                  </View>
-                  <View style={styles.subRight}>
-                    <Text style={styles.subAmount}>{formatPrice(sub.amount, sub.currency)}</Text>
-                    {/* 외화 구독은 현재 환율 기준 원화를 아래에 병기 */}
-                    {krwHint(sub.amount, sub.currency, sub.rateKrw) !== '' && (
-                      <Text style={styles.subKrw}>{krwHint(sub.amount, sub.currency, sub.rateKrw)}</Text>
-                    )}
-                    <Text style={styles.subDate}>{sub.nextDate}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                      {bucket.items.map((sub, i) => renderRow(sub, i))}
+                    </View>
+                  ))
+                : filtered.map((sub, i) => renderRow(sub, i))}
 
               {filtered.length === 0 && (
                 <Text style={styles.emptyText}>{t('common.noData')}</Text>
@@ -541,6 +662,67 @@ export default function SubscriptionsScreen() {
               )}
             </View>
 
+            {/* 분류 — 안 고르면 서비스 탐색의 카테고리를 그대로 따른다 */}
+            <View style={styles.modalEditRow}>
+              <Text style={styles.modalEditLabel}>
+                {language === 'ko' ? '분류' : 'Category'}
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.editPillScroll}>
+                <TouchableOpacity
+                  style={[styles.editPill, editCategoryId === null && styles.editPillActive]}
+                  onPress={() => setEditCategoryId(null)}
+                >
+                  <Text style={[styles.editPillText, editCategoryId === null && styles.editPillTextActive]}>
+                    {language === 'ko' ? '미분류' : 'None'}
+                  </Text>
+                </TouchableOpacity>
+                {categories.map(c => (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={[styles.editPill, editCategoryId === c.id && styles.editPillActive]}
+                    onPress={() => setEditCategoryId(c.id)}
+                  >
+                    {c.icon ? <Text style={styles.editPillIcon}>{c.icon}</Text> : null}
+                    <Text style={[styles.editPillText, editCategoryId === c.id && styles.editPillTextActive]}>
+                      {categoryLabel(c.name)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.manageCategoryLink}
+                onPress={() => { closeModal(); router.push('/(tabs)/catalog'); }}
+              >
+                <Ionicons name="add-circle-outline" size={14} color={Colors.primary} />
+                <Text style={styles.manageCategoryText}>
+                  {language === 'ko' ? '분류 만들기 (서비스 탐색)' : 'Create a category (Explore)'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 상태 */}
+            <View style={styles.modalEditRow}>
+              <Text style={styles.modalEditLabel}>
+                {language === 'ko' ? '상태' : 'Status'}
+              </Text>
+              <View style={styles.editPillRow}>
+                {(['active', 'paused', 'cancelled'] as Sub['status'][]).map(st => (
+                  <TouchableOpacity
+                    key={st}
+                    style={[
+                      styles.editPill,
+                      editStatus === st && { backgroundColor: statusKeys[st].color, borderColor: statusKeys[st].color },
+                    ]}
+                    onPress={() => setEditStatus(st)}
+                  >
+                    <Text style={[styles.editPillText, editStatus === st && styles.editPillTextActive]}>
+                      {t(statusKeys[st].labelKey)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             {/* 액션 버튼들 */}
             <View style={styles.modalActions}>
               {selectedSub.status === 'active' && (
@@ -595,6 +777,12 @@ export default function SubscriptionsScreen() {
                   }
                   if (editMembers !== selectedSub.memberCount) {
                     updateData.member_count = editMembers;
+                  }
+                  if (editCategoryId !== selectedSub.categoryId) {
+                    updateData.category_id = editCategoryId;
+                  }
+                  if (editStatus !== selectedSub.status) {
+                    updateData.status = editStatus;
                   }
                   if (Object.keys(updateData).length > 0) {
                     await subscriptionAPI.update(selectedSub.id, updateData);
@@ -662,6 +850,39 @@ const styles = StyleSheet.create({
   stepperValue: { fontSize: FontSize.xl, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
   stepperUnit: { fontSize: FontSize.sm, color: Colors.textTertiary },
   memberSplitHint: { fontSize: FontSize.xs, color: Colors.primary, marginTop: 8 },
+  // ── 분류 필터·그룹 헤더 ──
+  categoryFilterPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+  },
+  categoryFilterPillActive: { backgroundColor: '#FFF', borderColor: '#FFF' },
+  categoryFilterIcon: { fontSize: 12 },
+  groupHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    marginTop: Spacing.lg, marginBottom: Spacing.xs,
+  },
+  groupDot: { width: 22, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  groupDotIcon: { fontSize: 11 },
+  groupTitle: { flex: 1, fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  groupCount: { fontSize: FontSize.xs, color: Colors.textTertiary, fontWeight: FontWeight.medium },
+  // ── 상세 시트의 분류·상태 고르기 ──
+  editPillScroll: { flexGrow: 0 },
+  editPillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  editPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+    marginRight: Spacing.sm,
+  },
+  editPillActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  editPillIcon: { fontSize: 12 },
+  editPillText: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  editPillTextActive: { color: Colors.textWhite, fontWeight: FontWeight.semibold },
+  manageCategoryLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm },
+  manageCategoryText: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: FontWeight.medium },
   subAmount: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   subKrw: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
   subDate: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 4 },
