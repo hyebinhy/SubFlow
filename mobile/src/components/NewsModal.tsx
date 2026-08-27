@@ -134,79 +134,80 @@ function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
     };
   }, [item]);
 
+  // 부모(카드뉴스 목록 시트) 안에 Modal을 또 띄우면, 이 시트를 끌 때 목록 시트의
+  // PanResponder까지 같이 걸려 뒤에 있는 목록이 함께 내려간다. 어차피 부모가
+  // 이미 Modal 안이므로 여기서는 화면을 덮는 보통 View로 그린다.
   return (
-    <Modal visible transparent animationType="none" onRequestClose={detailSheet.close}>
-      <View style={sheet.overlay}>
-        <Animated.View style={[sheet.backdrop, { opacity: detailSheet.backdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={detailSheet.close} />
-        </Animated.View>
-        <Animated.View style={[sheet.container, detailSheet.style]} {...detailSheet.panHandlers}>
-          <View style={sheet.handle} />
+    <View style={[StyleSheet.absoluteFill, sheet.overlay]}>
+      <Animated.View style={[sheet.backdrop, { opacity: detailSheet.backdrop }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={detailSheet.close} />
+      </Animated.View>
+      <Animated.View style={[sheet.container, detailSheet.style]} {...detailSheet.panHandlers}>
+        <View style={sheet.handle} />
 
-          <View style={sheet.headerRow}>
-            <View style={[sheet.labelChip, ai ? sheet.labelChipAi : sheet.labelChipPrice]}>
-              <Ionicons
-                name={ai ? 'sparkles' : 'trending-up'}
-                size={12}
-                color={ai ? '#FFFFFF' : Colors.primaryText}
-              />
-              <Text style={[sheet.labelText, { color: ai ? '#FFFFFF' : Colors.primaryText }]}>
-                {ai ? t('news.aiLabel') : t('news.priceLabel')}
-              </Text>
-            </View>
-            {item.matched && (
-              <View style={styles.matchedChip}>
-                <Text style={styles.matchedText}>{t('news.mine')}</Text>
-              </View>
-            )}
-          </View>
-
-          <Text style={sheet.title}>{item.title}</Text>
-          <Text style={sheet.meta}>
-            {item.source}
-            {formatDate(item.pub_date, language) ? ` · ${formatDate(item.pub_date, language)}` : ''}
-          </Text>
-
-          <View style={sheet.summaryBox}>
-            {mode === 'loading' && (
-              <View style={sheet.loadingRow}>
-                <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={sheet.loadingText}>{t('news.summarizing')}</Text>
-              </View>
-            )}
-            {mode === 'ai' && (
-              <>
-                <View style={sheet.aiBadge}>
-                  <Text style={sheet.aiBadgeText}>{t('news.aiSummary')}</Text>
-                </View>
-                <Text style={sheet.summaryText}>{summary}</Text>
-              </>
-            )}
-            {mode === 'unavailable' && (
-              <Text style={sheet.summaryText}>
-                {ai ? t('news.unavailableAi') : t('news.unavailablePrice')}
-              </Text>
-            )}
-          </View>
-
-          <View style={sheet.footer}>
-            <Text style={sheet.footerSource}>
-              {t('news.source')} · {item.source}
+        <View style={sheet.headerRow}>
+          <View style={[sheet.labelChip, ai ? sheet.labelChipAi : sheet.labelChipPrice]}>
+            <Ionicons
+              name={ai ? 'sparkles' : 'trending-up'}
+              size={12}
+              color={ai ? '#FFFFFF' : Colors.primaryText}
+            />
+            <Text style={[sheet.labelText, { color: ai ? '#FFFFFF' : Colors.primaryText }]}>
+              {ai ? t('news.aiLabel') : t('news.priceLabel')}
             </Text>
-            <TouchableOpacity
-              style={sheet.readBtn}
-              activeOpacity={0.85}
-              onPress={() => {
-                Linking.openURL(item.link).catch(() => {});
-              }}
-            >
-              <Text style={sheet.readBtnText}>{t('news.readOriginal')}</Text>
-              <Ionicons name="open-outline" size={15} color="#FFFFFF" />
-            </TouchableOpacity>
           </View>
-        </Animated.View>
-      </View>
-    </Modal>
+          {item.matched && (
+            <View style={styles.matchedChip}>
+              <Text style={styles.matchedText}>{t('news.mine')}</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={sheet.title}>{item.title}</Text>
+        <Text style={sheet.meta}>
+          {item.source}
+          {formatDate(item.pub_date, language) ? ` · ${formatDate(item.pub_date, language)}` : ''}
+        </Text>
+
+        <View style={sheet.summaryBox}>
+          {mode === 'loading' && (
+            <View style={sheet.loadingRow}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={sheet.loadingText}>{t('news.summarizing')}</Text>
+            </View>
+          )}
+          {mode === 'ai' && (
+            <>
+              <View style={sheet.aiBadge}>
+                <Text style={sheet.aiBadgeText}>{t('news.aiSummary')}</Text>
+              </View>
+              <Text style={sheet.summaryText}>{summary}</Text>
+            </>
+          )}
+          {mode === 'unavailable' && (
+            <Text style={sheet.summaryText}>
+              {ai ? t('news.unavailableAi') : t('news.unavailablePrice')}
+            </Text>
+          )}
+        </View>
+
+        <View style={sheet.footer}>
+          <Text style={sheet.footerSource}>
+            {t('news.source')} · {item.source}
+          </Text>
+          <TouchableOpacity
+            style={sheet.readBtn}
+            activeOpacity={0.85}
+            onPress={() => {
+              Linking.openURL(item.link).catch(() => {});
+            }}
+          >
+            <Text style={sheet.readBtnText}>{t('news.readOriginal')}</Text>
+            <Ionicons name="open-outline" size={15} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -226,9 +227,16 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={listSheet.close}>
-      <Animated.View style={[styles.modalShell, listSheet.style]} {...listSheet.panHandlers}>
-      <BlurView intensity={38} tint="light" style={styles.modalRoot}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      // 안드로이드 뒤로가기: 상세가 열려 있으면 상세만 닫는다
+      onRequestClose={() => (selected ? setSelected(null) : listSheet.close())}
+    >
+      <View style={styles.modalShell}>
+        <Animated.View style={[styles.modalShell, listSheet.style]} {...listSheet.panHandlers}>
+          <BlurView intensity={38} tint="light" style={styles.modalRoot}>
         {/* 가독성 확보용 옅은 틴트 (배경 홈이 비쳐 보이도록 반투명) */}
         <View style={styles.modalTint} />
         <SafeAreaView edges={['top']} style={styles.modalSafe}>
@@ -274,10 +282,14 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
             </ScrollView>
           )}
 
-          {selected && <NewsSheet item={selected} onClose={() => setSelected(null)} />}
-        </SafeAreaView>
-      </BlurView>
-      </Animated.View>
+          </SafeAreaView>
+          </BlurView>
+        </Animated.View>
+
+        {/* 상세 시트는 목록 시트 바깥에 둔다. 안에 두면 목록의 translateY와
+            PanResponder를 그대로 물려받아, 상세를 내릴 때 목록까지 딸려 내려간다. */}
+        {selected && <NewsSheet item={selected} onClose={() => setSelected(null)} />}
+      </View>
     </Modal>
   );
 }
