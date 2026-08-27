@@ -46,7 +46,7 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack, showKrw,
         <button
           onClick={onBack}
           className="mb-4 text-sm text-slate-400 hover:text-slate-500"
-        >{tr("&larr; 서비스 목록으로")}</button>
+        >{tr("← 서비스 목록으로")}</button>
         <div className="glass border-red-200/60 bg-red-50/50 p-4 text-red-700">
           {error}
         </div>
@@ -61,7 +61,7 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack, showKrw,
       <button
         onClick={onBack}
         className="mb-4 text-sm text-slate-400 hover:text-slate-500"
-      >{tr("&larr; 서비스 목록으로")}</button>
+      >{tr("← 서비스 목록으로")}</button>
 
       <div className="glass p-6">
         <div className="flex items-center gap-4">
@@ -88,7 +88,7 @@ export default function ServiceDetail({ serviceId, onSubscribe, onBack, showKrw,
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-blue-500 hover:underline"
-              >{tr("공식 사이트 &rarr;")}</a>
+              >{tr("공식 사이트 →")}</a>
             )}
           </div>
         </div>

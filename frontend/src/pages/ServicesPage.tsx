@@ -13,6 +13,7 @@ import ServiceCard from "../components/service/ServiceCard";
 import ServiceDetail from "../components/service/ServiceDetail";
 import SubscriptionModal from "../components/subscription/SubscriptionModal";
 import { tr } from "../i18n/translations";
+import { nextBillingDate, todayIso } from "../utils/billingDate";
 
 export default function ServicesPage() {
   const navigate = useNavigate();
@@ -26,12 +27,8 @@ export default function ServicesPage() {
     serviceId: number;
     plan: ServicePlan;
   } | null>(null);
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [nextDate, setNextDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [startDate, setStartDate] = useState(todayIso());
+  const [nextDate, setNextDate] = useState(todayIso());
   const [saving, setSaving] = useState(false);
 
   // 원화 환산 토글. 환율은 처음 켤 때 한 번만 받는다(서버도 1시간 캐시).
@@ -125,9 +122,13 @@ export default function ServicesPage() {
         <ServiceDetail
           serviceId={selectedServiceId}
           onBack={() => setSelectedServiceId(null)}
-          onSubscribe={(serviceId, plan) =>
-            setSubscribing({ serviceId, plan })
-          }
+          onSubscribe={(serviceId, plan) => {
+            const start = todayIso();
+            setStartDate(start);
+            // 시작일과 같은 날을 두면 저장하자마자 결제 임박 알림이 뜬다
+            setNextDate(nextBillingDate(start, plan.billing_cycle));
+            setSubscribing({ serviceId, plan });
+          }}
           showKrw={showKrw}
           rates={rates}
         />
@@ -158,7 +159,14 @@ export default function ServicesPage() {
                 <input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    // 시작일을 옮기면 다음 결제일도 같이 옮긴다. 따로 정하고 싶으면
+                    // 아래 칸에서 고치면 된다(이 순서가 손이 덜 간다).
+                    if (subscribing) {
+                      setNextDate(nextBillingDate(e.target.value, subscribing.plan.billing_cycle));
+                    }
+                  }}
                   className="glass-input mt-1 block w-full rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>

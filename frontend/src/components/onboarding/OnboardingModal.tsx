@@ -65,7 +65,8 @@ export default function OnboardingModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    // 하단 독과 같은 층(z-50)에 두면 독이 위로 올라온다
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md rounded-2xl bg-white/80 backdrop-blur-xl border border-white/60 p-7 shadow-xl dark:bg-slate-800/80 dark:border-white/10">
         <div className="flex justify-end">
