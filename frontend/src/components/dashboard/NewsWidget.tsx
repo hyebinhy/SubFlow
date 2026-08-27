@@ -3,6 +3,7 @@ import { ExternalLink, X } from "lucide-react";
 import { getNewsSummary } from "../../api/news";
 import type { NewsItem } from "../../api/news";
 import { tr } from "../../i18n/translations";
+import ModalPortal from "../common/ModalPortal";
 
 interface NewsWidgetProps {
   news: NewsItem[];
@@ -66,8 +67,11 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
   }, [item]);
 
   return (
+    // 바깥 프레임의 backdrop-blur에 갇히지 않게 body로 빼서 그린다.
+    // 하단 독(z-50)보다 위에 오도록 z-[60].
+    <ModalPortal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -172,6 +176,7 @@ function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

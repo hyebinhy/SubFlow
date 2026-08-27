@@ -182,6 +182,51 @@
     box-shadow: 0 6px 24px color-mix(in oklch, var(--primary) 34%, transparent);
     transform: translateY(-1px);
   }
+
+  /* 스크롤 영역에 이 클래스가 붙어 있었지만 정의가 없어서, 브라우저 기본
+     스크롤바의 흰 트랙이 유리판 위에 그대로 얹혀 있었다(모달 오른쪽 흰 띠).
+     트랙을 비우고 막대만 반투명으로 남긴다. */
+  /* 모달이 열리면 독을 접는다. 모달 판이 반투명이라 어두운 독이 비쳐 보인다. */
+  .modal-open .floating-dock {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--shadow-tint) 28%, transparent) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track,
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--shadow-tint) 26%, transparent);
+    border-radius: 999px;
+    /* 막대를 트랙 안쪽으로 들여 모서리 곡선에 닿지 않게 한다 */
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklch, var(--shadow-tint) 42%, transparent);
+    background-clip: content-box;
+  }
+  .dark .custom-scrollbar {
+    scrollbar-color: rgba(226, 232, 240, 0.28) transparent;
+  }
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(226, 232, 240, 0.24);
+    background-clip: content-box;
+  }
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(226, 232, 240, 0.4);
+    background-clip: content-box;
+  }
 }
 
 @layer utilities {

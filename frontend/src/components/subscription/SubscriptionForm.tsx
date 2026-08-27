@@ -233,7 +233,7 @@ export default function SubscriptionForm({
             {dropdownOpen && (
               <div className="absolute z-50 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-xl">
                 {/* Category tabs */}
-                <div className="flex gap-1 overflow-x-auto border-b border-slate-100 px-2 py-2">
+                <div className="custom-scrollbar flex gap-1 overflow-x-auto border-b border-slate-100 px-2 py-2">
                   {categoriesWithServices.map((cat) => (
                     <button
                       key={cat.id}
@@ -251,7 +251,7 @@ export default function SubscriptionForm({
                 </div>
 
                 {/* Service list */}
-                <div className="max-h-56 overflow-y-auto py-1">
+                <div className="custom-scrollbar max-h-56 overflow-y-auto py-1">
                   {visibleServices.map((svc) => (
                     <button
                       key={svc.id}
