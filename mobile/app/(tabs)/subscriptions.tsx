@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Animated, Pressable, Alert, Linking, Share, PanResponder, Dimensions,
+  Animated, Pressable, Alert, Linking, Share, PanResponder, Dimensions, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import { useTranslation } from '../../src/hooks/useTranslation';
 import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
+import { CatalogAddModal } from '../../src/components/CatalogAddModal';
 import { useSubscriptions, useAnalyticsOverview, useCategories } from '../../src/hooks/useApi';
 import { useBottomSheet } from '../../src/hooks/useBottomSheet';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
@@ -80,6 +81,10 @@ export default function SubscriptionsScreen() {
   // 'none'은 어느 분류에도 안 들어간 구독.
   const [categoryFilter, setCategoryFilter] = useState<number | 'all' | 'none'>('all');
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  // 분류 시트를 닫는 애니메이션이 끝난 뒤에 추가 시트를 연다. 두 Modal이
+  // 겹쳐 뜨면 iOS에서 뒤엣것이 안 뜨는 일이 있다.
+  const pendingAddCategory = useRef(false);
 
   // 모달 상태
   const [selectedSub, setSelectedSub] = useState<Sub | null>(null);
@@ -147,13 +152,20 @@ export default function SubscriptionsScreen() {
   }, [filtered, categories, categoryFilter, language]);
 
   // 분류 고르기 시트 — 앱 안의 다른 시트와 같은 방식으로 열고 닫는다.
-  const groupSheet = useBottomSheet(groupPickerOpen, () => setGroupPickerOpen(false));
+  const groupSheet = useBottomSheet(groupPickerOpen, () => {
+    setGroupPickerOpen(false);
+    if (pendingAddCategory.current) {
+      pendingAddCategory.current = false;
+      setAddCategoryOpen(true);
+    }
+  });
 
-  // 필터 줄에는 실제로 쓰이는 분류만 남긴다. 13종을 전부 늘어놓으면 옆으로
-  // 한참 밀리는데, 눌러 봐야 비어 있는 칸이라 고를 이유가 없다.
+  // 고를 만한 분류만 남긴다. 기본 13종을 전부 늘어놓으면 대부분 0건이라
+  // 읽기 힘들다. 다만 내가 만든 분류는 비어 있어도 보여야 한다 — 방금
+  // 만들었는데 목록에 없으면 만들어지지 않은 걸로 보인다.
   const usedCategories = useMemo(() => {
     const ids = new Set(allSubs.map(s => s.categoryId).filter(id => id !== null));
-    return categories.filter(c => ids.has(c.id));
+    return categories.filter(c => ids.has(c.id) || c.is_custom);
   }, [allSubs, categories]);
   const hasUncategorised = allSubs.some(s => s.categoryId === null);
 
@@ -485,9 +497,15 @@ export default function SubscriptionsScreen() {
       </SafeAreaView>
 
       {/* ── 분류 고르기 시트 ── */}
-      {groupPickerOpen && (
-        // 하단 탭바가 떠 있는 자리에 겹치므로 한 층 위로 올린다(카탈로그 시트와 같은 방식)
-        <View style={[StyleSheet.absoluteFill, { zIndex: 9999, elevation: 9999 }]}>
+      {/* 떠 있는 탭바는 이 화면 바깥(Tabs 내비게이터)에서 그려져서 zIndex로는
+          못 이긴다. Modal로 띄워야 탭바 위로 올라온다. */}
+      <Modal
+        visible={groupPickerOpen}
+        transparent
+        animationType="none"
+        onRequestClose={groupSheet.close}
+      >
+        <View style={StyleSheet.absoluteFill}>
           <Animated.View style={[styles.modalOverlay, { opacity: groupSheet.backdrop }]}>
             <Pressable style={StyleSheet.absoluteFill} onPress={groupSheet.close} />
           </Animated.View>
@@ -523,10 +541,38 @@ export default function SubscriptionsScreen() {
                   );
                 })}
               </ScrollView>
+
+              {/* 카탈로그로 건너가지 않고 여기서 바로 분류를 만든다 */}
+              <TouchableOpacity
+                style={styles.groupAddRow}
+                onPress={() => {
+                  pendingAddCategory.current = true;
+                  groupSheet.close();
+                }}
+                activeOpacity={0.6}
+              >
+                <View style={styles.groupAddIcon}>
+                  <Ionicons name="add" size={16} color={Colors.primary} />
+                </View>
+                <Text style={styles.groupAddText}>
+                  {language === 'ko' ? '분류 만들기' : 'Create a category'}
+                </Text>
+              </TouchableOpacity>
             </Animated.View>
           </View>
         </View>
-      )}
+      </Modal>
+
+      {/* 분류 추가·삭제는 서비스 탐색과 같은 시트를 쓴다 */}
+      <CatalogAddModal
+        mode={addCategoryOpen ? 'category' : null}
+        onClose={() => setAddCategoryOpen(false)}
+        categories={categories}
+        onChanged={() => {
+          categoriesQuery.refetch();
+          subsQuery.refetch();
+        }}
+      />
 
       {/* ── 구독 상세 모달 ── */}
       {modalVisible && selectedSub && (
@@ -920,7 +966,9 @@ const styles = StyleSheet.create({
   groupSheet: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: BorderRadius.xxl, borderTopRightRadius: BorderRadius.xxl,
-    paddingHorizontal: Spacing.xl, paddingTop: Spacing.md, paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl, paddingTop: Spacing.md,
+    // 이제 탭바 위로 올라오므로 홈 인디케이터 자리를 직접 비워 준다
+    paddingBottom: Spacing.xxxl,
   },
   groupSheetHandle: {
     alignSelf: 'center', width: 36, height: 4, borderRadius: 2,
@@ -943,6 +991,18 @@ const styles = StyleSheet.create({
   groupOptionIcon: { fontSize: 13 },
   groupOptionLabel: { flex: 1, fontSize: FontSize.md, color: Colors.textPrimary },
   groupOptionCount: { fontSize: FontSize.sm, color: Colors.textTertiary },
+  groupAddRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
+    marginTop: Spacing.sm, paddingTop: Spacing.md, paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    borderTopWidth: 1, borderTopColor: Colors.borderLight,
+  },
+  groupAddIcon: {
+    width: 28, height: 28, borderRadius: BorderRadius.sm,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.primarySoftBg,
+  },
+  groupAddText: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.semibold },
   groupHeader: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     marginTop: Spacing.lg, marginBottom: Spacing.xs,

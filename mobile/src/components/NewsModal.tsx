@@ -214,8 +214,6 @@ function NewsSheet({ item, onClose }: { item: NewsItem; onClose: () => void }) {
 // ── 카드뉴스 전체 모달 (제목 옆 아이콘으로 오픈) ──
 export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { t } = useTranslation();
-  // 위를 44px 남기고 올라오는 시트라 상세 시트와 같은 규칙으로 닫는다.
-  const listSheet = useBottomSheet(visible, onClose);
   const { data, loading, error, refetch } = useNews();
   const [selected, setSelected] = React.useState<NewsItem | null>(null);
 
@@ -227,15 +225,17 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    // 이 시트는 오른쪽 위 X로만 닫는다. 쓸어 닫기를 붙였더니 안에서 연 AI 요약
+    // 시트를 내릴 때 이쪽 제스처까지 걸려 목록이 함께 사라졌다.
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       // 안드로이드 뒤로가기: 상세가 열려 있으면 상세만 닫는다
-      onRequestClose={() => (selected ? setSelected(null) : listSheet.close())}
+      onRequestClose={() => (selected ? setSelected(null) : onClose())}
     >
       <View style={styles.modalShell}>
-        <Animated.View style={[styles.modalShell, listSheet.style]} {...listSheet.panHandlers}>
+        <View style={styles.modalShell}>
           <BlurView intensity={38} tint="light" style={styles.modalRoot}>
         {/* 가독성 확보용 옅은 틴트 (배경 홈이 비쳐 보이도록 반투명) */}
         <View style={styles.modalTint} />
@@ -249,7 +249,7 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
               />
               <Text style={styles.modalTitle}>{t('news.section')}</Text>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={listSheet.close} hitSlop={8}>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={8}>
               <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
@@ -269,12 +269,9 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
               <Text style={styles.stateText}>{t('news.empty')}</Text>
             </View>
           ) : (
-            // 목록이 맨 위일 때만 쓸어 닫기가 걸리도록 스크롤 위치를 알려 준다
             <ScrollView
               contentContainerStyle={styles.list}
               showsVerticalScrollIndicator={false}
-              onScroll={listSheet.onScroll}
-              scrollEventThrottle={listSheet.scrollEventThrottle}
             >
               {items.map((item, idx) => (
                 <NewsCard key={`${item.title}-${idx}`} item={item} onPress={() => setSelected(item)} />
@@ -284,10 +281,9 @@ export function NewsModal({ visible, onClose }: { visible: boolean; onClose: () 
 
           </SafeAreaView>
           </BlurView>
-        </Animated.View>
+        </View>
 
-        {/* 상세 시트는 목록 시트 바깥에 둔다. 안에 두면 목록의 translateY와
-            PanResponder를 그대로 물려받아, 상세를 내릴 때 목록까지 딸려 내려간다. */}
+        {/* 상세 시트는 목록 껍데기 바깥에 둔다 — 안에 두면 목록의 변형을 물려받는다 */}
         {selected && <NewsSheet item={selected} onClose={() => setSelected(null)} />}
       </View>
     </Modal>
