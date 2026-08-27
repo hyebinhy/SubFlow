@@ -17,7 +17,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.subflow.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
@@ -30,9 +34,6 @@
       "permissions": [
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "runtimeVersion": {
-        "policy": "fingerprint"
-      },
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
       ]
@@ -67,6 +68,9 @@
     "owner": "yoongyeongeun",
     "updates": {
       "url": "https://u.expo.dev/ee9a4e67-7a1e-4ad7-9cd6-6c33613b6426"
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
     }
   }
 }
