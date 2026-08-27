@@ -14,8 +14,9 @@ import { ServiceLogo } from '../../src/components/ServiceLogo';
 import { AppLogoMark } from '../../src/components/AppLogoMark';
 import { GradientButton } from '../../src/components/GradientButton';
 import { useSubscriptions, useAnalyticsOverview, useCategories } from '../../src/hooks/useApi';
+import { useBottomSheet } from '../../src/hooks/useBottomSheet';
 import { subscriptionAPI, servicesAPI } from '../../src/services/api';
-import { Colors, Spacing, FontSize, FontWeight, Shadow, TabBarSpace } from '../../src/constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow, TabBarSpace } from '../../src/constants/theme';
 
 type FilterType = 'all' | 'active' | 'paused' | 'cancelled';
 
@@ -78,6 +79,7 @@ export default function SubscriptionsScreen() {
   // 'all'이면 카테고리별로 묶어 보여주고, 하나를 고르면 그 칸만 남긴다.
   // 'none'은 어느 분류에도 안 들어간 구독.
   const [categoryFilter, setCategoryFilter] = useState<number | 'all' | 'none'>('all');
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
 
   // 모달 상태
   const [selectedSub, setSelectedSub] = useState<Sub | null>(null);
@@ -144,6 +146,9 @@ export default function SubscriptionsScreen() {
     return [...buckets.entries()].filter(([, b]) => b.items.length > 0);
   }, [filtered, categories, categoryFilter, language]);
 
+  // 분류 고르기 시트 — 앱 안의 다른 시트와 같은 방식으로 열고 닫는다.
+  const groupSheet = useBottomSheet(groupPickerOpen, () => setGroupPickerOpen(false));
+
   // 필터 줄에는 실제로 쓰이는 분류만 남긴다. 13종을 전부 늘어놓으면 옆으로
   // 한참 밀리는데, 눌러 봐야 비어 있는 칸이라 고를 이유가 없다.
   const usedCategories = useMemo(() => {
@@ -158,6 +163,38 @@ export default function SubscriptionsScreen() {
     const label = t(key as any);
     return label === key ? name : label;
   };
+
+  const allLabel = language === 'ko' ? '분류 전체' : 'All groups';
+  const noneLabel = language === 'ko' ? '미분류' : 'Uncategorized';
+
+  /** 헤더 버튼에 찍히는 현재 선택. */
+  const activeGroupLabel =
+    categoryFilter === 'all'
+      ? allLabel
+      : categoryFilter === 'none'
+        ? noneLabel
+        : categoryLabel(categories.find(c => c.id === categoryFilter)?.name ?? '');
+
+  /** 시트에 늘어놓을 항목. 쓰이는 분류만 두고 각각 몇 건인지 함께 보여준다. */
+  const groupOptions: { key: number | 'all' | 'none'; label: string; icon: string | null; color: string | null; count: number }[] = [
+    { key: 'all', label: allLabel, icon: null, color: null, count: byStatus.length },
+    ...usedCategories.map(c => ({
+      key: c.id as number | 'all' | 'none',
+      label: categoryLabel(c.name),
+      icon: c.icon,
+      color: c.color,
+      count: byStatus.filter(s => s.categoryId === c.id).length,
+    })),
+    ...(hasUncategorised
+      ? [{
+          key: 'none' as number | 'all' | 'none',
+          label: noneLabel,
+          icon: null,
+          color: null,
+          count: byStatus.filter(s => s.categoryId === null).length,
+        }]
+      : []),
+  ];
   // 월 총액: 통화가 섞여 있으면 단순 합산이 불가하므로, 백엔드가 KRW로 환산해 준 값을 사용
   const naiveTotal = allSubs.filter(s => s.status === 'active').reduce((sum, s) => sum + s.amount, 0);
   const monthlyTotalKRW = Number((overviewQuery.data as any)?.total_monthly_cost ?? naiveTotal);
@@ -394,52 +431,25 @@ export default function SubscriptionsScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-
-            {/* 분류 줄. 상태와 따로 걸리므로 "활성 + 엔터테인먼트"처럼 겹쳐 볼 수 있다. */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-              <TouchableOpacity
-                style={[styles.categoryFilterPill, categoryFilter === 'all' && styles.categoryFilterPillActive]}
-                onPress={() => setCategoryFilter('all')}
-              >
-                <Ionicons
-                  name="albums-outline"
-                  size={13}
-                  color={categoryFilter === 'all' ? Colors.textPrimary : Colors.textWhite}
-                />
-                <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>
-                  {language === 'ko' ? '분류 전체' : 'All groups'}
-                </Text>
-              </TouchableOpacity>
-              {usedCategories.map(c => (
-                <TouchableOpacity
-                  key={c.id}
-                  style={[styles.categoryFilterPill, categoryFilter === c.id && styles.categoryFilterPillActive]}
-                  onPress={() => setCategoryFilter(c.id)}
-                >
-                  {c.icon ? <Text style={styles.categoryFilterIcon}>{c.icon}</Text> : null}
-                  <Text style={[styles.filterText, categoryFilter === c.id && styles.filterTextActive]}>
-                    {categoryLabel(c.name)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-              {hasUncategorised && (
-                <TouchableOpacity
-                  style={[styles.categoryFilterPill, categoryFilter === 'none' && styles.categoryFilterPillActive]}
-                  onPress={() => setCategoryFilter('none')}
-                >
-                  <Text style={[styles.filterText, categoryFilter === 'none' && styles.filterTextActive]}>
-                    {language === 'ko' ? '미분류' : 'Uncategorized'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </ScrollView>
           </View>
 
           <View style={styles.cardContainer}>
             <View style={styles.mainWhiteCard}>
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.cardTitle}>{t('subs.title')}</Text>
-                <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
+                {/* 분류는 이 목록에만 걸리는 조건이라 목록 머리에 둔다.
+                    바깥에 줄을 하나 더 만들면 상태 줄과 붙어 조잡해진다. */}
+                <TouchableOpacity
+                  style={styles.groupPickerBtn}
+                  onPress={() => setGroupPickerOpen(true)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="albums-outline" size={14} color={Colors.primary} />
+                  <Text style={styles.groupPickerText} numberOfLines={1}>
+                    {activeGroupLabel}
+                  </Text>
+                  <Ionicons name="chevron-down" size={14} color={Colors.primary} />
+                </TouchableOpacity>
               </View>
 
               {/* 분류 전체일 때는 카테고리별로 묶고, 하나를 고르면 그냥 늘어놓는다 */}
@@ -473,6 +483,50 @@ export default function SubscriptionsScreen() {
           <View style={{ height: 120 }} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* ── 분류 고르기 시트 ── */}
+      {groupPickerOpen && (
+        // 하단 탭바가 떠 있는 자리에 겹치므로 한 층 위로 올린다(카탈로그 시트와 같은 방식)
+        <View style={[StyleSheet.absoluteFill, { zIndex: 9999, elevation: 9999 }]}>
+          <Animated.View style={[styles.modalOverlay, { opacity: groupSheet.backdrop }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={groupSheet.close} />
+          </Animated.View>
+          <View style={styles.sheetAnchor} pointerEvents="box-none">
+            <Animated.View style={[styles.groupSheet, groupSheet.style]} {...groupSheet.panHandlers}>
+              <View style={styles.groupSheetHandle} />
+              <Text style={styles.groupSheetTitle}>
+                {language === 'ko' ? '분류' : 'Category'}
+              </Text>
+              <ScrollView
+                style={{ maxHeight: 360 }}
+                onScroll={groupSheet.onScroll}
+                scrollEventThrottle={groupSheet.scrollEventThrottle}
+              >
+                {groupOptions.map(opt => {
+                  const selected = categoryFilter === opt.key;
+                  return (
+                    <TouchableOpacity
+                      key={String(opt.key)}
+                      style={[styles.groupOptionRow, selected && styles.groupOptionRowActive]}
+                      onPress={() => { setCategoryFilter(opt.key); groupSheet.close(); }}
+                      activeOpacity={0.6}
+                    >
+                      <View style={[styles.groupOptionDot, { backgroundColor: opt.color ?? Colors.borderLight }]}>
+                        {opt.icon ? <Text style={styles.groupOptionIcon}>{opt.icon}</Text> : null}
+                      </View>
+                      <Text style={[styles.groupOptionLabel, selected && { color: Colors.primary, fontWeight: FontWeight.bold }]}>
+                        {opt.label}
+                      </Text>
+                      <Text style={styles.groupOptionCount}>{opt.count}</Text>
+                      {selected && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </Animated.View>
+          </View>
+        </View>
+      )}
 
       {/* ── 구독 상세 모달 ── */}
       {modalVisible && selectedSub && (
@@ -850,15 +904,45 @@ const styles = StyleSheet.create({
   stepperValue: { fontSize: FontSize.xl, fontWeight: FontWeight.heavy, color: Colors.textPrimary },
   stepperUnit: { fontSize: FontSize.sm, color: Colors.textTertiary },
   memberSplitHint: { fontSize: FontSize.xs, color: Colors.primary, marginTop: 8 },
-  // ── 분류 필터·그룹 헤더 ──
-  categoryFilterPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+  // ── 분류 고르기 (카드 헤더 버튼 + 시트) ──
+  groupPickerBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    maxWidth: 170,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primarySoftBg,
   },
-  categoryFilterPillActive: { backgroundColor: '#FFF', borderColor: '#FFF' },
-  categoryFilterIcon: { fontSize: 12 },
+  groupPickerText: {
+    flexShrink: 1,
+    fontSize: FontSize.xs, fontWeight: FontWeight.semibold, color: Colors.primary,
+  },
+  sheetAnchor: { flex: 1, justifyContent: 'flex-end' },
+  groupSheet: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: BorderRadius.xxl, borderTopRightRadius: BorderRadius.xxl,
+    paddingHorizontal: Spacing.xl, paddingTop: Spacing.md, paddingBottom: Spacing.xxl,
+  },
+  groupSheetHandle: {
+    alignSelf: 'center', width: 36, height: 4, borderRadius: 2,
+    backgroundColor: Colors.border, marginBottom: Spacing.md,
+  },
+  groupSheetTitle: {
+    fontSize: FontSize.lg, fontWeight: FontWeight.bold,
+    color: Colors.textPrimary, marginBottom: Spacing.sm,
+  },
+  groupOptionRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  groupOptionRowActive: { backgroundColor: Colors.primarySoftBg },
+  groupOptionDot: {
+    width: 28, height: 28, borderRadius: BorderRadius.sm,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  groupOptionIcon: { fontSize: 13 },
+  groupOptionLabel: { flex: 1, fontSize: FontSize.md, color: Colors.textPrimary },
+  groupOptionCount: { fontSize: FontSize.sm, color: Colors.textTertiary },
   groupHeader: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     marginTop: Spacing.lg, marginBottom: Spacing.xs,
