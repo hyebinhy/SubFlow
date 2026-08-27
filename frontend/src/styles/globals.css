@@ -262,6 +262,121 @@
     color: #F6D28B !important;
   }
 
+
+  /* ── 다크모드 색 보강 ────────────────────────────────────────────────
+     위 규칙들은 클래스를 하나씩 적어 뒤집는 방식이라, 새 색을 쓸 때마다
+     여기 추가하지 않으면 밝은 배경만 그대로 남는다. 실제로 대시보드
+     '오늘의 관리 액션' 카드(bg-indigo-50/90)가 밝은 채로 남고 그 안의
+     글자만 흰색으로 뒤집혀 읽을 수 없었다.
+
+     아래는 빠져 있던 배경 40종과 글자색 16종을 색 계열별로 묶어 채운 것이다.
+     밝은 배경은 같은 색조의 어두운 반투명으로, 그 위에 얹히는 진한 글자는
+     같은 색조의 밝은 톤으로 바꾼다.
+
+     bg-white/10~30은 제외한다. 색이 있는 카드 위에 얹는 얇은 막이라
+     (사이드바 구분선, 뉴스 카드 배지) 어둡게 만들면 오히려 사라진다. */
+
+  /* 흰 카드 — 투명도 변형까지 */
+  .dark .bg-white\/40,
+  .dark .bg-white\/65,
+  .dark .bg-white\/70,
+  .dark .bg-white\/80,
+  .dark .bg-white\/90 {
+    background-color: rgba(22, 29, 45, 0.88) !important;
+  }
+
+  .dark .bg-slate-200,
+  .dark .bg-slate-200\/50 {
+    background-color: rgba(31, 40, 58, 0.78) !important;
+  }
+
+  /* 보라 계열 — 브랜드 색이라 가장 많이 쓰인다 */
+  .dark .bg-indigo-50,
+  .dark .bg-indigo-50\/40,
+  .dark .bg-indigo-50\/50,
+  .dark .bg-indigo-50\/90,
+  .dark .bg-indigo-100,
+  .dark .bg-violet-50,
+  .dark .bg-violet-100,
+  .dark .bg-violet-100\/80,
+  .dark .bg-purple-100 {
+    background-color: rgba(67, 56, 202, 0.22) !important;
+  }
+
+  .dark .text-indigo-600,
+  .dark .text-indigo-700,
+  .dark .text-violet-600,
+  .dark .text-violet-700,
+  .dark .text-purple-600 {
+    color: #A9B4FF !important;
+  }
+
+  /* 붉은 계열 — 경고·초과 */
+  .dark .bg-rose-50,
+  .dark .bg-rose-50\/40,
+  .dark .bg-rose-50\/60,
+  .dark .bg-rose-100,
+  .dark .bg-rose-100\/70,
+  .dark .bg-rose-100\/80,
+  .dark .bg-red-50,
+  .dark .bg-red-50\/50,
+  .dark .bg-red-100 {
+    background-color: rgba(136, 19, 55, 0.26) !important;
+  }
+
+  .dark .text-rose-600,
+  .dark .text-rose-700,
+  .dark .text-red-600,
+  .dark .text-red-700 {
+    color: #FF9FB2 !important;
+  }
+
+  /* 노랑 계열 — 주의 */
+  .dark .bg-amber-100,
+  .dark .bg-amber-100\/70,
+  .dark .bg-amber-100\/80,
+  .dark .bg-amber-50\/80,
+  .dark .bg-orange-100\/70 {
+    background-color: rgba(92, 63, 20, 0.30) !important;
+  }
+
+  .dark .text-amber-600,
+  .dark .text-amber-700 {
+    color: #F6D28B !important;
+  }
+
+  /* 초록 계열 — 절약·정상 */
+  .dark .bg-green-100,
+  .dark .bg-emerald-100\/70,
+  .dark .bg-emerald-100\/80 {
+    background-color: rgba(6, 78, 59, 0.26) !important;
+  }
+
+  .dark .text-green-600 {
+    color: #66E3B4 !important;
+  }
+
+  /* 밝은 테두리 — 어두운 바탕에서 흰 테두리는 카드가 아니라 형광선처럼 보인다.
+     border-white/10은 색 카드 위에 얹는 얇은 선이라 그대로 둔다. */
+  .dark .border-white,
+  .dark .border-white\/60,
+  .dark .border-slate-50 {
+    border-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  /* 파랑 계열 */
+  .dark .bg-sky-50,
+  .dark .bg-blue-100 {
+    background-color: rgba(30, 58, 138, 0.26) !important;
+  }
+
+  .dark .text-blue-600,
+  .dark .text-blue-700,
+  .dark .text-blue-900,
+  .dark .text-sky-600 {
+    color: #8FC2FF !important;
+  }
+
   /* 로고는 배경 테마에 맞춰 검정/흰색 버전을 바꿔 끼운다 */
   .brand-logo-dark {
     display: none;
